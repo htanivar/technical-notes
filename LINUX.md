@@ -2,4 +2,6 @@
 
     netstat -tulpn | grep LISTEN
 
+**Find public ip address**
 
+    echo $(curl -s https://api.ipify.org)
