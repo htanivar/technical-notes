@@ -1,4 +1,5 @@
-** If lombok is not recongizing the methods you need to include all the following dependencies **
+**If lombok is not recongizing the methods you need to include all the following dependencies**
+
     compileOnly 'org.projectlombok:lombok:1.18.8'
     annotationProcessor 'org.projectlombok:lombok:1.18.8'
     testAnnotationProcessor 'org.projectlombok:lombok:1.18.8'
