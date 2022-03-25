@@ -16,6 +16,7 @@
 | **Service** |Helper class that provides desired functionality </br> Retrieving data from a server, performing a calculation, validation etc|
 | **Module** |A collection of related componnents directives, services etc|
 |**Decorator**|-|
+|**Event Binding**|User Events looking into browser events https://developer.mozilla.org/en-US/docs/Web/Events|
 
 
 |`@Component`| is an Angular Decorator similar to Annotations in Java(selector,templateUrl,styleUrls)|
