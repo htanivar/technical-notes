@@ -8,6 +8,7 @@
 8. http://angular.io/api/common/CurrencyPipe
 9. http://angular.io/api/common#pipes
 10. https://angular.io/guide/template-syntax#safe-navigation-operator
+11. https://angular.io/guide/language-service
 
 |Term|Definition|
 ---|---|
