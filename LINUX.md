@@ -1,3 +1,13 @@
+**How to check application is running**
+    sudo service mysql status
+    
+**How to login to Postgres**
+    https://www.digitalocean.com/community/tutorials/how-to-install-postgresql-on-ubuntu-20-04-quickstart
+    sudo -i -u postgres
+    psql
+    \q
+    
+    
 **Find the process using & port**
 
     netstat -tulpn | grep LISTEN
