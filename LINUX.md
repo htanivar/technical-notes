@@ -2,6 +2,7 @@
     sudo service mysql status
     
 **How to login to Postgres**
+    
     https://www.digitalocean.com/community/tutorials/how-to-install-postgresql-on-ubuntu-20-04-quickstart
     sudo -i -u postgres
     psql
