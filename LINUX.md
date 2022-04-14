@@ -1,3 +1,6 @@
+**How to check application location**
+   sudo update-alternatives --config java
+
 **How to check application is running**
     sudo service mysql status
     
