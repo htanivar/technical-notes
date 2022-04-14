@@ -11,3 +11,7 @@
     ssh-keygen -t ed25519 -C "your_email@example.com"
     eval "$(ssh-agent -s)"
     ssh-add ~/.ssh/<private ssh file>
+
+**Find java location**
+
+    sudo update-alternatives --config java
