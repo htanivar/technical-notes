@@ -1,8 +1,8 @@
-go mod init
-go mod tidy
+go mod init </br>
+go mod tidy </br>
 
-go build
+go build </br>
 
-go test
-go test -v -cover
-go test ./...
+go test </br>
+go test -v -cover </br>
+go test ./... </br>
