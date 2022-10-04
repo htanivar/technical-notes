@@ -27,3 +27,13 @@
     ssh-keygen -t ed25519 -C "your_email@example.com"
     eval "$(ssh-agent -s)"
     ssh-add ~/.ssh/<private ssh file>
+    
+**Ubuntu Firewall commands**    
+
+https://www.digitalocean.com/community/tutorials/how-to-set-up-a-firewall-with-ufw-on-ubuntu-20-04
+
+    sudo ufw status
+    sudo ufw enable
+    sudo ufw allow 22
+    sudo ufw allow 6000:6007/tcp
+    sudo ufw allow 6000:6007/udp
