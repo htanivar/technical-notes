@@ -1,1 +1,2 @@
-purge the deleted remote branch: git remote prune origin
+purge the deleted remote branch:
+    ```git remote prune origin```
