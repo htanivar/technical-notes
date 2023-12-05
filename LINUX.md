@@ -1,13 +1,15 @@
+https://www.cyberciti.biz/faq/apt-get-list-packages-are-installed-on-ubuntu-linux/
+
 **User Maintainance**
 
-| Purpose                                            | Command (example user is 'dev')    |
-|----------------------------------------------------|------------------------------------| 
-| Add Group                                          | sudo groupadd development          |
-| Add User without Home Directory                    | sudo useradd dev                   |
-| Add User with Home Directory & group               | sudo useradd -m -g development dev |
-| Set password to user                               | sudo passwd dev                    |
-| Before deleting user kill the process used by user | sudo killall -u dev                |
-| Delete user                                        | sudo userdel -r dev                |
+| Purpose                                            | Command (example user is 'dev')       |
+|----------------------------------------------------|---------------------------------------| 
+| Add Group                                          | sudo groupadd development             |
+| Add User without Home Directory                    | sudo useradd sysdev                   |
+| Add User with Home Directory & group               | sudo useradd -m -g development sysdev |
+| Set password to user                               | sudo pV1layatu<br/>asswd dev          |
+| Before deleting user kill the process used by user | sudo killall -u dev                   |
+| Delete user                                        | sudo userdel -r dev                   |
 
 **Copy files between servers**
 scp -r user@source_server:/path/to/source/ user@destination_server:/path/to/destination/
@@ -16,6 +18,7 @@ scp -r user@source_server:/path/to/source/ user@destination_server:/path/to/dest
 **How to check application location**
 
 sudo update-alternatives --config java
+exit
 
 **How to check application is running**
 
@@ -45,12 +48,17 @@ sudo update-alternatives --config java
 **Ubuntu Firewall commands**
 
 https://www.digitalocean.com/community/tutorials/how-to-set-up-a-firewall-with-ufw-on-ubuntu-20-04
+https://www.digitalocean.com/community/tutorials/ufw-essentials-common-firewall-rules-and-commands
 
     sudo ufw status
     sudo ufw enable
     sudo ufw allow 22
+    sudo ufw deny 22
     sudo ufw allow 6000:6007/tcp
     sudo ufw allow 6000:6007/udp
+    sudo ufw deny from <203.0.113.100> 
+    sudo ufw deny from <203.0.113.0/24>
+    sudo ufw deny in on <eth0> from 203.0.113.100
 
 
 **How to Install MySQL Server 8.0 in Ubuntu 22.04 LTS***
