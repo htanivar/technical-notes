@@ -9,6 +9,10 @@
 | Before deleting user kill the process used by user | sudo killall -u dev                |
 | Delete user                                        | sudo userdel -r dev                |
 
+**Copy files between servers**
+scp -r user@source_server:/path/to/source/ user@destination_server:/path/to/destination/
+
+
 **How to check application location**
 
 sudo update-alternatives --config java
