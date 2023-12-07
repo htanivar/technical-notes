@@ -1,32 +1,19 @@
-[USER Commands](#user-commands)  
-[SUDO Commands](#sudo-commands)    
-[SSH Commands](#ssh-commands)    
-[CURL Commands](#curl-commands)    
-[WGET Commands](#wget-commands)  
-[GREP Commands](#grep-commands)  
-[AWK Commands](#awk-commands)    
-[SED Commands](#sed-commands)  
-[PS Commands](#ps-commands)    
-[TOP Commands](#top-commands)  
-[IFCONFIG Commands](#ifconfig-commands)  
-[TAR Commands](#tar-commands)  
-[SCP Commands](#scp-commands)  
-[DU Commands](#du-commands)  
-[DF Commands](#df-commands)  
-[IP Commands](#ip-commands)  
-[PING Commands](#ping-commands)    
-[TCPDUMP Commands](#tcpdump-commands)  
-[NETSTAT Commands](#netstat-commands)  
-[ROUTE Commands](#route-commands)  
-[TRACEROUTE Commands](#traceroute-commands)  
-[ARP Commands](#arp-commands)  
-[IWCONFIG Commands](#iwconfig-commands)  
-[HOSTNAME Commands](#hostname-commands)  
-[SS Commands](#ss-commands)  
-[LSOF Commands](#lsof-commands)        
-[IPTABLES Commands](#iptables-commands)    
-[SYSTEMCTL Commands](#systemctl-commands)  
-[NMCLI Commands](#nmcli-commands)
+| User Commands                   | Admin Commands                            | Network Commands                            |
+|---------------------------------|-------------------------------------------|---------------------------------------------|
+| [CURL Commands](#curl-commands) | [USER Commands](#user-commands)           | [PING Commands](#ping-commands)             |
+| [WGET Commands](#wget-commands) | [SUDO Commands](#sudo-commands)           | [PING Commands](#ping-commands)             |
+| [DF Commands](#df-commands)     | [SSH Commands](#ssh-commands)             | [TCPDUMP Commands](#tcpdump-commands)       |
+| [DU Commands](#du-commands)     | [PS Commands](#ps-commands)               | [NETSTAT Commands](#netstat-commands)       |
+| [GREP Commands](#grep-commands) | [TOP Commands](#top-commands)             | [ROUTE Commands](#route-commands)           |
+| [AWK Commands](#awk-commands)   | [IFCONFIG Commands](#ifconfig-commands)   | [TRACEROUTE Commands](#traceroute-commands) |
+| [SED Commands](#sed-commands)   | [SYSTEMCTL Commands](#systemctl-commands) | [ARP Commands](#arp-commands)               |
+| [TAR Commands](#tar-commands)   | -                                         | [IWCONFIG Commands](#iwconfig-commands)     |
+| [SCP Commands](#scp-commands)   | -                                         | [HOSTNAME Commands](#hostname-commands)     |
+| [IP Commands](#ip-commands)     | -                                         | [SS Commands](#ss-commands)                 |
+| [LN Commands](#ln-commands)     | -                                         | [LSOF Commands](#lsof-commands)             |
+| -                               | -                                         | [IPTABLES Commands](#iptables-commands)     |
+| -                               | -                                         | [NMCLI Commands](#nmcli-commands)           |
+| -                               | -                                         | -                                           |
 
 [List of Network Commands](#list-network-commands)
 
@@ -303,6 +290,36 @@ Connect to terminal
 | `scp -B file.txt user@remote:/path/`                          | Run SCP in the background (batch mode).                                 |
 
 scp -r user@source_server:/path/to/source/ user@destination_server:/path/to/destination/
+
+<<<<<<< HEAD
+
+## ln-commands
+
+**LN Commands**
+
+| Command                                      | Description                                                                 |
+|----------------------------------------------|-----------------------------------------------------------------------------|
+| `ln source_file link_name`                   | Create a hard link to a file                                                |
+| `ln -s source_file symbolic_link`            | Create a symbolic (soft) link to a file                                     |
+| `ln source_directory link_name`              | Create a hard link to a directory (generally not recommended)               |
+| `ln -s source_directory symbolic_link`       | Create a symbolic link to a directory                                       |
+| `ln -b source_file link_name`                | Create a backup of the existing target file before creating a hard link     |
+| `ln -s -b source_file symbolic_link`         | Create a backup of the existing target file before creating a symbolic link |
+| `ln -i source_file link_name`                | Prompt before overwriting an existing target file with a hard link          |
+| `ln -s -i source_file symbolic_link`         | Prompt before overwriting an existing target file with a symbolic link      |
+| `ln -r source_directory link_name`           | Create symbolic links relative to the link location                         |
+| `ln -T source target`                        | Treat the target as a normal file even if it is a directory                 |
+| `ln --help`                                  | Display help information about the `ln` command                             |
+| `ln --version`                               | Display version information for the `ln` command                            |
+| `ln -v source_file link_name`                | Be verbose, display the link created                                        |
+| `ln -s -f source_file symbolic_link`         | Force creation of a symbolic link, overwriting the target if it exists      |
+| `ln -P source_file link_name`                | Do not dereference symbolic links when creating hard links                  |
+| `ln -L source_file link_name`                | Dereference symbolic links when creating hard links                         |
+| `ln -n source_file link_name`                | No-dereference, treat source_file as a normal file if it is a symbolic link |
+| `ln --relative -s source_file symbolic_link` | Create symbolic link relative to the symlink location                       |
+
+=======
+> > > > > > > develop
 
 ## du-commands
 
@@ -766,6 +783,7 @@ scp -r user@source_server:/path/to/source/ user@destination_server:/path/to/dest
 
 **How to Install MySQL Server 8.0 in Ubuntu 22.04 LTS***
 https://www.cyberciti.biz/faq/installing-mysql-server-on-ubuntu-22-04-lts-linux/
+<<<<<<< HEAD
 
 | Step                                                                                                                                                                                                | Command                                                                                                                                                                                                                                      |
 |-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------| 
@@ -790,7 +808,33 @@ https://www.cyberciti.biz/faq/installing-mysql-server-on-ubuntu-22-04-lts-linux/
 | MySQL 8 Server Configuration                                                                                                                                                                        | sudo vim /etc/mysql/mysql.conf.d/mysqld.cnf <br /> sudo systemctl edit mysql.service                                                                                                                                                         |
 | -                                                                                                                                                                                                   | -                                                                                                                                                                                                                                            |
 
-Feel free to customize the table based on your needs or add more details as required.
+=======
+
+| Step                                                                                                                                                                                                | Command                                                                                                                                                                                                                                      |
+|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------| 
+| Update system                                                                                                                                                                                       | sudo apt update <br /> sudo apt list --upgradable <br /> sudo apt upgrade                                                                                                                                                                    |
+| Search for Existing mysql                                                                                                                                                                           | apt-cache search mysql-server                                                                                                                                                                                                                |
+| Find more info about mysql-<v>                                                                                                                                                                      | apt info -a mysql-server-8.0                                                                                                                                                                                                                 |
+| Install MySQL 8 Server Package                                                                                                                                                                      | sudo apt install mysql-server-8.0                                                                                                                                                                                                            |
+| Setup Root Password                                                                                                                                                                                 | sudo mysql   <br /> ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'MyRootPassword';                                                                                                                                 | 
+| Find info about mysql.service                                                                                                                                                                       | sudo systemctl start mysql.service <br /> sudo systemctl stop mysql.service <br /> sudo systemctl restart mysql.service <br /> sudo systemctl status mysql.service                                                                           |
+| Main MySQL server configuration directory                                                                                                                                                           | /etc/mysql/                                                                                                                                                                                                                                  |
+| The MySQL database server configuration file <br /> Edit the .my.cnf ($HOME/.my.cnf) to set user-specific options. <br /> Additional settings that can override from the following two directories: | /etc/mysql/my.cnf <br /> /etc/mysql/conf.d/ <br /> /etc/mysql/mysql.conf.d/                                                                                                                                                                  |
+| Port Setting                                                                                                                                                                                        | The TCP/3306 is the default network for the MySQL server and binds to 127.0.0.1 for security reasons <br /> MySQL server using the localhost socket set in the/run/mysqld/ directory                                                         |
+| Securing MySQL 8 server                                                                                                                                                                             | sudo mysql_secure_installation                                                                                                                                                                                                               |
+| Enable MySQL server at boot time                                                                                                                                                                    | sudo systemctl is-enabled mysql.service <br />   sudo systemctl enable mysql.service     <br />  sudo systemctl status mysql.service                                                                                                         |
+| Start/Stop/Restarting MySQL Server                                                                                                                                                                  | sudo systemctl start mysql.service <br /> sudo systemctl stop mysql.service <br /> sudo systemctl restart mysql.service <br /> sudo systemctl status mysql.service                                                                           |
+| View Journal Log                                                                                                                                                                                    | sudo journalctl -u mysql.service -xe                                                                                                                                                                                                         |
+| View Error Log                                                                                                                                                                                      | sudo tail -f /var/log/mysql/error.log                                                                                                                                                                                                        |
+| Login into MySQL 8 server for testing purpose                                                                                                                                                       | mysql -u {user} -p <br /> mysql -u {user} -h {remote_server_ip} -p <br /> mysql -u root -p                                                                                                                                                   |
+| Useful DB Commands                                                                                                                                                                                  | STATUS; <br /> SHOW VARIABLES LIKE "%version%";                                                                                                                                                                                              |
+| Create DB & User                                                                                                                                                                                    | CREATE DATABASE mydemodb;  <br /> CREATE USER 'vivekappusr'@'%' IDENTIFIED BY 'myPassword'; <br /> GRANT SELECT, INSERT, UPDATE, DELETE ON mydemodb.* TO 'vivekappusr'@'%';  <br /> GRANT ALL PRIVILEGES ON mydemodb.* TO 'vivekappusr'@'%'; |
+| Find DB user Status                                                                                                                                                                                 | SELECT USER,host FROM mysql.user; <br />    SHOW GRANTS FOR vivekappusr;                                                                                                                                                                     |
+| MySQL 8 Server Configuration                                                                                                                                                                        | sudo vim /etc/mysql/mysql.conf.d/mysqld.cnf <br /> sudo systemctl edit mysql.service                                                                                                                                                         |
+| -                                                                                                                                                                                                   | -                                                                                                                                                                                                                                            |
+
+> > > > > > > develop
+> > > > > > > Feel free to customize the table based on your needs or add more details as required.
 
 **How to check application location**
 
