@@ -1,3 +1,7 @@
+Input: "The abcdef is important."
+Regex Composition: abc
+Output: Matches the sequence "abc." No other part of the text is matched.
+
 | Syntax Element     | Description                                                    |
 |--------------------|----------------------------------------------------------------|
 | Literal Characters | Match characters literally, e.g., `abc` matches "abc".         |
@@ -36,3 +40,42 @@
 
 Replace `string`, `regex`, and other placeholders with your actual values. The table provides a quick reference for
 various scenarios where regular expressions are commonly used in Bash.
+
+# Extracting Email Addresses
+
+```
+#!/bin/bash
+input="Contact us at info@example.com or support@company.net."
+regex="\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b"
+
+output=$(echo "$input" | grep -o -E "$regex")
+```
+
+# Extracting Dates
+```
+#!/bin/bash
+input="Important dates: 12/20/2023 and 01/15/2024."
+regex="(\d{2}/\d{2}/\d{4})"
+
+output=$(echo "$input" | grep -o -E "$regex")
+```
+
+# Removing HTML Tags
+
+```
+#!/bin/bash
+input="<p>This is <b>bold</b> and <i>italic</i>.</p>"
+regex="<[^>]+>"
+
+output=$(echo "$input" | sed -r "s/$regex//g")
+```
+
+# Extracting Phone Numbers
+
+```
+#!/bin/bash
+input="Call us at (123) 456-7890 or (555) 555-5555."
+regex="\(\d{3}\) \d{3}-\d{4}"
+
+output=$(echo "$input" | grep -o -E "$regex")
+```
