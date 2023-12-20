@@ -1,0 +1,11 @@
+#!/bin/bash
+
+input="Contact us at info@example.com or support@company.net."
+echo "INPUT = $input"
+
+regex="\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b"
+echo "RegEx = $regex"
+
+
+output=$(echo "$input" | grep -o -E "$regex")
+echo "Output = $output"
