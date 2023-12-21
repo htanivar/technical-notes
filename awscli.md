@@ -1,3 +1,10 @@
+| Configuration Item    | Command                                                                                     |
+|-----------------------|---------------------------------------------------------------------------------------------|
+| AWS Access Key ID     | `aws2 configure set aws_access_key_id YOUR_ACCESS_KEY_ID --profile YourProfileName`         |
+| AWS Secret Access Key | `aws2 configure set aws_secret_access_key YOUR_SECRET_ACCESS_KEY --profile YourProfileName` |
+| Default region name   | `aws2 configure set region YOUR_DEFAULT_REGION --profile YourProfileName`                   |
+| Default output format | `aws2 configure set output YOUR_OUTPUT_FORMAT --profile YourProfileName`                    |
+
 | Description                         | AWS CLI Command                                                                               |
 |-------------------------------------|-----------------------------------------------------------------------------------------------|
 | List all S3 buckets                 | `aws s3 ls`                                                                                   |
