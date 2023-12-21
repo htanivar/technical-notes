@@ -18,3 +18,16 @@
 | Copy objects between buckets        | `aws s3 cp s3://source-bucket/source-file.txt s3://destination-bucket/destination-file.txt`   |
 | Set bucket ACL (make it public)     | `aws s3api put-bucket-acl --bucket your-bucket-name --acl public-read`                        |
 | Set object ACL (make it public)     | `aws s3api put-object-acl --bucket your-bucket-name --key your-s3-file.txt --acl public-read` |
+
+
+| Scenario                                   | Command                                                                      |
+|--------------------------------------------|------------------------------------------------------------------------------|
+| Copy a local file to S3 bucket              | `aws s3 cp local-file.txt s3://your-bucket/`                                  |
+| Copy a local directory to S3 bucket         | `aws s3 cp local-directory/ s3://your-bucket/ --recursive`                   |
+| Copy a file from S3 bucket to local         | `aws s3 cp s3://your-bucket/your-file.txt ./local-directory/`                |
+| Copy all files in S3 bucket to local        | `aws s3 cp s3://your-bucket/ ./local-directory/ --recursive`                 |
+| Copy files matching a pattern to S3 bucket   | `aws s3 cp ./local-directory/ s3://your-bucket/ --recursive --exclude "*" --include "*.txt"` |
+| Copy files between two S3 buckets            | `aws s3 cp s3://source-bucket/ s3://destination-bucket/ --recursive`         |
+| Copy with reduced redundancy storage class  | `aws s3 cp local-file.txt s3://your-bucket/ --storage-class REDUCED_REDUNDANCY` |
+| Copy with server-side encryption (SSE-S3)    | `aws s3 cp local-file.txt s3://your-bucket/ --sse`                           |
+| Copy and set ACL (Access Control List)       | `aws s3 cp local-file.txt s3://your-bucket/ --acl public-read`               |
