@@ -13,6 +13,7 @@
 | [LN Commands](#ln-commands)     | -                                         | [LSOF Commands](#lsof-commands)             |
 | -                               | -                                         | [IPTABLES Commands](#iptables-commands)     |
 | -                               | -                                         | [NMCLI Commands](#nmcli-commands)           |
+| -                               | -                                         | [NSLOOKUP Commands](#nslookup-commands)     |
 | -                               | -                                         | -                                           |
 
 [List of Network Commands](#list-network-commands)
@@ -744,6 +745,22 @@ scp -r user@source_server:/path/to/source/ user@destination_server:/path/to/dest
 | `nmcli radio wifi off`                             | Disable Wi-Fi                             |
 | `nmcli networking on`                              | Enable networking                         |
 | `nmcli networking off`                             | Disable networking                        |
+
+## nslookup-commands
+
+**NSLOOUP Commands**
+
+| Command                                   | Description                               |
+|-------------------------------------------|-------------------------------------------|
+| `nslookup example.com`                    | Perform a basic DNS lookup for a domain.  |
+| `nslookup -type=mx example.com`           | Retrieve Mail Exchange (MX) records.      |
+| `nslookup -type=ns example.com`           | Retrieve Name Server (NS) records.        |
+| `nslookup -type=cname www.example.com`    | Retrieve Canonical Name (CNAME) record.   |
+| `nslookup -query=soa example.com`         | Retrieve Start of Authority (SOA) record. |
+| `nslookup -query=txt example.com`         | Retrieve Text (TXT) record.               |
+| `nslookup -query=ptr 8.8.8.8`             | Perform reverse DNS lookup for an IP.     |
+| `nslookup -query=any example.com`         | Retrieve all available records for a domain. |
+
 
 ## list-network-commands
 
