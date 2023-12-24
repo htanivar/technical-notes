@@ -6,5 +6,6 @@
 | [Windows](Windows.md)   | [Angular](angular/ANGULAR.md) | [REGEX](regex/REGEX.md) |
 | -                       | -                             | [JQ](jq/JQ.md)          |
 | -                       | -                             | [SSH](ssh/SSH.md)       |
+| -                       | -                             | [MAVEN](mvn.md)         |
 | -                       | -                             | -                       |
 
