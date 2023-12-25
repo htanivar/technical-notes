@@ -7,5 +7,6 @@
 | -                       | -                             | [JQ](jq/JQ.md)          |
 | -                       | -                             | [SSH](ssh/SSH.md)       |
 | -                       | -                             | [MAVEN](mvn.md)         |
+| -                       | -                             | [GRADLE](gradle.md)     |
 | -                       | -                             | -                       |
 
