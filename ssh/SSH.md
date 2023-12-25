@@ -5,6 +5,29 @@
 | List Available Keys      | `ssh-add -l`                       | Lists the currently added SSH keys.                 |
 | Debug SSH Connection     | `ssh -v username@remote_host`      | Verbose mode to debug SSH connection issues.        |
 
+| Command                                                  | Description                                                     |
+|----------------------------------------------------------|-----------------------------------------------------------------|
+| `ssh`                                                    | OpenSSH client to connect to remote SSH servers                 |
+| `ssh user@host`                                          | Connect to a remote host as a specific user                     |
+| `ssh -p port user@host`                                  | Specify a non-default SSH port                                  |
+| `ssh -i /path/to/private_key user@host`                  | Use a specific private key for authentication                   |
+| `ssh -l user host`                                       | Specify the user to log in as                                   |
+| `ssh -X user@host`                                       | Enable X11 forwarding for GUI applications                      |
+| `ssh -N -L local_port:remote_host:remote_port user@host` | Create a local port forward without opening a shell (tunneling) |
+| `ssh-keygen`                                             | Generate a new SSH key pair (default: RSA, 2048-bit)            |
+| `ssh-copy-id user@host`                                  | Copy the public key to the authorized keys on a remote host     |
+| `ssh-add /path/to/private_key`                           | Add a private key to the SSH agent for authentication           |
+| `ssh-agent`                                              | Start the SSH agent                                             |
+| `ssh-add -l`                                             | List fingerprints of all identities added to the agent          |
+| `ssh-add -D`                                             | Delete all identities from the agent                            |
+| `ssh-add -d /path/to/private_key`                        | Delete a specific identity from the agent                       |
+| `ssh -v user@host`                                       | Verbose mode for detailed debugging during connection           |
+| `ssh -vv user@host`                                      | Increased verbosity for more detailed debugging                 |
+| `ssh -vvv user@host`                                     | Maximum verbosity for extensive debugging                       |
+| `ssh-keygen -F remote_host`                              | Check the server host key fingerprint on the local machine      |
+| `ssh-keygen -l -f /path/to/public_key`                   | Display detailed information about a public key file            |
+| `ssh -Q key`                                             | List available key algorithms supported by the SSH client       |
+
 | Task                                      | Command                                  | Description                                              |
 |-------------------------------------------|------------------------------------------|----------------------------------------------------------|
 | Generate RSA Key Pair (default)           | `ssh-keygen`                             | Generates a new RSA key pair (2048-bit)                  |
