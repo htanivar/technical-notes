@@ -11,7 +11,7 @@
 | [SCP Commands](#scp-commands)   | -                                         | [HOSTNAME Commands](#hostname-commands)     |
 | [IP Commands](#ip-commands)     | -                                         | [SS Commands](#ss-commands)                 |
 | [LN Commands](#ln-commands)     | -                                         | [LSOF Commands](#lsof-commands)             |
-| -                               | -                                         | [IPTABLES Commands](#iptables-commands)     |
+| [WGET Commands](#wget-commands) | -                                         | [IPTABLES Commands](#iptables-commands)     |
 | -                               | -                                         | [NMCLI Commands](#nmcli-commands)           |
 | -                               | -                                         | [NSLOOKUP Commands](#nslookup-commands)     |
 | -                               | -                                         | -                                           |
@@ -750,17 +750,34 @@ scp -r user@source_server:/path/to/source/ user@destination_server:/path/to/dest
 
 **NSLOOUP Commands**
 
-| Command                                   | Description                               |
-|-------------------------------------------|-------------------------------------------|
-| `nslookup example.com`                    | Perform a basic DNS lookup for a domain.  |
-| `nslookup -type=mx example.com`           | Retrieve Mail Exchange (MX) records.      |
-| `nslookup -type=ns example.com`           | Retrieve Name Server (NS) records.        |
-| `nslookup -type=cname www.example.com`    | Retrieve Canonical Name (CNAME) record.   |
-| `nslookup -query=soa example.com`         | Retrieve Start of Authority (SOA) record. |
-| `nslookup -query=txt example.com`         | Retrieve Text (TXT) record.               |
-| `nslookup -query=ptr 8.8.8.8`             | Perform reverse DNS lookup for an IP.     |
-| `nslookup -query=any example.com`         | Retrieve all available records for a domain. |
+| Command                                | Description                                  |
+|----------------------------------------|----------------------------------------------|
+| `nslookup example.com`                 | Perform a basic DNS lookup for a domain.     |
+| `nslookup -type=mx example.com`        | Retrieve Mail Exchange (MX) records.         |
+| `nslookup -type=ns example.com`        | Retrieve Name Server (NS) records.           |
+| `nslookup -type=cname www.example.com` | Retrieve Canonical Name (CNAME) record.      |
+| `nslookup -query=soa example.com`      | Retrieve Start of Authority (SOA) record.    |
+| `nslookup -query=txt example.com`      | Retrieve Text (TXT) record.                  |
+| `nslookup -query=ptr 8.8.8.8`          | Perform reverse DNS lookup for an IP.        |
+| `nslookup -query=any example.com`      | Retrieve all available records for a domain. |
 
+## wget-commands
+
+**WGET Commands**
+
+| Description                             | Command                                                                         |
+|-----------------------------------------|---------------------------------------------------------------------------------|
+| Download a file                         | `wget <URL>`                                                                    |
+| Download and save with a different name | `wget -O <output_filename> <URL>`                                               |
+| Download multiple files from a file     | `wget -i <file_containing_URLs>`                                                |
+| Continue an interrupted download        | `wget -c <URL>`                                                                 |
+| Limit download speed                    | `wget --limit-rate=<speed> <URL>`                                               |
+| Download in the background              | `wget -b <URL>`                                                                 |
+| Download recursively (whole website)    | `wget -r <URL>`                                                                 |
+| Download with user-agent specification  | `wget --user-agent="<user_agent>" <URL>`                                        |
+| Download with HTTP authentication       | `wget --http-user=<username> --http-password=<password> <URL>`                  |
+| Download with FTP authentication        | `wget --ftp-user=<username> --ftp-password=<password> <URL>`                    |
+| Download via a proxy                    | `wget --proxy=on/off --proxy-user=<username> --proxy-password=<password> <URL>` |
 
 ## list-network-commands
 
