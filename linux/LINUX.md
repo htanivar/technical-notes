@@ -12,7 +12,7 @@
 | [IP Commands](#ip-commands)     | -                                         | [SS Commands](#ss-commands)                 |
 | [LN Commands](#ln-commands)     | -                                         | [LSOF Commands](#lsof-commands)             |
 | [WGET Commands](#wget-commands) | -                                         | [IPTABLES Commands](#iptables-commands)     |
-| -                               | -                                         | [NMCLI Commands](#nmcli-commands)           |
+| [CURL Commands](#curl-commands) | -                                         | [NMCLI Commands](#nmcli-commands)           |
 | -                               | -                                         | [NSLOOKUP Commands](#nslookup-commands)     |
 | -                               | -                                         | -                                           |
 
@@ -778,6 +778,24 @@ scp -r user@source_server:/path/to/source/ user@destination_server:/path/to/dest
 | Download with HTTP authentication       | `wget --http-user=<username> --http-password=<password> <URL>`                  |
 | Download with FTP authentication        | `wget --ftp-user=<username> --ftp-password=<password> <URL>`                    |
 | Download via a proxy                    | `wget --proxy=on/off --proxy-user=<username> --proxy-password=<password> <URL>` |
+
+## curl-commands
+
+**CURL Commands**
+| Description | Command |
+|------------------------------------|------------------------------------------------|
+| Perform a basic GET request | `curl https://example.com`                     |
+| Send data with a POST request | `curl -X POST -d 'data=example' https://example.com` |
+| Include headers in a request | `curl -H 'Content-Type: application/json' https://example.com` |
+| Follow redirects with `-L` option | `curl -L https://example.com`                  |
+| Save response to a file | `curl -o output.html https://example.com`     |
+| Set a specific timeout | `curl --max-time 10 https://example.com`      |
+| Include basic authentication | `curl -u username:password https://example.com` |
+| Send JSON data in a POST
+request | `curl -X POST -H 'Content-Type: application/json' -d '{"key": "value"}' https://example.com` |
+| Upload a file with a POST request | `curl -X POST -F 'file=@localfile.txt' https://example.com/upload` |
+| Perform a HEAD request | `curl -I https://example.com`                 |
+| Display only response headers | `curl -I -s https://example.com`              |
 
 ## list-network-commands
 
