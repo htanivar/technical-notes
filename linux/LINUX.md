@@ -11,8 +11,9 @@
 | [SCP Commands](#scp-commands)   | -                                         | [HOSTNAME Commands](#hostname-commands)     |
 | [IP Commands](#ip-commands)     | -                                         | [SS Commands](#ss-commands)                 |
 | [LN Commands](#ln-commands)     | -                                         | [LSOF Commands](#lsof-commands)             |
-| -                               | -                                         | [IPTABLES Commands](#iptables-commands)     |
-| -                               | -                                         | [NMCLI Commands](#nmcli-commands)           |
+| [WGET Commands](#wget-commands) | -                                         | [IPTABLES Commands](#iptables-commands)     |
+| [CURL Commands](#curl-commands) | -                                         | [NMCLI Commands](#nmcli-commands)           |
+| -                               | -                                         | [NSLOOKUP Commands](#nslookup-commands)     |
 | -                               | -                                         | -                                           |
 
 [List of Network Commands](#list-network-commands)
@@ -744,6 +745,57 @@ scp -r user@source_server:/path/to/source/ user@destination_server:/path/to/dest
 | `nmcli radio wifi off`                             | Disable Wi-Fi                             |
 | `nmcli networking on`                              | Enable networking                         |
 | `nmcli networking off`                             | Disable networking                        |
+
+## nslookup-commands
+
+**NSLOOUP Commands**
+
+| Command                                | Description                                  |
+|----------------------------------------|----------------------------------------------|
+| `nslookup example.com`                 | Perform a basic DNS lookup for a domain.     |
+| `nslookup -type=mx example.com`        | Retrieve Mail Exchange (MX) records.         |
+| `nslookup -type=ns example.com`        | Retrieve Name Server (NS) records.           |
+| `nslookup -type=cname www.example.com` | Retrieve Canonical Name (CNAME) record.      |
+| `nslookup -query=soa example.com`      | Retrieve Start of Authority (SOA) record.    |
+| `nslookup -query=txt example.com`      | Retrieve Text (TXT) record.                  |
+| `nslookup -query=ptr 8.8.8.8`          | Perform reverse DNS lookup for an IP.        |
+| `nslookup -query=any example.com`      | Retrieve all available records for a domain. |
+
+## wget-commands
+
+**WGET Commands**
+
+| Description                             | Command                                                                         |
+|-----------------------------------------|---------------------------------------------------------------------------------|
+| Download a file                         | `wget <URL>`                                                                    |
+| Download and save with a different name | `wget -O <output_filename> <URL>`                                               |
+| Download multiple files from a file     | `wget -i <file_containing_URLs>`                                                |
+| Continue an interrupted download        | `wget -c <URL>`                                                                 |
+| Limit download speed                    | `wget --limit-rate=<speed> <URL>`                                               |
+| Download in the background              | `wget -b <URL>`                                                                 |
+| Download recursively (whole website)    | `wget -r <URL>`                                                                 |
+| Download with user-agent specification  | `wget --user-agent="<user_agent>" <URL>`                                        |
+| Download with HTTP authentication       | `wget --http-user=<username> --http-password=<password> <URL>`                  |
+| Download with FTP authentication        | `wget --ftp-user=<username> --ftp-password=<password> <URL>`                    |
+| Download via a proxy                    | `wget --proxy=on/off --proxy-user=<username> --proxy-password=<password> <URL>` |
+
+## curl-commands
+
+**CURL Commands**
+| Description | Command |
+|------------------------------------|------------------------------------------------|
+| Perform a basic GET request | `curl https://example.com`                     |
+| Send data with a POST request | `curl -X POST -d 'data=example' https://example.com` |
+| Include headers in a request | `curl -H 'Content-Type: application/json' https://example.com` |
+| Follow redirects with `-L` option | `curl -L https://example.com`                  |
+| Save response to a file | `curl -o output.html https://example.com`     |
+| Set a specific timeout | `curl --max-time 10 https://example.com`      |
+| Include basic authentication | `curl -u username:password https://example.com` |
+| Send JSON data in a POST
+request | `curl -X POST -H 'Content-Type: application/json' -d '{"key": "value"}' https://example.com` |
+| Upload a file with a POST request | `curl -X POST -F 'file=@localfile.txt' https://example.com/upload` |
+| Perform a HEAD request | `curl -I https://example.com`                 |
+| Display only response headers | `curl -I -s https://example.com`              |
 
 ## list-network-commands
 

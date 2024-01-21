@@ -1,45 +1,51 @@
-| Action                         | Command                                                   |
-|--------------------------------|-----------------------------------------------------------|
-| **Initialize Repository**      | `git init`                                                |
-| **Clone Repository**           | `git clone <repository_url>`                              |
-| **Check Status**               | `git status`                                              |
-| **Add Changes**                | `git add <filename>`                                      |
-|                                | `git add .`                                               |
-| **Commit Changes**             | `git commit -m "Commit message"`                          |
-| **Add, Commit & push**         | `git commit -am "Your commit message" && git push`        |
-| **Update Last Commit**         | `git commit --amend`                                      |
-| **Create Branch**              | `git branch <branch_name>`                                |
-| **Switch Branch**              | `git checkout <branch_name>`                              |
-| **Pull Changes**               | `git pull origin <branch_name>`                           |
-| **Merge Changes**              | `git merge <branch_name>`                                 |
-| **Rebase Branch**              | `git rebase <base_branch>`                                |
-| **Interactive Rebase**         | `git rebase -i <base_branch>`                             |
-| **Push Changes**               | `git push origin <branch_name>`                           |
-| **Force Push Changes**         | `git push origin <branch_name> --force`                   |
-| **Stash Changes**              | `git stash`                                               |
-| **Apply Stashed Changes**      | `git stash apply`                                         |
-| **Pop Stash**                  | `git stash pop`                                           |
-| **List Stashes**               | `git stash list`                                          |
-| **Drop Stash**                 | `git stash drop`                                          |
-| **Purge Remote Branch**        | `git push origin --delete <branch_name>`                  |
-| **Create and Switch Branch**   | `git checkout -b <branch_name>`                           |
-| **Fetch Changes**              | `git fetch`                                               |
-| **Merge with Fast-Forward**    | `git merge --ff-only <branch_name>`                       |
-| **Merge with Commit**          | `git merge --no-ff <branch_name>`                         |
-| **Rebase Interactively**       | `git rebase -i <base_branch>`                             |
-| **Cherry-pick a Commit**       | `git cherry-pick <commit_hash>`                           |
-| **View Commit History**        | `git log`                                                 |
-| **View Remote URLs**           | `git remote -v`                                           |
-| **Add Remote Repository**      | `git remote add <remote_name> <remote_url>`               |
-| **Remove Remote**              | `git remote remove <remote_name>`                         |
-| **Undo Last Commit (Local)**   | `git reset HEAD^`                                         |
-| **Undo Last Commit (Remote)**  | `git push origin +HEAD^:<branch_name>`                    |
-| **Create Tag**                 | `git tag <tag_name>`                                      |
-| **Show Tags**                  | `git show <tag_name>`                                     |
-| **Delete Local Branch**        | `git branch -d <branch_name>`                             |
-| **Delete Remote Branch**       | `git push origin --delete <branch_name>`                  |
-| **Configure User Information** | `git config --global user.name "Your Name"`               |
-| **Configure User Email**       | `git config --global user.email "your.email@example.com"` |
+**SSH Key Generation**
+
+    ssh-keygen -t ed25519 -C "your_email@example.com"
+    eval "$(ssh-agent -s)"
+    ssh-add ~/.ssh/<private ssh file>
+
+| Action                         | Command                                                                           |
+|--------------------------------|-----------------------------------------------------------------------------------|
+| **Initialize Repository**      | `git init`                                                                        |
+| **Clone Repository**           | `git clone <repository_url>`                                                      |
+| **Check Status**               | `git status`                                                                      |
+| **Add Changes**                | `git add <filename>`                                                              |
+|                                | `git add .`                                                                       |
+| **Commit Changes**             | `git commit -m "Commit message"`                                                  |
+| **Add, Commit & push**         | `git commit -am "Your commit message" && git push`                                |
+| **Update Last Commit**         | `git commit --amend`                                                              |
+| **Create Branch**              | `git branch <branch_name>`                                                        |
+| **Switch Branch**              | `git checkout <branch_name>`                                                      |
+| **Pull Changes**               | `git pull origin <branch_name>`                                                   |
+| **Merge Changes**              | `git merge <branch_name>`                                                         |
+| **Rebase Branch**              | `git rebase <base_branch>`                                                        |
+| **Interactive Rebase**         | `git rebase -i <base_branch>`                                                     |
+| **Push Changes**               | `git push origin <branch_name>`                                                   |
+| **Force Push Changes**         | `git push origin <branch_name> --force`                                           |
+| **Stash Changes**              | `git stash`                                                                       |
+| **Apply Stashed Changes**      | `git stash apply`                                                                 |
+| **Pop Stash**                  | `git stash pop`                                                                   |
+| **List Stashes**               | `git stash list` \n `git stash list --pretty=format:"%h - %gd: %gs" --date=local` |
+| **Drop Stash**                 | `git stash drop`                                                                  |
+| **Purge Remote Branch**        | `git push origin --delete <branch_name>`                                          |
+| **Create and Switch Branch**   | `git checkout -b <branch_name>`                                                   |
+| **Fetch Changes**              | `git fetch`                                                                       |
+| **Merge with Fast-Forward**    | `git merge --ff-only <branch_name>`                                               |
+| **Merge with Commit**          | `git merge --no-ff <branch_name>`                                                 |
+| **Rebase Interactively**       | `git rebase -i <base_branch>`                                                     |
+| **Cherry-pick a Commit**       | `git cherry-pick <commit_hash>`                                                   |
+| **View Commit History**        | `git log`                                                                         |
+| **View Remote URLs**           | `git remote -v`                                                                   |
+| **Add Remote Repository**      | `git remote add <remote_name> <remote_url>`                                       |
+| **Remove Remote**              | `git remote remove <remote_name>`                                                 |
+| **Undo Last Commit (Local)**   | `git reset HEAD^`                                                                 |
+| **Undo Last Commit (Remote)**  | `git push origin +HEAD^:<branch_name>`                                            |
+| **Create Tag**                 | `git tag <tag_name>`                                                              |
+| **Show Tags**                  | `git show <tag_name>`                                                             |
+| **Delete Local Branch**        | `git branch -d <branch_name>`                                                     |
+| **Delete Remote Branch**       | `git push origin --delete <branch_name>`                                          |
+| **Configure User Information** | `git config --global user.name "Your Name"`                                       |
+| **Configure User Email**       | `git config --global user.email "your.email@example.com"`                         |
 
 | Action                                        | Command                                                                                      |
 |-----------------------------------------------|----------------------------------------------------------------------------------------------|
