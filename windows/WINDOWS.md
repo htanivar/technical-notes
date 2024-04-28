@@ -3,6 +3,7 @@
 | [FINDSTR Commands](#findstr-commands)          | [SYSTEMINFO Commands](#systeminfo-commands) | [NETSTAT Commands](#netstat-commands) |
 | [TASKKILL_Commands](#taskkill-commands)        |                                             |                                       |
 | [STRINGMANIPUATION_COMMANDS](#strman-commands) |                                             |                                       |
+| [PIPE_COMMANDS](#pipe-commands)                |                                             |                                       |
 
 ## systeminfo-commands
 
@@ -92,6 +93,22 @@
 | `echo %string:~start,length%`                              | Outputs a substring of a string.                         |
 | `echo %string% has %len(%string%) characters`              | Gets the length of a string and displays it.             |
 | `for /F "options" %%variable in (file/command) do command` | Iterates through lines of a file or command output.      |
+
+## pipe-commands
+
+**PIPE Commands**
+
+| Command                           | Description                                                                  |
+|-----------------------------------|------------------------------------------------------------------------------|
+| `command1 \| command2`            | Pipes the output of `command1` as input to `command2`                        |
+| `dir \| find "search_string"`     | Lists files and directories in the current directory and filters by a string |
+| `tasklist \| find "chrome"`       | Lists running processes and filters for processes containing "chrome"        |
+| `ipconfig \| findstr "IPv4"`      | Displays network configuration and filters for lines containing "IPv4"       |
+| `type filename \| find "pattern"` | Displays the content of a file and filters for lines containing "pattern"    |
+| `dir \| sort`                     | Lists files and directories in alphabetical order                            |
+| `tasklist \| sort /R`             | Lists running processes in reverse order of their process IDs                |
+| `ipconfig /all \| clip`           | Displays detailed network configuration and copies it to the clipboard       |
+| `systeminfo \| find "OS Name"`    | Displays detailed system information and filters for "OS Name"               |
 
 **Find the process using & port**
 
