@@ -1,8 +1,9 @@
-| User Commands                     | Admin Commands |
-|-----------------------------------|----------------|
-| [CHEF Commands](#chef-commands)   | -              |
-| [KNIFE Commands](#knife-commands) | -              |
-| [OHAI Commands](#ohai-commands)   | -              |
+| User Commands                         | Admin Commands |
+|---------------------------------------|----------------|
+| [CHEF Commands](#chef-commands)       | -              |
+| [KNIFE Commands](#knife-commands)     | -              |
+| [KITCHEN Commands](#kitchen-commands) | -              |
+| [OHAI Commands](#ohai-commands)       | -              |
 
 ## chef-commands
 
@@ -68,6 +69,32 @@
 | `knife user delete USERNAME`                                     | Delete a user                                            |
 | `knife node run_list add NODE_NAME 'recipe[RECIPE_NAME]'`        | Add a recipe to a node's run list                        |
 | `knife node run_list remove NODE_NAME 'recipe[RECIPE_NAME]'`     | Remove a recipe from a node's run list                   |
+
+## kitchen-commands
+
+**KITCHEN Commands**
+
+| Command                                   | Description                                               |
+|-------------------------------------------|-----------------------------------------------------------|
+| `kitchen init`                            | Initialize Test Kitchen in the current directory          |
+| `kitchen create`                          | Create an instance based on the configuration             |
+| `kitchen converge`                        | Apply cookbook changes to the instance                    |
+| `kitchen verify`                          | Run automated tests on the instance                       |
+| `kitchen login`                           | Log in to the instance via SSH                            |
+| `kitchen destroy`                         | Destroy the instance                                      |
+| `kitchen test`                            | Create, converge, verify, and destroy the instance        |
+| `kitchen list`                            | List all instances                                        |
+| `kitchen diagnose`                        | Diagnose common issues with Test Kitchen                  |
+| `kitchen exec INSTANCE_NAME COMMAND`      | Execute a command on a specific instance                  |
+| `kitchen converge INSTANCE_NAME`          | Converge a specific instance                              |
+| `kitchen verify INSTANCE_NAME`            | Verify a specific instance                                |
+| `kitchen destroy INSTANCE_NAME`           | Destroy a specific instance                               |
+| `kitchen test -d always`                  | Run Test Kitchen in debug mode always                     |
+| `kitchen test -d never`                   | Run Test Kitchen in debug mode never                      |
+| `kitchen test -d INSTANCE_NAME`           | Run Test Kitchen in debug mode for a specific instance    |
+| `kitchen login INSTANCE_NAME`             | Log in to a specific instance via SSH                     |
+| `kitchen converge -c 3`                   | Converge with a concurrency level of 3 instances          |
+| `kitchen exec INSTANCE_NAME -c 'COMMAND'` | Execute a command on a specific instance with concurrency |
 
 ## ohai-commands
 
