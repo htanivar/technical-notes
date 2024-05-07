@@ -6,6 +6,14 @@
 
 **CONFIG Commands**
 
+| File Name                                 | Location                     | Description                                               |
+|-------------------------------------------|------------------------------|-----------------------------------------------------------|
+| AWS CLI Configuration File                | `~/.aws/config`              | Contains configuration settings for AWS CLI               |
+| AWS CLI Credentials File                  | `~/.aws/credentials`         | Stores AWS Access Key ID and Secret Access Key            |
+| AWS CLI History File                      | `~/.aws/cli/history`         | Stores command history for AWS CLI                        |
+| AWS CLI Command Completion Script (Linux) | `/etc/bash_completion.d/aws` | Enables tab-completion for AWS CLI commands in Bash shell |
+| AWS CLI Installation Directory            | `/usr/local/aws-cli`         | Default directory for AWS CLI installation                |
+
 | Step                                 | Command                                                                                                            | Description                                                                                    |
 |--------------------------------------|--------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------|
 | Install AWS CLI                      | `curl "https://awscli.amazonaws.com/AWSCLIV2.pkg" -o "AWSCLIV2.pkg" && sudo installer -pkg AWSCLIV2.pkg -target /` | Install AWS CLI on macOS (replace with appropriate command for your OS)                        |
