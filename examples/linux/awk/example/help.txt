@@ -1,0 +1,7 @@
+./script.sh ravitest dev ls
+./script.sh ravitest dev sl
+./convert_to_base64.sh employee.txt
+./decode_base64.sh employee.txt.base64
+
+tar -cvf my_archive.tar my_folder
+tar -xvf my_archive.tar
