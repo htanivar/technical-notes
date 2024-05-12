@@ -7,6 +7,16 @@
 [Go Run Commands](#go-run)  
 [Go Test Commands](#go-test)
 
+````
+GOOS=windows GOARCH=amd64 go build -o myprogram.exe
+GOOS=linux GOARCH=amd64 go build -o myprogram
+GOOS=darwin GOARCH=amd64 go build -o myprogram
+set GOOS=linux
+set GOARCH=amd64
+go build -o myprogram
+
+````
+
 ## go-mod
 | Command                                       | Description                                       |
 |-----------------------------------------------|---------------------------------------------------|
