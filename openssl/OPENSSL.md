@@ -19,6 +19,8 @@
 
 **Symmetric Encryption**
 
+    1. aes-256-cbc = Advanced Encryption Standard (aes) 256-bit key size Cipher Block Chaining (cbc)
+
 | Command Purpose                                   | Command                                                                                    |
 |---------------------------------------------------|--------------------------------------------------------------------------------------------|
 | Encrypt a file using AES-256-CBC                  | `openssl enc -aes-256-cbc -salt -in plaintext.txt -out encrypted.enc`                      |

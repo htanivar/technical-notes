@@ -13,7 +13,8 @@
 | [LN Commands](#ln-commands)     | -                                         | [LSOF Commands](#lsof-commands)             |
 | [WGET Commands](#wget-commands) | -                                         | [IPTABLES Commands](#iptables-commands)     |
 | [CURL Commands](#curl-commands) | -                                         | [NMCLI Commands](#nmcli-commands)           |
-| -                               | -                                         | [NSLOOKUP Commands](#nslookup-commands)     |
+| [BASE64](#base64-commands)      | -                                         | [NSLOOKUP Commands](#nslookup-commands)     |
+| -                               | -                                         | [DIG Commands](#dig-commands)               |
 | -                               | -                                         | -                                           |
 
 [List of Network Commands](#list-network-commands)
@@ -797,6 +798,30 @@ request | `curl -X POST -H 'Content-Type: application/json' -d '{"key": "value"}
 | Perform a HEAD request | `curl -I https://example.com`                 |
 | Display only response headers | `curl -I -s https://example.com`              |
 
+## base64-commands
+
+**BASE64 Commands**
+
+| Command purpose                  | Command md table code                       |
+|----------------------------------|---------------------------------------------|
+| Encode a file to Base64 format   | `base64 input_file > output_file.base64`    |
+| Decode a Base64-encoded file     | `base64 -d input_file.base64 > output_file` |
+| Encode a string to Base64 format | `echo -n "string_to_encode"  \| base64`     |
+| Decode a Base64-encoded string   | `echo -n "encoded_string" \| base64 -d`     |
+
+## dig-commands
+
+**DIG Commands**
+
+| Command purpose                           | Command md table code                |
+|-------------------------------------------|--------------------------------------|
+| Perform a DNS lookup for a domain         | `dig domain_name`                    |
+| Query a specific DNS record type          | `dig +short domain_name record_type` |
+| Query DNS records using a specific server | `dig @dns_server domain_name`        |
+| Display only the answer section           | `dig +noall +answer domain_name`     |
+| Perform a reverse DNS lookup              | `dig -x IP_address`                  |
+| Trace the DNS delegation path             | `dig +trace domain_name`             |
+
 ## list-network-commands
 
 **NETWORK Commands**
@@ -954,3 +979,5 @@ https://www.digitalocean.com/community/tutorials/ufw-essentials-common-firewall-
 | `ag "search_string" /path/to/directory`                               | Silver Searcher tool (you may need to install `silversearcher-ag`)                                           |
 | `find /path/to/directory -type f -exec grep -l "search_string" {} \;` | Find files in a directory and its subdirectories containing a specific string                                |
 | `ack-grep -il "search_string" /path/to/directory`                     | Find files in a directory and its subdirectories containing a specific string (alternative using `ack-grep`) |
+
+
