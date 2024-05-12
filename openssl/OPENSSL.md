@@ -21,18 +21,21 @@
 
     1. aes-256-cbc = Advanced Encryption Standard (aes) 256-bit key size Cipher Block Chaining (cbc)
 
-| Command Purpose                                   | Command                                                                                    |
-|---------------------------------------------------|--------------------------------------------------------------------------------------------|
-| Encrypt a file using AES-256-CBC                  | `openssl enc -aes-256-cbc -salt -in plaintext.txt -out encrypted.enc`                      |
-| Decrypt an AES-256-CBC encrypted file             | `openssl enc -d -aes-256-cbc -in encrypted.enc -out decrypted.txt`                         |
-| Encrypt a file using CAST5 algorithm              | `gpg -c --cipher-algo CAST5 file.txt`                                                      |
-| Decrypt a CAST5 encrypted file                    | `gpg -d file.txt.gpg > decrypted.txt`                                                      |
-| Encrypt a file using DES algorithm                | `mcrypt --keygen --list \| grep des`<br>`mcrypt -k des -a des file.txt`                    |
-| Decrypt a DES encrypted file                      | `mcrypt -d -k des -a des file.txt.nc`                                                      |
-| Encrypt a file using AES-256 algorithm            | `7z a -p -mhe=on -t7z archive.7z file.txt`                                                 |
-| Decrypt an AES-256 encrypted archive              | `7z x archive.7z`                                                                          |
-| Encrypt text using AES-256-CBC algorithm          | `echo -n "Secret Message" \| openssl enc -aes-256-cbc -a -salt -pass pass:yourpassword`    |
-| Decrypt text encrypted with AES-256-CBC algorithm | `echo -n "Encrypted Text" \| openssl enc -d -aes-256-cbc -a -salt -pass pass:yourpassword` |
+| Command Purpose                                                                     | Command                                                                                    |
+|-------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------|
+| Encrypt a file using AES-256-CBC                                                    | `openssl enc -aes-256-cbc -salt -in plaintext.txt -out encrypted.enc`                      |
+| Decrypt an AES-256-CBC encrypted file                                               | `openssl enc -d -aes-256-cbc -in encrypted.enc -out decrypted.txt`                         |
+| Encrypt a file using OpenSSL with iterations and the PBKDF2 key derivation function | `openssl enc -aes-256-cbc -salt -in input.txt -out encrypted.enc -pbkdf2 -iter 10000`      |
+| Decrypt a file using OpenSSL with iterations and the PBKDF2 key derivation function | `openssl enc -d -aes-256-cbc -in encrypted.enc -out decrypted.txt -pbkdf2 -iter 10000`     |
+| Decrypt an AES-256-CBC encrypted file                                               | `openssl enc -d -aes-256-cbc -in encrypted.enc -out decrypted.txt`                         |
+| Encrypt a file using CAST5 algorithm                                                | `gpg -c --cipher-algo CAST5 file.txt`                                                      |
+| Decrypt a CAST5 encrypted file                                                      | `gpg -d file.txt.gpg > decrypted.txt`                                                      |
+| Encrypt a file using DES algorithm                                                  | `mcrypt --keygen --list \| grep des`<br>`mcrypt -k des -a des file.txt`                    |
+| Decrypt a DES encrypted file                                                        | `mcrypt -d -k des -a des file.txt.nc`                                                      |
+| Encrypt a file using AES-256 algorithm                                              | `7z a -p -mhe=on -t7z archive.7z file.txt`                                                 |
+| Decrypt an AES-256 encrypted archive                                                | `7z x archive.7z`                                                                          |
+| Encrypt text using AES-256-CBC algorithm                                            | `echo -n "Secret Message" \| openssl enc -aes-256-cbc -a -salt -pass pass:yourpassword`    |
+| Decrypt text encrypted with AES-256-CBC algorithm                                   | `echo -n "Encrypted Text" \| openssl enc -d -aes-256-cbc -a -salt -pass pass:yourpassword` |
 
 ## asymmetric-encryption
 
