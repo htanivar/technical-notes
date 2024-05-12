@@ -24,6 +24,8 @@
 | Select nested fields from JSON objects    | `jq '.parent_field.child_field' input.json` |
 | Select multiple fields from JSON objects  | `jq '.field1, .field2' input.json`          |
 | Alias field selection                     | `jq '{ alias: .original_name }' input.json` |
+| Example with array                        | `jq '.[].field' input.json`                 |
+| Example with nested array                 | `jq '.[].nested[].field' input.json`        |
 
 ## filtering-objects
 
