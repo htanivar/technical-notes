@@ -1,0 +1,10 @@
+#!/bin/bash
+
+input="<p>This is <b>bold</b> and <i>italic</i>.</p>"
+regex="<[^>]+>"
+
+output=$(echo "$input" | sed -r "s/$regex//g")
+
+echo "INPUT = $input"
+echo "RegEx = $regex"
+echo "Output = $output"

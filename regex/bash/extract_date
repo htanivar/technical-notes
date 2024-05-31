@@ -1,0 +1,10 @@
+#!/bin/bash
+
+input="Important dates: 12/20/2023 and 01/15/2024."
+regex="(\d{2}/\d{2}/\d{4})"
+
+output=$(echo "$input" | grep -o -E "$regex")
+
+#echo "INPUT = $input"
+#echo "RegEx = $regex"
+#echo "Output = $output"

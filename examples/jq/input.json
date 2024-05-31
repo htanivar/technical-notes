@@ -1,0 +1,67 @@
+{
+  "data": [
+    {
+      "name": "Christine",
+      "age": 50,
+      "pets": [
+        {
+          "name": "Poppy",
+          "type": "dog",
+          "sex": "female",
+          "breed": "cocoker-spaniel",
+          "cost": "100",
+          "children": [
+            ""
+          ]
+        },
+        {
+          "name": "Whiskers",
+          "type": "cat",
+          "cost": "10"
+        }
+      ]
+    },
+    {
+      "name": "Carrisa",
+      "age": 35,
+      "pets": [
+        {
+          "name": "Molly",
+          "type": "dog",
+          "sex": "female",
+          "breed": "Beegle",
+          "cost": "100"
+        },
+        {
+          "name": "Bubbles",
+          "type": "fish",
+          "cost": "1"
+        },
+        {
+          "name": "Pura",
+          "type": "bird",
+          "cost": "0"
+        }
+      ]
+    },
+    {
+      "name": "Ravi",
+      "age": 46,
+      "pets": [
+      ]
+    },
+    {
+      "name": "Arthi",
+      "age": 40,
+      "pets": [
+        {
+          "name": "Cherry",
+          "type": "dog",
+          "sex": "female",
+          "breed": "Pomerian",
+          "cost": "100"
+        }
+      ]
+    }
+  ]
+}
