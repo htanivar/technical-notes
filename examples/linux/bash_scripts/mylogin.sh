@@ -40,8 +40,14 @@ get_project_details() {
     local dc="$2"
     local environment="$3"
 
-    local project_id=$(grep "^$service,$dc,$environment" "$CONFIG_FILE" | awk -F, '{print $4}')
-    local api_url=$(grep "^$service,$dc,$environment" "$CONFIG_FILE" | awk -F, '{print $5}')
+    local project_id=$(echo "$project_info" | cut -d',' -f4)
+    local api_url=$(echo "$project_info" | cut -d',' -f5 | tr -d '\r')
+
+    # Check if the URL is valid
+    if ! [[ $api_url =~ ^https?:// ]]; then
+        echo "Invalid API URL: $api_url"
+        exit 1
+    fi
 
     if [[ -z "$project_id" || -z "$api_url" ]]; then
         echo "Project details not found for $service, $dc, $environment"
