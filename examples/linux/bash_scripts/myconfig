@@ -1,0 +1,14 @@
+# Service, Data Center, Environment, Project ID, API URL
+OneService,AB,dev,OneService-dev, http://oneapi
+OneService,AB,int,OneService-int, http://oneapi
+OneService,AB,stg,OneService-stg, http://oneapi
+OneService,AB,prd,OneService-prd, http://oneapi
+TwoService,AB,dev,TwoService-dev, http://twoapi
+TwoService,AB,int,TwoService-int, http://twoapi
+TwoService,AB,stg,TwoService-stg, http://twoapi
+TwoService,AB,prd,TwoService-prd, http://twoapi
+ThreeService,AB,dev,ThreeService-dev, http://threeapi
+ThreeService,AB,int,ThreeService-int, http://threeapi
+ThreeService,AB,stg,ThreeService-stg, http://threeapi
+ThreeService,AB,prd,ThreeService-prd, http://threeapi
+# Repeat for CD, XY, ZY and other services
