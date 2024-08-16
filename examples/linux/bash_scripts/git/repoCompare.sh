@@ -1,39 +1,70 @@
 #!/bin/bash
 
-# Variables for SSH URLs of the repositories
-REPO1_SSH_URL="git@github.com:user/repo1.git"
-REPO2_SSH_URL="git@github.com:user/repo2.git"
+# Variables for SSH URLs of the repositories and branches
+SOURCE_REPO_SSH_URL="git@github.com:user/source-repo.git"
+TARGET_REPO_SSH_URL="git@github.com:user/target-repo.git"
+
+SOURCE_BRANCH="main"
+TARGET_BRANCH="main"
 
 # Directories where the repositories will be cloned
-REPO1_DIR="repo1"
-REPO2_DIR="repo2"
+SOURCE_DIR="source-repo"
+TARGET_DIR="target-repo"
 
 # Reports
-UNCHANGED_FILES_REPORT="unchanged_files_report.txt"
 CHANGED_FILES_REPORT="changed_files_report.txt"
+SUMMARY_REPORT="summary_report.txt"
 
-# Clone the first repository
-git clone "$REPO1_SSH_URL" "$REPO1_DIR"
+# Function to clone the repository and checkout the desired branch
+clone_and_checkout() {
+    local repo_url=$1
+    local clone_dir=$2
+    local branch=$3
 
-# Clone the second repository
-git clone "$REPO2_SSH_URL" "$REPO2_DIR"
+    git clone "$repo_url" "$clone_dir"
+    cd "$clone_dir" || exit
+    git checkout "$branch"
 
-# Compare the directories
+    # Check if the branch has an upstream tracking branch
+    if ! git rev-parse --abbrev-ref --symbolic-full-name "@{u}" &>/dev/null; then
+        echo "Warning: No upstream tracking branch for $branch in $clone_dir. Ignoring updates."
+        cd ..
+        return 1
+    fi
+
+    # Pull the latest changes
+    git pull
+    cd ..
+    return 0
+}
+
+# Clone and update the source repository
+clone_and_checkout "$SOURCE_REPO_SSH_URL" "$SOURCE_DIR" "$SOURCE_BRANCH"
+
+# Clone and update the target repository
+clone_and_checkout "$TARGET_REPO_SSH_URL" "$TARGET_DIR" "$TARGET_BRANCH"
+
+# Compare the repositories and generate reports
 echo "Comparing repositories..."
-diff -rq "$REPO1_DIR" "$REPO2_DIR" > diff_output.txt
+diff -qr "$SOURCE_DIR" "$TARGET_DIR" | grep "differ" > diff_output.txt
 
-# Generate reports
-echo "Generating reports..."
+# Generate the changed files report
+awk '{print $2}' diff_output.txt > "$CHANGED_FILES_REPORT"
 
-# Files without changes
-grep "Files .* are identical" diff_output.txt | awk '{print $2}' > "$UNCHANGED_FILES_REPORT"
-
-# Summarize the changes in different files
-grep "Files .* differ" diff_output.txt | awk '{print $2 " and " $4}' > "$CHANGED_FILES_REPORT"
+# Generate the summary report
+echo "Summarizing changes..."
+rm -f "$SUMMARY_REPORT"
+while IFS= read -r line; do
+    file1=$(echo "$line" | awk '{print $2}')
+    file2=$(echo "$line" | awk '{print $4}')
+    echo "Changes in $file1 and $file2:" >> "$SUMMARY_REPORT"
+    diff "$file1" "$file2" >> "$SUMMARY_REPORT"
+    echo -e "\n" >> "$SUMMARY_REPORT"
+done < diff_output.txt
 
 # Clean up the diff output
 rm diff_output.txt
 
 echo "Reports generated:"
-echo "1. Files without changes: $UNCHANGED_FILES_REPORT"
-echo "2. Summary of changes: $CHANGED_FILES_REPORT"
+echo "1. List of changed files: $CHANGED_FILES_REPORT"
+echo "2. Summary of changes: $SUMMARY_REPORT"
