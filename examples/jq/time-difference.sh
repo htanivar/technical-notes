@@ -8,15 +8,16 @@ fi
 
 input_file=$1
 
-# Use jq to handle timestamps and calculate time differences in human-readable format
+# Use jq to handle timestamps, calculate time differences, and include key in the output
 jq '
-  [.config.account[].ts | sub("\\.[0-9]+\\+[0-9:]+$"; "Z") | fromdateiso8601] as $timestamps |
+  [.config.account[] | {key, ts: (.ts | sub("\\.[0-9]+\\+[0-9:]+$"; "Z") | fromdateiso8601)}] as $entries |
   reduce range(1; length) as $i (
     [];
     . + [{
-      ts_diff: ($timestamps[$i] - $timestamps[$i - 1]),
-      current_ts: ($timestamps[$i] | todate),
-      previous_ts: ($timestamps[$i - 1] | todate)
+      key: $entries[$i].key,
+      ts_diff: ($entries[$i].ts - $entries[$i - 1].ts),
+      current_ts: ($entries[$i].ts | todate),
+      previous_ts: ($entries[$i - 1].ts | todate)
     }]
   )
 ' "$input_file"
