@@ -203,5 +203,30 @@
 | **List Branches with Details**                | `git show-branch -a`                                                                        |
 | **List Branches by Author**                   | `git shortlog -s -n`                                                                        |
 
+| **Command**                                     | **Description**                                                                      |
+|-------------------------------------------------|--------------------------------------------------------------------------------------|
+| `git cat-file -t <object_hash>`                 | Show the type of a specific Git object (blob, tree, commit, etc.).                   |
+| `git cat-file -p <object_hash>`                 | Display the content of a Git object (e.g., file content for a blob).                 |
+| `git ls-tree <commit_hash>`                     | List the contents of a tree object (e.g., files in a commit).                        |
+| `git rev-parse HEAD`                            | Get the full hash of the latest commit (current HEAD).                               |
+| `git rev-parse --short HEAD`                    | Get the short hash of the latest commit.                                             |
+| `git update-index --assume-unchanged <file>`    | Mark a file as "assume unchanged" to avoid it being tracked in future changes.       |
+| `git update-index --no-assume-unchanged <file>` | Unmark a file that was previously set to "assume unchanged".                         |
+| `git show-ref`                                  | List references in the repository, such as branches and tags.                        |
+| `git for-each-ref`                              | List all references in the repository with more customizable formatting options.     |
+| `git symbolic-ref HEAD`                         | Show the symbolic reference of HEAD (typically the current branch name).             |
+| `git diff-index <tree-ish>`                     | Compare the working directory or index with the specified tree object.               |
+| `git reflog`                                    | Show the reference logs for branches and other refs, listing recent changes.         |
+| `git gc`                                        | Runs a garbage collection to clean up unnecessary files and optimize the repository. |
+| `git fsck`                                      | Verifies the integrity of the Git repository by checking objects and references.     |
+| `git pack-refs`                                 | Packs all references in the `.git/refs` directory to save space.                     |
+| `git unpack-objects`                            | Unpack objects from a packfile.                                                      |
+| `git prune`                                     | Remove objects that are not reachable from any reference.                            |
+| `git read-tree <tree-ish>`                      | Reads a tree into the staging area without checking out into the working directory.  |
+| `git write-tree`                                | Writes the current state of the index (staging area) to a new tree object.           |
+| `git hash-object <file>`                        | Compute and store the hash of a file as a Git object (blob).                         |
+| `git verify-pack`                               | Validates the integrity of the objects inside a packfile.                            |
+
 ssh -T git@github.com
 ssh -T -p 443 git@ssh.github.com
+
