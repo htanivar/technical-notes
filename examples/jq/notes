@@ -1,0 +1,14 @@
+Extract the names of all governments
+    jq 'map(select(.government != null) | .government.name)' test.json
+
+List all state names under each government
+    jq 'map(select(.government != null) | .government.state[].name)' test.json
+
+Extract the names and skills of states
+    jq 'map(select(.government != null) | .government.state[] | {name: .name, skills: .skills})' test.json
+
+Get all school names
+    jq 'map(select(.school != null) | .school.name)' test.json
+
+List all students' names and their departments
+    jq 'map(select(.school != null) | .school.student[]? | select(.department != null) | {name: .name, department: .department})' test.json
