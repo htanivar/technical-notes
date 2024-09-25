@@ -229,4 +229,6 @@
 
 ssh -T git@github.com
 ssh -T -p 443 git@ssh.github.com
+git branch --merged | grep -v "\*" | xargs -n 1 git branch -d
+
 
