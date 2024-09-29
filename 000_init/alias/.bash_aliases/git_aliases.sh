@@ -18,7 +18,7 @@ gc() {
 }
 
 # Git Commit
-gc() {
+gcm() {
   if [ -z "$1" ]; then
     read -p "Enter commit message: " commit_message
     git commit -m "$commit_message"
