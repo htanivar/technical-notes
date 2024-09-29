@@ -34,7 +34,12 @@ gsl() {
 }
 # Git Stash Save
 gss() {
-  git stash save "$1"
+  if [ -z "$1" ]; then
+    read -p "Enter commit message: " commit_message
+    git stash save "$commit_message"
+  else
+    git stash save "$1"
+  fi
 }
 # Git Stash Apply
 gsa() {
