@@ -12,9 +12,26 @@ alias gps='git push'
 alias gbla='git branch -a'
 # Git Branch Cleanup
 alias gbc='git branch --merged | grep -v "*" | xargs -n 1 git branch -d'
-# Git Checkout
+
+# Git Checkout New Branch
 gc() {
-  git checkout "$1"
+  if [ -z "$1" ]; then
+      read -p "Checkout Branch Name: " branch_name
+      git checkout "$branch_name"
+    else
+      git checkout "$1"
+    fi
+}
+
+
+# Git Checkout New Branch
+gcnb() {
+  if [ -z "$1" ]; then
+      read -p "Enter New Branch Name: " branch_name
+      git checkout -b "$branch_name"
+    else
+      git checkout -b "$1"
+    fi
 }
 
 # Git Commit
@@ -35,8 +52,8 @@ gsl() {
 # Git Stash Save
 gss() {
   if [ -z "$1" ]; then
-    read -p "Enter commit message: " commit_message
-    git stash save "$commit_message"
+    read -p "Enter Stash Save Name: " stash_name
+    git stash save "$stash_name"
   else
     git stash save "$1"
   fi
