@@ -8,3 +8,6 @@ alias reload='source ~/.bashrc'
 if [ -f ~/.bash_aliases/git_aliases.sh ]; then
   source ~/.bash_aliases/git_aliases.sh
 fi
+
+# Call go.sh to manage Go symlink
+source ~/.bash_aliases/go.sh
