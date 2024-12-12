@@ -1,0 +1,28 @@
+# Bash Script Control Statements
+
+- `-z` : Check if the string is empty
+- `-n` : Check if the string is not empty
+- `>` : Redirect output to a file (overwrites the file)
+- `>>` : Append output to a file
+- `<` : Redirect input from a file
+- `-eq` : Check if two values are equal
+- `-ne` : Check if two values are not equal
+- `-gt` : Check if the left value is greater than the right value
+- `-lt` : Check if the left value is less than the right value
+- `-ge` : Check if the left value is greater than or equal to the right value
+- `-le` : Check if the left value is less than or equal to the right value
+- `!` : Negate a condition (logical NOT)
+- `&&` : Logical AND (execute the second command if the first command succeeds)
+- `||` : Logical OR (execute the second command if the first command fails)
+- `if` : Conditional statement to execute commands based on a condition
+- `else` : Executes a block of commands when an `if` condition is false
+- `elif` : Used to specify multiple conditions in an `if` statement
+- `for` : Loop through a list of items
+- `while` : Loop as long as the condition is true
+- `until` : Loop until the condition is true
+- `case` : Multi-way branch statement
+- `select` : Select from a list of options
+- `break` : Exit a loop
+- `continue` : Skip the current iteration of a loop
+- `return` : Exit a function and optionally return a value
+- `exit` : Exit a script and return an exit status
