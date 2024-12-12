@@ -1,4 +1,4 @@
-<<<<<<< HEAD:LINUX.md
+
 | User Commands                   | Admin Commands                            | Network Commands                            |
 |---------------------------------|-------------------------------------------|---------------------------------------------|
 | [CURL Commands](#curl-commands) | [USER Commands](#user-commands)           | [PING Commands](#ping-commands)             |
