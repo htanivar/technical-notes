@@ -1,0 +1,18 @@
+my example.txt file's content is
+
+ravi,dev,sl,10001,http://sl.com
+ravi,int,sl,10002,http://sl.com
+ravi,stguk,sl,10003,http://sl.com
+ravi,stgus,cn,10004,http://sl.com
+ravi,produk,sl,10005,http://sl.com
+ravi,produs,cn,10006,http://sl.com
+ravi,dev,gl,10001,http://gl.com
+ravi,int,gl,10002,http://gl.com
+ravi,stguk,gl,10003,http://gl.com
+ravi,stgus,pi,10004,http://gl.com
+ravi,produk,gl,10005,http://gl.com
+ravi,produs,pi,10006,http://gl.com
+
+
+I will like to filter it by column 1,2,3 and set a local variable for column 4 and 5
+
