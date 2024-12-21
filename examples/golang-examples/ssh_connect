@@ -1,0 +1,74 @@
+package main
+
+import (
+	"fmt"
+	"golang.org/x/crypto/ssh"
+	"log"
+)
+
+const (
+	ls  = "ls -ltr"
+	pwd = "pwd"
+)
+
+type sshCreds struct {
+	server   string
+	username string
+	password string
+}
+
+func main() {
+	playbox := sshCreds{server: "playbox", username: "myuser", password: ""}
+
+	if playbox.password == "" {
+		log.Fatal("SSH_PASSWORD environment variable is not set")
+	}
+
+	sshClient, err := sshLogin(playbox)
+	if err != nil {
+		log.Fatalf("failed to login: %v", err)
+	}
+
+	// Ensure to close the SSH client after usage
+	defer sshClient.Close()
+
+	fmt.Println("Connected to server successfully")
+
+	session := sshInitSession(sshClient)
+	defer session.Close()
+
+	// Run the 'pwd' command
+	output, err := session.CombinedOutput(ls)
+	if err != nil {
+		log.Fatalf("failed to run pwd command: %v", err)
+	}
+
+	// Print the output of the 'pwd' command
+	fmt.Println(string(output))
+}
+
+func sshInitSession(sshClient *ssh.Client) *ssh.Session {
+	session, err := sshClient.NewSession()
+	if err != nil {
+		log.Fatalf("failed to create session: %v", err)
+	}
+	return session
+}
+
+func sshLogin(playbox sshCreds) (*ssh.Client, error) {
+	// Set up SSH client configuration
+	config := &ssh.ClientConfig{
+		User: playbox.username,
+		Auth: []ssh.AuthMethod{
+			ssh.Password(playbox.password),
+		},
+		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+	}
+
+	// Dial SSH client
+	sshClient, err := ssh.Dial("tcp", playbox.server+":22", config)
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect: %v", err)
+	}
+	return sshClient, nil
+}
