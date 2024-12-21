@@ -45,6 +45,16 @@ func main() {
 
 	// Print the output of the 'pwd' command
 	fmt.Println(string(output))
+
+
+	 // Run the bash script
+        output, err := session.CombinedOutput(fmt.Sprintf("bash %s", scriptPath))
+        if err != nil {
+            log.Fatalf("failed to run bash script: %v", err)
+        }
+
+            // Print the output of the bash script
+            fmt.Println(string(output))
 }
 
 func sshInitSession(sshClient *ssh.Client) *ssh.Session {
