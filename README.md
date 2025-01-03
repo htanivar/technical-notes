@@ -10,5 +10,5 @@
 | -                             | -                             | [KEYTOOL](ssh/KEYTOOL.md)     |
 | -                             | -                             | [MAVEN](mvn.md)               |
 | -                             | -                             | [GRADLE](gradle.md)           |
-| -                             | -                             | [GITLAB](gitlab/gitlab.md)    |
+| -                             | -                             | [GITLAB](gitlab/GITLAB.md)    |
 
