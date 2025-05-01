@@ -1,0 +1,31 @@
+echo "-----BEGIN PUBLIC KEY-----" > public.pem
+echo "MIIBIjANBgkq...IDAQAB" >> public.pem
+echo "-----END PUBLIC KEY-----" >> public.pem
+
+openssl rsa -pubin -in public.pem -text -noout > parsed.txt
+
+MOD_HEX=$(awk '/Modulus:/,/Exponent:/' parsed.txt | grep -v 'Modulus\|Exponent' | tr -d ':\n ')
+EXP_DEC=$(awk '/Exponent:/ {print $2}' parsed.txt)
+
+MOD_BIN=$(echo "$MOD_HEX" | xxd -r -p)
+MOD_B64URL=$(echo -n "$MOD_BIN" | base64 | tr '+/' '-_' | tr -d '=')
+
+EXP_HEX=$(printf '%x\n' $EXP_DEC)
+if (( ${#EXP_HEX} % 2 )); then EXP_HEX="0$EXP_HEX"; fi
+EXP_BIN=$(echo "$EXP_HEX" | xxd -r -p)
+EXP_B64URL=$(echo -n "$EXP_BIN" | base64 | tr '+/' '-_' | tr -d '=')
+
+cat <<EOF > jwks.json
+{
+  "keys": [
+    {
+      "kty": "RSA",
+      "kid": "BAAS_2FA",
+      "use": "sig",
+      "alg": "RS256",
+      "n": "$MOD_B64URL",
+      "e": "$EXP_B64URL"
+    }
+  ]
+}
+EOF
