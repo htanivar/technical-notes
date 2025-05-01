@@ -11,6 +11,7 @@ set "gitlab=https://gitlab.com"
 set "vikatan=https://vikatan.com"
 set "learn=https://learn.jaganathan.co.uk"
 set "hdfc=https://www.hdfcbank.com"
+set "veda=https://veda.jaganathan.co.uk"
 
 :: Check for argument
 if "%1"=="" (
