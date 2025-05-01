@@ -5,7 +5,7 @@ setlocal
 set "tech=https://github.com/htanivar/technical-notes"
 set "smartapi=https://github.com/matrixmoney/ai-smartapi"
 set "gomask=https://github.com/matrixmoney/gomask"
-set "learning=https://github.com/artyregi/learning"
+set "learn=https://github.com/artyregi/learning"
 
 :: Check for argument
 if "%1"=="" (
