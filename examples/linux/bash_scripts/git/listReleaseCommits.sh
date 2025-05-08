@@ -9,7 +9,7 @@ REPO_LOCATIONS["app3"]="/c/user/repo/app3"
 # Function to display progress and log
 log_progress() {
     echo "$1"
-    echo "$(date): $1" >> $LOG_FILE
+    echo "$(date): $1" >> "$LOG_FILE"
 }
 
 # Ask for the repository name, source, and target branches
@@ -63,22 +63,22 @@ git fetch origin
 
 # Checkout to the release branch and pull the latest changes
 log_progress "Checking out the $RELEASE_BRANCH branch..."
-git checkout "$RELEASE_BRANCH" &>> $LOG_FILE
-git pull origin "$RELEASE_BRANCH" &>> $LOG_FILE
+git checkout "$RELEASE_BRANCH" >> "$LOG_FILE" 2>&1
+git pull origin "$RELEASE_BRANCH" >> "$LOG_FILE" 2>&1
 
 # Checkout to the develop branch and pull the latest changes
 log_progress "Checking out the $DEVELOP_BRANCH branch..."
-git checkout "$DEVELOP_BRANCH" &>> $LOG_FILE
-git pull origin "$DEVELOP_BRANCH" &>> $LOG_FILE
+git checkout "$DEVELOP_BRANCH" >> "$LOG_FILE" 2>&1
+git pull origin "$DEVELOP_BRANCH" >> "$LOG_FILE" 2>&1
 
 # List the commits that are unique to the release branch
 log_progress "Listing commits that exist in $RELEASE_BRANCH but not in $DEVELOP_BRANCH..."
-git log "$DEVELOP_BRANCH..$RELEASE_BRANCH" --oneline &>> $LOG_FILE
+git log "$DEVELOP_BRANCH..$RELEASE_BRANCH" --oneline >> "$LOG_FILE" 2>&1
 log_progress "Commits listed successfully."
 
 # List all the unique files changed in the release branch
 log_progress "Listing affected files in $RELEASE_BRANCH that are not in $DEVELOP_BRANCH..."
-git diff --name-only "$DEVELOP_BRANCH..$RELEASE_BRANCH" &>> $LOG_FILE
+git diff --name-only "$DEVELOP_BRANCH..$RELEASE_BRANCH" >> "$LOG_FILE" 2>&1
 log_progress "Files listed successfully."
 
 # Success message
