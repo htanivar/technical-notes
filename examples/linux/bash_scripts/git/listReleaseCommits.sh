@@ -37,14 +37,14 @@ fi
 cd "$REPO_PATH" || exit 1
 log_progress "Navigated to repository at $REPO_PATH."
 
-# Create the local folder if it doesn't exist
-if [ ! -d "local" ]; then
+# Check and create the 'local' directory if it doesn't exist
+if [ ! -d "$REPO_PATH/local" ]; then
     log_progress "Creating 'local' folder for storing logs."
-    mkdir local
+    mkdir "$REPO_PATH/local"
 fi
 
 # Create the log file
-LOG_FILE="local/$(echo $RELEASE_BRANCH | sed 's/\//_/g')CompareWith$(echo $DEVELOP_BRANCH | sed 's/\//_/g').log"
+LOG_FILE="$REPO_PATH/local/$(echo $RELEASE_BRANCH | sed 's/\//_/g')CompareWith$(echo $DEVELOP_BRANCH | sed 's/\//_/g').log"
 
 # Ensure both branches exist locally
 if ! git show-ref --verify --quiet refs/heads/"$RELEASE_BRANCH"; then
