@@ -33,20 +33,14 @@ if [ ! -d "$REPO_PATH" ]; then
     exit 1
 fi
 
-# Navigate to the repository directory
-cd "$REPO_PATH" || exit 1
-log_progress "Navigated to repository at $REPO_PATH."
+# Navigate to the repository directory (no need to cd into the folder)
+log_progress "Repository found at $REPO_PATH. Proceeding with the comparison..."
 
-# Check and create the 'local' directory if it doesn't exist
-if [ ! -d "$REPO_PATH/local" ]; then
-    log_progress "Creating 'local' folder for storing logs."
-    mkdir "$REPO_PATH/local"
-fi
-
-# Create the log file
-LOG_FILE="$REPO_PATH/local/$(echo $RELEASE_BRANCH | sed 's/\//_/g')CompareWith$(echo $DEVELOP_BRANCH | sed 's/\//_/g').log"
+# Create the log file in the current directory
+LOG_FILE="./$(echo $RELEASE_BRANCH | sed 's/\//_/g')CompareWith$(echo $DEVELOP_BRANCH | sed 's/\//_/g').log"
 
 # Ensure both branches exist locally
+cd "$REPO_PATH" || exit 1
 if ! git show-ref --verify --quiet refs/heads/"$RELEASE_BRANCH"; then
     echo "Error: Release branch '$RELEASE_BRANCH' does not exist."
     exit 1
@@ -71,9 +65,9 @@ log_progress "Checking out the $DEVELOP_BRANCH branch..."
 git checkout "$DEVELOP_BRANCH" >> "$LOG_FILE" 2>&1
 git pull origin "$DEVELOP_BRANCH" >> "$LOG_FILE" 2>&1
 
-# List the commits that are unique to the release branch
+# List the commits that are unique to the release branch (ignoring merge commits)
 log_progress "Listing commits that exist in $RELEASE_BRANCH but not in $DEVELOP_BRANCH..."
-git log "$DEVELOP_BRANCH..$RELEASE_BRANCH" --oneline >> "$LOG_FILE" 2>&1
+git log "$DEVELOP_BRANCH..$RELEASE_BRANCH" --oneline --no-merges >> "$LOG_FILE" 2>&1
 log_progress "Commits listed successfully."
 
 # List all the unique files changed in the release branch
