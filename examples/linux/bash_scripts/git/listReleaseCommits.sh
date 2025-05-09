@@ -36,8 +36,22 @@ fi
 # Navigate to the repository directory (no need to cd into the folder)
 log_progress "Repository found at $REPO_PATH. Proceeding with the comparison..."
 
+# Check and create the 'local' directory if it doesn't exist
+if [ ! -d "$REPO_PATH/local" ]; then
+    log_progress "Creating 'local' folder for storing logs."
+    mkdir "$REPO_PATH/local"
+fi
+
 # Create the log file in the current directory
 LOG_FILE="./$(echo $RELEASE_BRANCH | sed 's/\//_/g')CompareWith$(echo $DEVELOP_BRANCH | sed 's/\//_/g').log"
+
+# Check if log file exists, if not create it
+if [ ! -f "$LOG_FILE" ]; then
+    log_progress "Log file $LOG_FILE does not exist. Creating a new log file."
+    touch "$LOG_FILE"
+else
+    log_progress "Log file $LOG_FILE already exists. Appending to it."
+fi
 
 # Ensure both branches exist locally
 cd "$REPO_PATH" || exit 1
