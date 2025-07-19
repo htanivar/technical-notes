@@ -12,43 +12,41 @@ GATEWAY="192.168.1.1"
 DNS="8.8.8.8"
 NETWORK_FILE="/etc/systemd/network/10-${INTERFACE}-static.network"
 
-# Function to validate IP format
-function valid_ip() {
-  [[ "$1" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]] &&
-  for i in $(echo "$1" | tr '.' ' '); do
-    [[ $i -ge 0 && $i -le 255 ]] || return 1
+# Function to validate IP
+valid_ip() {
+  [[ "$1" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]] || return 1
+  for octet in $(echo "$1" | tr '.' ' '); do
+    [[ "$octet" -ge 0 && "$octet" -le 255 ]] || return 1
   done
+  return 0
 }
 
-# Prompt for STATIC_IP if not set or invalid
-attempt=0
+# Get STATIC_IP from env or prompt user
+attempts=0
 max_attempts=5
 
 while ! valid_ip "$STATIC_IP"; do
-  if [[ $attempt -ge $max_attempts ]]; then
-    echo "❌ Exceeded $max_attempts invalid attempts. Exiting."
+  if [[ $attempts -ge $max_attempts ]]; then
+    echo "❌ Exceeded maximum attempts. Exiting."
     exit 2
   fi
-  read -p "Enter static IP address (e.g., 192.168.1.100): " STATIC_IP
-  if ! valid_ip "$STATIC_IP"; then
-    echo "⚠️  Invalid IP format."
-  fi
-  ((attempt++))
+  read -p "Enter a valid static IP (e.g. 192.168.1.100): " STATIC_IP
+  ((attempts++))
 done
 
 # Check if IP is already in use
-echo "🔍 Checking if $STATIC_IP is already in use..."
+echo "🔍 Checking if $STATIC_IP is in use..."
 if ping -c 2 -W 1 "$STATIC_IP" &>/dev/null; then
-  echo "❌ IP address $STATIC_IP is already in use on the network."
+  echo "❌ IP address $STATIC_IP is already in use."
   exit 3
 fi
 
-echo "✅ IP $STATIC_IP appears free. Applying config..."
+echo "✅ IP $STATIC_IP appears free. Applying static config..."
 
-# Backup existing config
+# Backup current config if any
 [[ -f "$NETWORK_FILE" ]] && cp "$NETWORK_FILE" "${NETWORK_FILE}.bak.$(date +%s)"
 
-# Write static IP config
+# Write static config
 cat > "$NETWORK_FILE" <<EOF
 [Match]
 Name=$INTERFACE
@@ -59,13 +57,13 @@ Gateway=$GATEWAY
 DNS=$DNS
 EOF
 
-# Remove conflicting configs
-rm -f /etc/systemd/network/*${INTERFACE}*.network~
+# Remove runtime-generated configs
+rm -f /run/systemd/network/*${INTERFACE}*.network
 
-# Restart network
+# Restart networking
 systemctl restart systemd-networkd
+networkctl reconfigure "$INTERFACE"
 
 # Show result
-echo "🌐 Assigned static IP $STATIC_IP to $INTERFACE"
-ip addr show $INTERFACE
-
+echo "🌐 New static IP applied to $INTERFACE:"
+ip addr show "$INTERFACE"
