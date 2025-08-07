@@ -1,0 +1,28 @@
+=========================================
+      Browser Update & Install
+=========================================
+[1;33mℹ[0m Checking current browsers...
+[0;32m✓[0m Found: Mozilla Firefox 141.0
+[1;33mℹ[0m Updating existing browsers...
+Hit:1 http://security.debian.org/debian-security bookworm-security InRelease
+Hit:2 http://deb.debian.org/debian bookworm-updates InRelease
+Hit:3 http://deb.debian.org/debian bookworm InRelease
+Hit:4 https://packages.microsoft.com/repos/code stable InRelease
+Get:5 https://mirror.kku.ac.th/mx-packages/mx/repo bookworm InRelease [25.3 kB]
+Get:6 https://mirror.kku.ac.th/mx-packages/mx/repo bookworm/main i386 Packages [243 kB]
+Get:7 https://mirror.kku.ac.th/mx-packages/mx/repo bookworm/main amd64 Packages [253 kB]
+Get:8 https://mirror.kku.ac.th/mx-packages/mx/repo bookworm/main amd64 Contents (deb) [1,317 kB]
+Get:9 https://mirror.kku.ac.th/mx-packages/mx/repo bookworm/main i386 Contents (deb) [1,280 kB]
+Err:9 https://mirror.kku.ac.th/mx-packages/mx/repo bookworm/main i386 Contents (deb)
+  File has unexpected size (884736 != 1279511). Mirror sync in progress? [IP: 2001:3c8:c108:2895::2 443]
+  Hashes of expected file:
+   - Filesize:1279511 [weak]
+   - SHA256:da30489318d7800117f2fb1ecec1b8541c650e148b324ae6b803295b7f3459a2
+   - SHA1:6bfb36aea02ca56718c80fcdfdb751bcc6fac89a [weak]
+   - MD5Sum:6dd73b2e8bae1d6d49f7865909fd50b9 [weak]
+  Release file created at: Wed, 06 Aug 2025 03:31:10 +0000
+Fetched 25.3 kB in 3s (8,850 B/s)
+Reading package lists...
+=========================================
+Browser setup complete!
+=========================================

@@ -2,6 +2,7 @@
 setlocal
 
 :: Define site mappings
+set "abacus=https://apps.abacus.ai"
 set "chatgpt=https://chatgpt.com"
 set "gemini=https://gemini.google.com"
 set "aistudio=https://aistudio.google.com"
