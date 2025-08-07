@@ -2,6 +2,7 @@
 
 # Define site mappings (associative array for easier lookup)
 declare -A SITES
+SITES["abacus"]="https://apps.abacus.ai"
 SITES["chatgpt"]="https://chatgpt.com"
 SITES["gemini"]="https://gemini.google.com"
 SITES["aistudio"]="https://aistudio.google.com"
@@ -12,6 +13,9 @@ SITES["vikatan"]="https://vikatan.com"
 SITES["learn"]="https://learn.jaganathan.co.uk"
 SITES["hdfc"]="https://www.hdfcbank.com"
 SITES["veda"]="https://veda.jaganathan.co.uk"
+SITES["local-taga"]="https://localhost:1703"
+SITES["taga"]="https://taga.jaganathan.co.uk:1703"
+SITES["devtaga"]="http://localhost:8080"
 
 # Check for argument
 if [ -z "$1" ]; then
