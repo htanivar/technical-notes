@@ -158,7 +158,7 @@ gcnb() {
   fi
 }
 
-# Git Commit - Commit with message
+ Git Commit - Commit with message
 gcm() {
   if [ -z "$1" ]; then
     read -p "Enter commit message: " commit_message
