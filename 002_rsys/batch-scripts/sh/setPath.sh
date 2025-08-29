@@ -4,7 +4,7 @@
 # Usage: source setPath.sh in your .bashrc
 
 # Base directory for software installations
-OPT_DIR="/opt"
+OPT_DIR=\"/apps\"
 
 # Directory for soft links
 LINK_DIR="/usr/local/bin"
@@ -109,6 +109,7 @@ for software in "${!SOFTWARE[@]}"; do
 done
 
 # Additional PATH exports (add your custom paths here)
+# export PATH=\"/usr/local/bin:$PATH\"
 # export PATH="/usr/local/bin:$PATH"
 
 echo -e "${GREEN}PATH setup complete!${NC}"
