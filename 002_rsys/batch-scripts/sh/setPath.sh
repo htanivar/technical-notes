@@ -3,8 +3,9 @@
 # setPath.sh - Dynamic PATH setter with software availability check
 # Usage: source setPath.sh in your .bashrc
 
+
 # Base directory for software installations
-OPT_DIR=\"/apps\"
+OPT_DIR="/apps"
 
 # Directory for soft links
 LINK_DIR="/usr/local/bin"
@@ -104,7 +105,7 @@ check_and_add_path() {
 echo -e "${YELLOW}Checking software availability in $OPT_DIR...${NC}"
 
 # Check each software
-for software in "${!SOFTWARE[@]}"; do
+for software in "${(@k)SOFTWARE}"; do
     check_and_add_path "$software"
 done
 
