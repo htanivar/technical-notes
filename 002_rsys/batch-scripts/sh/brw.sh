@@ -3,6 +3,7 @@
 # Define site mappings (associative array for easier lookup)
 declare -A SITES
 SITES["abacus"]="https://apps.abacus.ai"
+SITES["deepseek"]="https://chat.deepseek.com"
 SITES["chatgpt"]="https://chatgpt.com"
 SITES["gemini"]="https://gemini.google.com"
 SITES["aistudio"]="https://aistudio.google.com"
