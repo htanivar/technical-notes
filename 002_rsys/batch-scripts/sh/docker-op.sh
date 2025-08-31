@@ -18,9 +18,10 @@ help_menu() {
   echo ""
   echo "  container <subcommand>"
   echo "    container list        - List all containers (running and stopped)."
+  echo "    container create <name> <image> - Create and start a new container from an image."
   echo "    container start <name/id> - Start a stopped container."
   echo "    container stop <name/id>  - Stop a running container."
-  echo "    container delete <name/id>- Delete a container."
+  echo "    container rm <name/id> - Remove a container."
   echo "    container connect <name/id>- connect to container in bash."
   echo ""
   echo "  help                    - Display this help menu."
@@ -47,7 +48,7 @@ handle_image_ops() {
                 help_menu
                 exit 1
             fi
-            echo "Pulling image '$2'..."
+            echo "Pulling image '$2' from Docker Hub..."
             docker pull "$2"
             ;;
         "search")
@@ -56,7 +57,7 @@ handle_image_ops() {
                 help_menu
                 exit 1
             fi
-            echo "Searching for images matching '$2'..."
+            echo "Searching for images with term '$2'..."
             docker search "$2"
             ;;
         *)
@@ -74,13 +75,24 @@ handle_container_ops() {
             echo "Listing all Docker containers..."
             docker ps -a
             ;;
-        "start"|"stop"|"delete")
+        "create")
+            if [ -z "$2" ] || [ -z "$3" ]; then
+                echo "Error: Please provide a container name and an image name."
+                help_menu
+                exit 1
+            fi
+            echo "Creating a new container named '$2' from image '$3'..."
+            # Using `docker run -d` to create and start the container in detached mode.
+            # Using `tail -f /dev/null` as a command to keep the container running.
+            docker run --name "$2" -d "$3" tail -f /dev/null
+            ;;
+        "start"|"stop"|"rm")
             if [ -z "$2" ]; then
                 echo "Error: Please provide a container name or ID."
                 help_menu
                 exit 1
             fi
-            echo "Executing docker $1 on container '$2'..."
+            echo "Executing docker "$1" on container '$2'..."
             docker "$1" "$2"
             ;;
         "connect")
@@ -89,9 +101,26 @@ handle_container_ops() {
                 help_menu
                 exit 1
             fi
-            echo "Connecting to docker container $1 on container '$2'..."
-            docker exec -it $2 /bin/bash
-            ;;        	
+
+            # Check if the container is running
+            if [ -z "$(docker ps -q -f name=^$2$ -f status=running)" ]; then
+                echo "Container '$2' is not running. Starting it now..."
+                # Attempt to start the container. The output of this command will be displayed.
+                docker start "$2"
+                # Check the exit code of the previous command to see if the start was successful
+                if [ $? -ne 0 ]; then
+                    echo "Error: Failed to start container '$2'. Cannot connect."
+                    exit 1
+                fi
+            fi
+
+            echo "Attempting to connect with /bin/bash..."
+            if ! docker exec -it "$2" /bin/bash; then
+                echo "Bash not found in container, falling back to /bin/sh..."
+                echo "Attempting to connect with /bin/sh..."
+                docker exec -it "$2" /bin/sh
+            fi
+            ;;
         *)
             echo "Error: Unknown container subcommand: '$1'"
             help_menu
@@ -112,11 +141,11 @@ case "$1" in
         ;;
     
     "image")
-        handle_image_ops "$2" "$3"
+        handle_image_ops "${@:2}"
         ;;
 
     "container")
-        handle_container_ops "$2" "$3"
+        handle_container_ops "${@:2}"
         ;;
     
     "help")
@@ -129,4 +158,3 @@ case "$1" in
         exit 1
         ;;
 esac
-
