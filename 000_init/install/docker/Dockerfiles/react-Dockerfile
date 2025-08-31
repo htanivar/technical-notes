@@ -1,0 +1,25 @@
+# Use the official Alpine image
+FROM alpine:latest
+
+# Update the package list and install Node.js, npm, and a C compiler (for node-gyp)
+# The 'nodejs' package includes npm on newer versions of Alpine.
+RUN apk add --no-cache nodejs npm
+
+# (Optional but highly recommended) Install a shell for easier debugging
+RUN apk add --no-cache bash
+
+# Create and change to the app directory
+WORKDIR /app
+
+# Copy your package.json and package-lock.json (if available)
+# COPY package*.json ./
+
+# Install your React app dependencies (you would do this after creating the project)
+# RUN npm install
+
+# Inform Docker that the container listens on port 3000 (for React dev server)
+EXPOSE 3000
+
+# Default command: start a shell so you can work interactively.
+# You'll change this to `npm start` later.
+CMD [ "/bin/bash" ]
