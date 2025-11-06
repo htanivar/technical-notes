@@ -119,32 +119,29 @@ EOF
 mkdir -p "$CERT_DIR"
 echo "Certificate directory: $CERT_DIR"
 
-# Prompt for the certificate name
-read -p "Enter the desired Common Name (CN) for the certificate (e.g., mobi): " cert_name
-
-if [ -z "$cert_name" ]; then
-  echo "Error: Common Name must be provided."
-  exit 1
-fi
+# Prompt for the certificate name (CN) with new default
+read -p "Enter the desired Common Name (CN) for the certificate (default: self-cert): " cert_name
+# Set the default if input is empty
+CERT_NAME=${cert_name:-self-cert}
 
 echo "---"
 echo "➡️ Please provide the organization details for the certificate owner (press Enter for defaults):"
 
-# Prompt for Distinguished Name (DN) Fields with Defaults
-read -r -p "Country Name (C) [US]: " c_name
-C_NAME=${c_name:-US}
+# Prompt for Distinguished Name (DN) Fields with new defaults
+read -r -p "Country Name (C) [IN]: " c_input
+C_NAME=${c_input:-IN}
 
-read -r -p "State or Province Name (ST) [California]: " st_name
-ST_NAME=${st_name:-California}
+read -r -p "State or Province Name (ST) [Tamil Nadu]: " st_input
+ST_NAME=${st_input:-Tamil Nadu}
 
-read -r -p "Locality Name (L) [San Francisco]: " l_name
-L_NAME=${l_name:-San Francisco}
+read -r -p "Locality Name (L) [Salem]: " l_input
+L_NAME=${l_input:-Salem}
 
-read -r -p "Organization Name (O) [My Local Development]: " o_name
-O_NAME=${o_name:-My Local Development}
+read -r -p "Organization Name (O) [Ravi Jaganathan]: " o_input
+O_NAME=${o_input:-Ravi Jaganathan}
 
-read -r -p "Organizational Unit Name (OU) [IT]: " ou_name
-OU_NAME=${ou_name:-IT}
+read -r -p "Organizational Unit Name (OU) [Self]: " ou_input
+OU_NAME=${ou_input:-Self}
 
 # Build the DN subject string for the config file
 DN_SUBJECT="C = $C_NAME
@@ -152,14 +149,12 @@ ST = $ST_NAME
 L = $L_NAME
 O = $O_NAME
 OU = $OU_NAME
-CN = $cert_name" # The CN is always required
+CN = $CERT_NAME" # Use the potentially defaulted name
 
 # Generate the SAN configuration file
-CONFIG_FILE=$(generate_san_config "$cert_name" "$CERT_DIR" "$DN_SUBJECT")
+CONFIG_FILE=$(generate_san_config "$CERT_NAME" "$CERT_DIR" "$DN_SUBJECT")
 
 echo "---"
 echo "Task complete. The configuration file is ready."
 echo "File location: **$CONFIG_FILE**"
 echo "You can view the contents or run the commented command inside the file to proceed."
-
-Would you like me to display the contents of the generated configuration file for verification?
