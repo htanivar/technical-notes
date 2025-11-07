@@ -9,7 +9,12 @@ CERT_DIR="/etc/ssl/certs/medusa"
 RUN_USER=$(cat /tmp/medusa_run_user.txt 2>/dev/null) # FIX: Read RUN_USER
 # ... (other variables) ...
 # ... (logging functions) ...
-
+log() {
+  local msg="$1"
+  local ts
+  ts="$(date '+%Y-%m-%d %H:%M:%S')"
+  printf '[%s] %s\n' "$ts" "$msg" | tee -a "$LOG_FILE" >&2
+}
 # --- Core Logic ---
 log "--- [04/06] Starting Configuration and Service Setup Script ---"
 

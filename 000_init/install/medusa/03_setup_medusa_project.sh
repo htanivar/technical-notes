@@ -1,67 +1,136 @@
 #!/bin/bash
-# 03_setup_medusa_project_v2.sh - Creates Medusa project, uninstall Admin, migrates, and seeds.
+set -euo pipefail
 
-# --- Core Global Variables ---
-LOG_FILE=$(cat /tmp/medusa_log_path.txt 2>/dev/null)
-MEDUSA_ROOT="/opt/medusa/my-store"
-RUN_USER=$(cat /tmp/medusa_run_user.txt 2>/dev/null) # CRITICAL FIX: Read RUN_USER
+# 03_setup_medusa_project.sh - Sets up Medusa project, DB, migrations, and initial admin user.
+
+LOG_FILE="${LOG_FILE:-$(pwd)/medusa_setup_$(date +%Y%m%d_%H%M%S).log}"
+MEDUSA_ROOT="${MEDUSA_ROOT:-/opt/medusa/my-store}"
+RUN_USER="${RUN_USER:-${SUDO_USER:-$(logname 2>/dev/null || whoami)}}"
 DB_USER="medusa_user"
 DB_PASS="medusa_password"
 DB_NAME="medusa_db"
-# ... (logging functions) ...
+DB_HOST="${DB_HOST:-localhost}"
+DB_PORT="${DB_PORT:-5432}"
+REDIS_URL="redis://localhost:6379"
+COMMANDS_FILE="$MEDUSA_ROOT/commands.txt"
 
-# --- Core Logic ---
-log "--- [03/06] Starting Medusa Project Setup Script ---"
+log() {
+  local ts msg
+  ts="$(date '+%Y-%m-%d %H:%M:%S')"
+  msg="$1"
+  printf '[%s] %s\n' "$ts" "$msg" | tee -a "$LOG_FILE" >&2
+}
+log_cmd() {
+  echo "$1" | tee -a "$COMMANDS_FILE" >&2
+}
+error_exit() {
+  log "ERROR: $1"
+  exit 1
+}
 
-if [ -z "$RUN_USER" ]; then error_exit "RUN_USER variable is empty. Did script 01 run successfully?"; fi
-log "Running project setup as user: $RUN_USER"
+log "Starting Medusa project setup..."
+log "MEDUSA_ROOT=$MEDUSA_ROOT, RUN_USER=$RUN_USER, DB=${DB_USER}@${DB_HOST}:${DB_PORT}/${DB_NAME}"
 
-# 1. Prepare Directory
-log "1. Creating/cleaning project directory $MEDUSA_ROOT."
-sudo mkdir -p "$MEDUSA_ROOT" || error_exit "Failed to create directory $MEDUSA_ROOT."
-sudo chown -R "$RUN_USER":"$RUN_USER" "$MEDUSA_ROOT" || error_exit "Failed to set ownership."
-sudo -u "$RUN_USER" rm -rf "$MEDUSA_ROOT"/* "$MEDUSA_ROOT"/.* 2>>"$LOG_FILE"
+# Ensure MEDUSA_ROOT exists and has correct perms
+sudo mkdir -p "$MEDUSA_ROOT"
+sudo chown -R "$RUN_USER":"$RUN_USER" "$MEDUSA_ROOT"
 
-# 2. Create Medusa Starter Project
-log "2. Creating Medusa starter project in $MEDUSA_ROOT..."
-sudo -u "$RUN_USER" medusa new "$MEDUSA_ROOT" --seed -b next 2>>"$LOG_FILE" || error_exit "Medusa project creation failed."
-log "   ✅ Medusa project created."
+cd "$MEDUSA_ROOT"
 
-# 3. CRITICAL FIX: Uninstall the Admin UI to prevent the 'index.html not found' service crash.
-log "3. CRITICAL FIX: Uninstalling @medusajs/admin plugin..."
-if sudo -u "$RUN_USER" bash -c "cd $MEDUSA_ROOT && npm uninstall @medusajs/admin" 2>>"$LOG_FILE"; then
-    log "   ✅ @medusajs/admin successfully uninstalled."
-else
-    log "   ⚠️ WARNING: Failed to uninstall @medusajs/admin. Proceeding."
+# Ensure node/npm available
+if ! command -v node >/dev/null 2>&1; then
+  error_exit "node not found. Install Node.js before running this script."
+fi
+if ! command -v npm >/dev/null 2>&1; then
+  error_exit "npm not found. Install npm before running this script."
 fi
 
-# 4. FIX: Ensure environment variables are set in .env
-log "4. Ensuring correct .env file configuration..."
-DB_ENV_VARS="DATABASE_URL=postgres://$DB_USER:$DB_PASS@localhost/$DB_NAME"
-sudo -u "$RUN_USER" bash -c "cat > \"$MEDUSA_ROOT/.env\" <<EOF
-# --- Required Database Configuration ---
-$DB_ENV_VARS
-# --- Server Configuration ---
-PORT=9000
-# ... (other environment variables) ...
-EOF" 2>>"$LOG_FILE" || error_exit "Failed to write .env file."
-log "   ✅ .env file configured."
+# Install medusa CLI locally if not present
+if ! command -v medusa >/dev/null 2>&1; then
+  log "medusa CLI not found globally — will use npx to run Medusa commands"
+  MEDUSA_CMD="npx @medusajs/medusa@latest"
+else
+  MEDUSA_CMD="medusa"
+fi
 
-# 5. Database Setup (Clean, Migrate, Seed)
-log "5. Running database setup (Clean, Migrate, Seed)..."
-# 5a. Clean and recreate database (idempotent, ensures a fresh seed)
-log "   5a. Dropping and recreating database: $DB_NAME"
-sudo -u postgres psql -c "DROP DATABASE IF EXISTS $DB_NAME WITH (FORCE);" 2>>"$LOG_FILE"
-sudo -u postgres psql -c "CREATE DATABASE $DB_NAME OWNER $DB_USER;" 2>>"$LOG_FILE" || error_exit "Failed to drop/recreate database."
-log "   ✅ Database cleaned and recreated."
+# Check Postgres connection
+log "Checking PostgreSQL connectivity to ${DB_HOST}:${DB_PORT} as ${DB_USER}..."
+log_cmd "CMD Issued: PGPASSWORD=\"$DB_PASS\" psql -h \"$DB_HOST\" -U \"$DB_USER\" -p \"$DB_PORT\" -d postgres -c '\\l'"
+if ! PGPASSWORD="$DB_PASS" psql -h "$DB_HOST" -U "$DB_USER" -p "$DB_PORT" -d postgres -c '\l' >/dev/null 2>&1; then
+  log "Unable to connect as ${DB_USER}. Attempting to create database user and database (requires sudo/postgres privileges)..."
+  if sudo -n true 2>/dev/null; then
+    log_cmd "CMD Issued: sudo -u postgres psql -v ON_ERROR_STOP=1 -c \"DO \$\$ BEGIN IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = '$DB_USER') THEN CREATE ROLE $DB_USER WITH LOGIN PASSWORD '$DB_PASS'; END IF; END \$\$;\""
+    sudo -u postgres psql -v ON_ERROR_STOP=1 -c "DO \$\$ BEGIN IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = '$DB_USER') THEN CREATE ROLE $DB_USER WITH LOGIN PASSWORD '$DB_PASS'; END IF; END \$\$;" || log "Warning: creating DB user failed. Ensure postgres is configured for password auth."
+    log_cmd "CMD Issued: sudo -u postgres psql -v ON_ERROR_STOP=1 -c \"CREATE DATABASE $DB_NAME OWNER $DB_USER;\""
+    sudo -u postgres psql -v ON_ERROR_STOP=1 -c "CREATE DATABASE $DB_NAME OWNER $DB_USER;" || log "Warning: creating DB may have failed or already exists."
+  else
+    log "No sudo privileges to create DB user. Please ensure Postgres user '$DB_USER' exists and is password-auth enabled."
+  fi
+else
+  log "Postgres connectivity OK."
+fi
 
-# 5b. Run Migrations explicitly
-log "   5b. Running database migrations (npx medusa db:migrate)..."
-sudo -u "$RUN_USER" bash -c "cd $MEDUSA_ROOT && export $DB_ENV_VARS && npx medusa db:migrate" 2>>"$LOG_FILE" || error_exit "Database migration failed."
+# Ensure .env exists and has correct DATABASE_URL and REDIS_URL
+ENV_FILE="$MEDUSA_ROOT/.env"
+DATABASE_URL="postgres://${DB_USER}:${DB_PASS}@${DB_HOST}:${DB_PORT}/${DB_NAME}"
 
-# 5c. Run Seed explicitly
-log "   5c. Seeding database with sample data (npm run seed)..."
-sudo -u "$RUN_USER" bash -c "cd $MEDUSA_ROOT && export $DB_ENV_VARS && /usr/bin/npm run seed" 2>>"$LOG_FILE" || error_exit "Medusa seed command failed."
-log "   ✅ Database setup complete (Clean, Migrated, Seeded)."
+if [ ! -f "$ENV_FILE" ]; then
+  log "No .env file found. Creating one with DATABASE_URL and REDIS_URL."
+  log_cmd "CMD Issued: echo \"DATABASE_URL=$DATABASE_URL\" > \"$ENV_FILE\""
+  echo "DATABASE_URL=$DATABASE_URL" > "$ENV_FILE"
+  log_cmd "CMD Issued: echo \"REDIS_URL=$REDIS_URL\" >> \"$ENV_FILE\""
+  echo "REDIS_URL=$REDIS_URL" >> "$ENV_FILE"
+else
+  log ".env file found. Ensuring DATABASE_URL and REDIS_URL are set."
+  if ! grep -q '^DATABASE_URL=' "$ENV_FILE"; then
+    log_cmd "CMD Issued: echo \"DATABASE_URL=$DATABASE_URL\" >> \"$ENV_FILE\""
+    echo "DATABASE_URL=$DATABASE_URL" >> "$ENV_FILE"
+  fi
+  if ! grep -q '^REDIS_URL=' "$ENV_FILE"; then
+    log_cmd "CMD Issued: echo \"REDIS_URL=$REDIS_URL\" >> \"$ENV_FILE\""
+    echo "REDIS_URL=$REDIS_URL" >> "$ENV_FILE"
+  fi
+fi
 
-log "--- [03/06] Medusa Project Setup Complete ---"
+# Initialize medusa project if package.json missing
+if [ ! -f package.json ]; then
+  log "No package.json found — creating Medusa project skeleton..."
+  log_cmd "CMD Issued: sudo -u \"$RUN_USER\" bash -c \"$MEDUSA_CMD new . --seed\""
+  sudo -u "$RUN_USER" bash -c "$MEDUSA_CMD new . --seed" >>"$LOG_FILE" 2>&1 || {
+    log "medusa new with --seed failed, retrying without --seed"
+    log_cmd "CMD Issued: sudo -u \"$RUN_USER\" bash -c \"$MEDUSA_CMD new .\""
+    sudo -u "$RUN_USER" bash -c "$MEDUSA_CMD new ." >>"$LOG_FILE" 2>&1 || error_exit "Medusa project creation failed. Check $LOG_FILE"
+  }
+else
+  log "Detected existing project; skipping 'medusa new'."
+fi
+
+# Install dependencies
+log_cmd "CMD Issued: sudo -u \"$RUN_USER\" bash -lc \"npm install --legacy-peer-deps\""
+log "Installing npm dependencies..."
+sudo -u "$RUN_USER" bash -lc "npm install --legacy-peer-deps" >>"$LOG_FILE" 2>&1 || error_exit "npm install failed. Check $LOG_FILE"
+
+# Run database migrations / setup
+log "Running Medusa DB setup/migrations..."
+if $MEDUSA_CMD --help 2>/dev/null | grep -q 'db:setup'; then
+  log_cmd "CMD Issued: sudo -u \"$RUN_USER\" bash -lc \"$MEDUSA_CMD db:setup\""
+  sudo -u "$RUN_USER" bash -lc "$MEDUSA_CMD db:setup" >>"$LOG_FILE" 2>&1 || log "medusa db:setup failed; attempting fallback migrations"
+fi
+
+# Fallback: run prisma migrate deploy if prisma exists
+if [ -d prisma ] || grep -q "\"prisma\"" package.json >/dev/null 2>&1; then
+  log_cmd "CMD Issued: sudo -u \"$RUN_USER\" bash -lc \"npx prisma migrate deploy\""
+  log "Attempting prisma migrate deploy..."
+  sudo -u "$RUN_USER" bash -lc "npx prisma migrate deploy" >>"$LOG_FILE" 2>&1 || log "prisma migrate deploy failed or not configured"
+fi
+
+# Create initial admin (if Medusa provides a create-admin script)
+if grep -q "\"create-admin\"" package.json >/dev/null 2>&1; then
+  log_cmd "CMD Issued: sudo -u \"$RUN_USER\" bash -lc \"npm run create-admin\""
+  log "Creating initial admin user via npm script 'create-admin'..."
+  sudo -u "$RUN_USER" bash -lc "npm run create-admin" >>"$LOG_FILE" 2>&1 || log "create-admin script failed"
+else
+  log "No create-admin script detected. You may create an admin via Medusa CLI or API later."
+fi
+
+log "Medusa setup completed. Check log: $LOG_FILE"
