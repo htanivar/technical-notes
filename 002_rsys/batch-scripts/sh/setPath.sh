@@ -183,6 +183,8 @@ git config --global --add safe.directory /apps/flutter
 
 echo -e "${GREEN}PATH setup complete!${NC}"
 
+ln -s /home/ravi/code/github/htanivar/technical-notes/002_rsys/batch-scripts/sh/docker-op.sh ~/bin/dop
+
 # Optional: Show current PATH (uncomment if needed)
 # echo -e "\nCurrent PATH:"
 # echo $PATH | tr ':' '\n' | nl
