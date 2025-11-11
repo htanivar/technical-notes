@@ -12,6 +12,7 @@ LINK_DIR="/usr/local/bin"
 
 # Software list with their expected subdirectories and executables
 declare -A SOFTWARE=(
+    ["gimp"]="gimp:GIMP-3.0.0-RC3-x86_64.AppImage"
     ["intellij"]="intellij/bin:idea.sh"
     ["studio"]="android-studio/bin:studio.sh"
     ["webstorm"]="webstorm/bin:webstorm.sh"
