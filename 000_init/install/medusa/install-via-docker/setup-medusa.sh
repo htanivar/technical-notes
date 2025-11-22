@@ -204,7 +204,7 @@ services:
     ports:
       - "$DB_PORT:$DEFAULT_DB_PORT" # Host Port:Container Port
     volumes:
-      - ${ENV_NAME}_postgres_data:/var/lib/postgresql/data
+      - ${ENV_NAME}_postgres_data:/var/lib/postgresql/${ENV_NAME}_data
     networks:
       - ${ENV_NAME}_network
 
