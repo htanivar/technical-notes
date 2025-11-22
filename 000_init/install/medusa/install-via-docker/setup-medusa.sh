@@ -52,20 +52,33 @@ exec_cmd() {
 load_env_file() {
     local env_file="infra/$1/.env"
     
+    # Define required variables by application
+    declare -A required_vars=(
+        ["medusa"]="MEDUSA_PORT MEDUSA_ADMIN MEDUSA_ADMIN_PASSWORD"
+        ["database"]="DB_PORT"
+        ["redis"]="REDIS_PORT"
+        # Add more applications here as needed
+        # ["new_app"]="VAR1 VAR2 VAR3"
+    )
+    
     # Source the environment file
     set -a
     source "$env_file"
     set +a
     
-    # Validate required variables
-    if [ -z "$MEDUSA_PORT" ]; then
-        log ERROR "MEDUSA_PORT is not set in $env_file"
-        exit 1
-    fi
-    if [ -z "$DB_PORT" ]; then
-        log ERROR "DB_PORT is not set in $env_file"
-        exit 1
-    fi
+    # Validate required variables for each application
+    for app in "${!required_vars[@]}"; do
+        log STEP "Checking required variables for $app..."
+        IFS=' ' read -ra vars <<< "${required_vars[$app]}"
+        for var in "${vars[@]}"; do
+            if [ -z "${!var}" ]; then
+                log ERROR "Required variable '$var' for $app is not set in $env_file"
+                exit 1
+            else
+                log INFO "✅ $app: $var is set"
+            fi
+        done
+    done
 }
 
 # Function to print usage guide
@@ -103,8 +116,13 @@ if [ ! -f "$ENV_FILE_PATH" ]; then
     log WARN "Environment file '$ENV_FILE_PATH' not found. Creating a template..."
     cat << EOF > "$ENV_FILE_PATH"
 # Medusa Environment Configuration for ${ENV_NAME}
+# Required Variables
 MEDUSA_PORT=9000
+MEDUSA_ADMIN=admin@example.com
+MEDUSA_ADMIN_PASSWORD=supersecret
 DB_PORT=5432
+REDIS_PORT=6379
+
 # Optional: Override defaults
 # DB_USER=postgres
 # DB_PASS=postgres
@@ -129,6 +147,24 @@ JWT_SECRET=${JWT_SECRET:-"${ENV_NAME}_${DEFAULT_JWT_SECRET}"}
 COOKIE_SECRET=${COOKIE_SECRET:-"${ENV_NAME}_${DEFAULT_COOKIE_SECRET}"}
 MEDUSA_PORT=${MEDUSA_PORT}
 DB_PORT=${DB_PORT}
+
+# Check for environment-specific configuration files
+ENV_PACKAGE_JSON="infra/${ENV_NAME}/package.json"
+ENV_MEDUSA_CONFIG="infra/${ENV_NAME}/medusa-config.js"
+
+if [ ! -f "$ENV_PACKAGE_JSON" ]; then
+    log ERROR "Environment-specific package.json not found at: $ENV_PACKAGE_JSON"
+    log INFO "Please create this file with the appropriate configuration for the $ENV_NAME environment"
+    exit 1
+fi
+
+if [ ! -f "$ENV_MEDUSA_CONFIG" ]; then
+    log ERROR "Environment-specific medusa-config.js not found at: $ENV_MEDUSA_CONFIG"
+    log INFO "Please create this file with the appropriate configuration for the $ENV_NAME environment"
+    exit 1
+fi
+
+log INFO "✅ Found all required environment-specific configuration files"
 
 # --- Derived Variables ---
 DOCKER_COMPOSE_FILE="docker-compose.yml"
@@ -275,39 +311,15 @@ log INFO "$DOCKERFILE_NAME created."
 log STEP "7. Installing host dependencies (required for package.json modification)..."
 exec_cmd "npm install --legacy-peer-deps"
 
-## 8. Update package.json to include Docker scripts
-log STEP "8. Updating $PACKAGE_JSON with Docker scripts..."
-# Temporary modification using sed
-if [[ "$OSTYPE" == "darwin"* ]]; then
-    SED_INPLACE_OPT='-i ""'
-else
-    SED_INPLACE_OPT='-i'
-fi
+## 8. Copy environment-specific package.json
+log STEP "8. Copying environment-specific package.json..."
+exec_cmd "cp $ENV_PACKAGE_JSON $PACKAGE_JSON"
+log INFO "$PACKAGE_JSON updated from $ENV_PACKAGE_JSON"
 
-# Read package.json content
-PKG_CONTENT=$(cat $PACKAGE_JSON)
-
-# Define the new scripts to insert (using 'docker compose' which is the modern command)
-NEW_SCRIPTS='"docker:up": "docker compose up --build -d",\n    "docker:down": "docker compose down"'
-
-# Insert the new scripts right after the "scripts": { line
-MODIFIED_PKG_CONTENT=$(echo "$PKG_CONTENT" | sed -E '/"scripts": {/a\
-    '"$NEW_SCRIPTS"'
-')
-
-# Overwrite the package.json file with the modified content
-echo "$MODIFIED_PKG_CONTENT" > $PACKAGE_JSON
-log INFO "$PACKAGE_JSON updated."
-
-## 9. Update medusa-config.js for Docker
-log STEP "9. Updating $MEDUSA_CONFIG for Docker connectivity..."
-# Insert the databaseDriverOptions block
-sed $SED_INPLACE_OPT '/projectConfig: {/a\
-    databaseDriverOptions: {\
-      ssl: false,\
-      sslmode: "disable",\
-    },' $MEDUSA_CONFIG
-log INFO "$MEDUSA_CONFIG updated."
+## 9. Copy environment-specific medusa-config.js
+log STEP "9. Copying environment-specific medusa-config.js..."
+exec_cmd "cp $ENV_MEDUSA_CONFIG $MEDUSA_CONFIG"
+log INFO "$MEDUSA_CONFIG updated from $ENV_MEDUSA_CONFIG"
 
 ## 10. Create .dockerignore
 log STEP "10. Creating $DOCKERIGNORE_FILE..."
