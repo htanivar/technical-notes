@@ -51,21 +51,22 @@ exec_cmd() {
 # Function to load environment variables from file
 load_env_file() {
     local env_file="infra/$1/.env"
-    
-    # Source the environment file
-    set -a
-    source "$env_file"
-    set +a
-    
-    # Validate required variables
-    if [ -z "$MEDUSA_PORT" ]; then
-        log ERROR "MEDUSA_PORT is not set in $env_file"
-        exit 1
-    fi
-    if [ -z "$DB_PORT" ]; then
-        log ERROR "DB_PORT is not set in $env_file"
-        exit 1
-    fi
+
+        # Define required variables
+        local required_vars=("MEDUSA_PORT" "MEDUSA_ADMIN" "MEDUSA_ADMIN_PASSWORD" "DB_PORT")
+
+        # Source the environment file
+        set -a
+        source "$env_file"
+        set +a
+                                                                                                                                                              
+        # Validate required variables
+        for var in "${required_vars[@]}"; do
+            if [ -z "${!var}" ]; then
+                log ERROR "$var is not set in $env_file"
+                exit 1
+            fi
+        done
 }
 
 # Function to print usage guide
