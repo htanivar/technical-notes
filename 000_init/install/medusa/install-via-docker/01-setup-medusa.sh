@@ -233,7 +233,7 @@ services:
     ports:
       - "$MEDUSA_PORT:$DEFAULT_MEDUSA_PORT" # Host Port:Container Port
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=${ENV_NAME}
       # Internal Docker Compose communication uses service names (postgres, redis)
       - DATABASE_URL=postgres://$DB_USER:$DB_PASS@postgres:$DEFAULT_DB_PORT/$DB_NAME
       - REDIS_URL=redis://redis:$DEFAULT_REDIS_PORT
