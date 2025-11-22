@@ -48,38 +48,73 @@ exec_cmd() {
     fi
 }
 
+# Function to load environment variables from file
+load_env_file() {
+    local env_file="infra/$1.env"
+    if [ ! -f "$env_file" ]; then
+        log ERROR "Environment file '$env_file' not found."
+        log INFO "Please create '$env_file' with the following variables:"
+        log INFO "  MEDUSA_PORT=<port number>"
+        log INFO "  DB_PORT=<port number>"
+        log INFO "  DB_USER=<username> (optional, defaults to '$DEFAULT_DB_USER')"
+        log INFO "  DB_PASS=<password> (optional, defaults to '$DEFAULT_DB_PASS')"
+        log INFO "  DB_NAME=<database name> (optional, defaults to '${ENV_NAME}_${DEFAULT_DB_NAME}')"
+        log INFO "  JWT_SECRET=<secret> (optional, defaults to '${ENV_NAME}_${DEFAULT_JWT_SECRET}')"
+        log INFO "  COOKIE_SECRET=<secret> (optional, defaults to '${ENV_NAME}_${DEFAULT_COOKIE_SECRET}')"
+        exit 1
+    fi
+    
+    # Source the environment file
+    set -a
+    source "$env_file"
+    set +a
+    
+    # Validate required variables
+    if [ -z "$MEDUSA_PORT" ]; then
+        log ERROR "MEDUSA_PORT is not set in $env_file"
+        exit 1
+    fi
+    if [ -z "$DB_PORT" ]; then
+        log ERROR "DB_PORT is not set in $env_file"
+        exit 1
+    fi
+}
+
 # Function to print usage guide
 usage() {
-    log INFO "Usage: $0 <ENVIRONMENT_NAME> <MEDUSA_PORT> <DB_PORT>"
+    log INFO "Usage: $0 <ENVIRONMENT_NAME>"
     log INFO ""
     log INFO "  <ENVIRONMENT_NAME> : e.g., dev, tst, uat, prd. Used for directory name and container names."
-    log INFO "  <MEDUSA_PORT>      : The host port for the Medusa server (e.g., 9001)."
-    log INFO "  <DB_PORT>          : The host port for the PostgreSQL database (e.g., 5433)."
+    log INFO "                      The script will look for 'infra/<environment>.env' file."
     log INFO ""
-    log INFO "Example: $0 dev 9001 5433"
+    log INFO "Example: $0 dev"
     exit 1
 }
 
 # --- Script Execution Start ---
 
 # Check for required arguments
-if [ "$#" -lt 3 ]; then
+if [ "$#" -lt 1 ]; then
     log ERROR "Missing required arguments."
     usage
 fi
 
 # --- Parameter Assignment ---
 ENV_NAME=$(echo "$1" | tr '[:upper:]' '[:lower:]') # Convert to lowercase for paths/names
-MEDUSA_PORT=$2
-DB_PORT=$3
 PROJECT_DIR="${ENV_NAME}-medusa-store"
 
-# Optional parameters (using defaults if not provided)
-DB_USER=${4:-$DEFAULT_DB_USER}
-DB_PASS=${5:-$DEFAULT_DB_PASS}
-DB_NAME="${ENV_NAME}_${DEFAULT_DB_NAME}" # Parameterize DB name with environment
-JWT_SECRET="${ENV_NAME}_${DEFAULT_JWT_SECRET}"
-COOKIE_SECRET="${ENV_NAME}_${DEFAULT_COOKIE_SECRET}"
+# Load environment variables from file
+log STEP "Loading environment configuration from infra/${ENV_NAME}.env..."
+load_env_file "$ENV_NAME"
+
+# Set variables with defaults if not provided in the environment file
+DB_USER=${DB_USER:-$DEFAULT_DB_USER}
+DB_PASS=${DB_PASS:-$DEFAULT_DB_PASS}
+DB_NAME=${DB_NAME:-"${ENV_NAME}_${DEFAULT_DB_NAME}"}
+JWT_SECRET=${JWT_SECRET:-"${ENV_NAME}_${DEFAULT_JWT_SECRET}"}
+COOKIE_SECRET=${COOKIE_SECRET:-"${ENV_NAME}_${DEFAULT_COOKIE_SECRET}"}
+MEDUSA_PORT=${MEDUSA_PORT}
+DB_PORT=${DB_PORT}
 
 # --- Derived Variables ---
 DOCKER_COMPOSE_FILE="docker-compose.yml"
@@ -98,6 +133,7 @@ log INFO "Project Directory (PROJECT_DIR): $PROJECT_DIR"
 log INFO "Medusa Host Port:               $MEDUSA_PORT"
 log INFO "DB Host Port:                   $DB_PORT"
 log INFO "DB Name:                        $DB_NAME"
+log INFO "DB User:                        $DB_USER"
 log INFO "=================================================="
 
 ## 1. Clone the Medusa starter repository
