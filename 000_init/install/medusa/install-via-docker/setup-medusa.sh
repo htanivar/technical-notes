@@ -150,7 +150,7 @@ DB_PORT=${DB_PORT}
 
 # Check for environment-specific configuration files
 ENV_PACKAGE_JSON="infra/${ENV_NAME}/package.json"
-ENV_MEDUSA_CONFIG="infra/${ENV_NAME}/medusa-config.js"
+ENV_MEDUSA_CONFIG="infra/${ENV_NAME}/medusa-config.ts"
 
 if [ ! -f "$ENV_PACKAGE_JSON" ]; then
     log ERROR "Environment-specific package.json not found at: $ENV_PACKAGE_JSON"
@@ -159,7 +159,7 @@ if [ ! -f "$ENV_PACKAGE_JSON" ]; then
 fi
 
 if [ ! -f "$ENV_MEDUSA_CONFIG" ]; then
-    log ERROR "Environment-specific medusa-config.js not found at: $ENV_MEDUSA_CONFIG"
+    log ERROR "Environment-specific medusa-config.ts not found at: $ENV_MEDUSA_CONFIG"
     log INFO "Please create this file with the appropriate configuration for the $ENV_NAME environment"
     exit 1
 fi
@@ -173,7 +173,7 @@ DOCKERFILE_NAME="Dockerfile"
 DOCKERIGNORE_FILE=".dockerignore"
 ENV_FILE=".env"
 PACKAGE_JSON="package.json"
-MEDUSA_CONFIG="medusa-config.js"
+MEDUSA_CONFIG="medusa-config.ts"
 
 log INFO "=================================================="
 log INFO "🚀 Starting Medusa Environment Setup Script"
@@ -316,8 +316,8 @@ log STEP "8. Copying environment-specific package.json..."
 exec_cmd "cp $ENV_PACKAGE_JSON $PACKAGE_JSON"
 log INFO "$PACKAGE_JSON updated from $ENV_PACKAGE_JSON"
 
-## 9. Copy environment-specific medusa-config.js
-log STEP "9. Copying environment-specific medusa-config.js..."
+## 9. Copy environment-specific medusa-config.ts
+log STEP "9. Copying environment-specific medusa-config.ts..."
 exec_cmd "cp $ENV_MEDUSA_CONFIG $MEDUSA_CONFIG"
 log INFO "$MEDUSA_CONFIG updated from $ENV_MEDUSA_CONFIG"
 
