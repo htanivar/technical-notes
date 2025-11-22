@@ -51,22 +51,34 @@ exec_cmd() {
 # Function to load environment variables from file
 load_env_file() {
     local env_file="infra/$1/.env"
-
-        # Define required variables
-        local required_vars=("MEDUSA_PORT" "MEDUSA_ADMIN" "MEDUSA_ADMIN_PASSWORD" "DB_PORT")
-
-        # Source the environment file
-        set -a
-        source "$env_file"
-        set +a
-                                                                                                                                                              
-        # Validate required variables
-        for var in "${required_vars[@]}"; do
+    
+    # Define required variables by application
+    declare -A required_vars=(
+        ["medusa"]="MEDUSA_PORT MEDUSA_ADMIN MEDUSA_ADMIN_PASSWORD"
+        ["database"]="DB_PORT"
+        ["redis"]="REDIS_PORT"
+        # Add more applications here as needed
+        # ["new_app"]="VAR1 VAR2 VAR3"
+    )
+    
+    # Source the environment file
+    set -a
+    source "$env_file"
+    set +a
+    
+    # Validate required variables for each application
+    for app in "${!required_vars[@]}"; do
+        log STEP "Checking required variables for $app..."
+        IFS=' ' read -ra vars <<< "${required_vars[$app]}"
+        for var in "${vars[@]}"; do
             if [ -z "${!var}" ]; then
-                log ERROR "$var is not set in $env_file"
+                log ERROR "Required variable '$var' for $app is not set in $env_file"
                 exit 1
+            else
+                log INFO "✅ $app: $var is set"
             fi
         done
+    done
 }
 
 # Function to print usage guide
