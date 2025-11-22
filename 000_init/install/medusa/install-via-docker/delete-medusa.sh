@@ -43,9 +43,11 @@ if [[ "$ARG" == *"-"* ]]; then
   PROJECT_NAME="$ARG"
 else
   PROJECT_NAME="${ARG}-medusa-store"
+  SHOP_NAME="${ARG}-shop"
 fi
 
 PROJECT_DIR="$(pwd)/${PROJECT_NAME}"
+SHOP_DIR="$(pwd)/${SHOP_NAME}"
 
 echo "Project       : $PROJECT_NAME"
 echo "Project folder: $PROJECT_DIR"
@@ -88,5 +90,13 @@ if [[ -d "$PROJECT_DIR" ]]; then
 else
   echo "Project folder does not exist, skipping."
 fi
+
+if [[ -d "$SHOP_DIR" ]]; then
+  echo "Deleting Shop folder: $SHOP_DIR"
+  rm -rf "$SHOP_DIR"
+else
+  echo "Project folder does not exist, skipping."
+fi
+
 
 echo "Cleanup completed for '$PROJECT_NAME'."
