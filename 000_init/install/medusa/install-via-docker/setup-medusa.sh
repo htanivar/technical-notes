@@ -10,9 +10,6 @@ fi
 echo "Root privileges detected. Continuing script execution..."
 
 # --- Default Configuration Variables ---
-DEFAULT_DB_NAME="medusa-store"
-DEFAULT_DB_USER="$1-postgres"
-DEFAULT_DB_PASS="$1-postgres"
 DEFAULT_JWT_SECRET="$1-supersecret"
 DEFAULT_COOKIE_SECRET="$1-supersecret"
 DEFAULT_REDIS_PORT=6379
@@ -55,7 +52,7 @@ load_env_file() {
     # Define required variables by application
     declare -A required_vars=(
         ["medusa"]="MEDUSA_PORT MEDUSA_ADMIN MEDUSA_ADMIN_PASSWORD"
-        ["database"]="DB_PORT"
+        ["database"]="DB_NAME DB_USER DB_PASS DB_PORT"
         ["redis"]="REDIS_PORT"
         # Add more applications here as needed
         # ["new_app"]="VAR1 VAR2 VAR3"
@@ -140,9 +137,6 @@ log STEP "Loading environment configuration from $ENV_FILE_PATH..."
 load_env_file "$ENV_NAME"
 
 # Set variables with defaults if not provided in the environment file
-DB_USER=${DB_USER:-$DEFAULT_DB_USER}
-DB_PASS=${DB_PASS:-$DEFAULT_DB_PASS}
-DB_NAME=${DB_NAME:-"${ENV_NAME}_${DEFAULT_DB_NAME}"}
 JWT_SECRET=${JWT_SECRET:-"${ENV_NAME}_${DEFAULT_JWT_SECRET}"}
 COOKIE_SECRET=${COOKIE_SECRET:-"${ENV_NAME}_${DEFAULT_COOKIE_SECRET}"}
 MEDUSA_PORT=${MEDUSA_PORT}
