@@ -50,7 +50,7 @@ exec_cmd() {
 
 # Function to load environment variables from file
 load_env_file() {
-    local env_file="infra/$1.env"
+    local env_file="infra/$1/.env"
     
     # Source the environment file
     set -a
@@ -98,7 +98,7 @@ if [ ! -d "infra" ]; then
 fi
 
 # Check if environment file exists, if not create a template
-ENV_FILE_PATH="infra/${ENV_NAME}.env"
+ENV_FILE_PATH="infra/${ENV_NAME}/.env"
 if [ ! -f "$ENV_FILE_PATH" ]; then
     log WARN "Environment file '$ENV_FILE_PATH' not found. Creating a template..."
     cat << EOF > "$ENV_FILE_PATH"
