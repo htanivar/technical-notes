@@ -104,8 +104,13 @@ if [ ! -f "$ENV_FILE_PATH" ]; then
     log WARN "Environment file '$ENV_FILE_PATH' not found. Creating a template..."
     cat << EOF > "$ENV_FILE_PATH"
 # Medusa Environment Configuration for ${ENV_NAME}
+# Required Variables
 MEDUSA_PORT=9000
+MEDUSA_ADMIN=admin@example.com
+MEDUSA_ADMIN_PASSWORD=supersecret
 DB_PORT=5432
+REDIS_PORT=6379
+
 # Optional: Override defaults
 # DB_USER=postgres
 # DB_PASS=postgres
