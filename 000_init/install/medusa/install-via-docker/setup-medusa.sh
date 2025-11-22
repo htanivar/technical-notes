@@ -51,18 +51,6 @@ exec_cmd() {
 # Function to load environment variables from file
 load_env_file() {
     local env_file="infra/$1.env"
-    if [ ! -f "$env_file" ]; then
-        log ERROR "Environment file '$env_file' not found."
-        log INFO "Please create '$env_file' with the following variables:"
-        log INFO "  MEDUSA_PORT=<port number>"
-        log INFO "  DB_PORT=<port number>"
-        log INFO "  DB_USER=<username> (optional, defaults to '$DEFAULT_DB_USER')"
-        log INFO "  DB_PASS=<password> (optional, defaults to '$DEFAULT_DB_PASS')"
-        log INFO "  DB_NAME=<database name> (optional, defaults to '${ENV_NAME}_${DEFAULT_DB_NAME}')"
-        log INFO "  JWT_SECRET=<secret> (optional, defaults to '${ENV_NAME}_${DEFAULT_JWT_SECRET}')"
-        log INFO "  COOKIE_SECRET=<secret> (optional, defaults to '${ENV_NAME}_${DEFAULT_COOKIE_SECRET}')"
-        exit 1
-    fi
     
     # Source the environment file
     set -a
@@ -103,8 +91,34 @@ fi
 ENV_NAME=$(echo "$1" | tr '[:upper:]' '[:lower:]') # Convert to lowercase for paths/names
 PROJECT_DIR="${ENV_NAME}-medusa-store"
 
+# Create infra directory if it doesn't exist
+if [ ! -d "infra" ]; then
+    log STEP "Creating infra directory for environment files..."
+    exec_cmd "mkdir -p infra"
+fi
+
+# Check if environment file exists, if not create a template
+ENV_FILE_PATH="infra/${ENV_NAME}.env"
+if [ ! -f "$ENV_FILE_PATH" ]; then
+    log WARN "Environment file '$ENV_FILE_PATH' not found. Creating a template..."
+    cat << EOF > "$ENV_FILE_PATH"
+# Medusa Environment Configuration for ${ENV_NAME}
+MEDUSA_PORT=9000
+DB_PORT=5432
+# Optional: Override defaults
+# DB_USER=postgres
+# DB_PASS=postgres
+# DB_NAME=${ENV_NAME}_medusa-store
+# JWT_SECRET=${ENV_NAME}_supersecret
+# COOKIE_SECRET=${ENV_NAME}_supersecret
+EOF
+    log INFO "Created template environment file at '$ENV_FILE_PATH'"
+    log INFO "Please edit this file to set appropriate values before running the script again."
+    exit 1
+fi
+
 # Load environment variables from file
-log STEP "Loading environment configuration from infra/${ENV_NAME}.env..."
+log STEP "Loading environment configuration from $ENV_FILE_PATH..."
 load_env_file "$ENV_NAME"
 
 # Set variables with defaults if not provided in the environment file
