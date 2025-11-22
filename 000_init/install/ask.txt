@@ -1,0 +1,16 @@
+Please generate the installation script & configuration scripts for NGINX
+* create a script execution log file to know what did happen, and update it on each action
+* Check current user is root
+* Check OS is Linux
+* depending on the linux distribution
+> verify all the dependencies for nginx is installed, if not install it
+> get the current system state [installed packages, libs with versions]
+> Create rollback capacity incase if the installation or configration is failed. [we don't want to leave any unfinished changes]
+> create required dependencies private key, certs to have the site working in https
+> setup a https://nginx.localhost.com website with some simple examples
+> create readme.txt file with all key config files & testing commands
+> start the nginx server for the test setup
+> Test the installation is working fine
+> anything is wrong rollback any changes that is performed. [system should be in same state as before we started installation]
+
+

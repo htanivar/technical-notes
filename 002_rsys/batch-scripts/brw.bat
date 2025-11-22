@@ -2,6 +2,7 @@
 setlocal
 
 :: Define site mappings
+set "abacus=https://apps.abacus.ai"
 set "chatgpt=https://chatgpt.com"
 set "gemini=https://gemini.google.com"
 set "aistudio=https://aistudio.google.com"
@@ -11,6 +12,7 @@ set "gitlab=https://gitlab.com"
 set "vikatan=https://vikatan.com"
 set "learn=https://learn.jaganathan.co.uk"
 set "hdfc=https://www.hdfcbank.com"
+set "veda=https://veda.jaganathan.co.uk"
 
 :: Check for argument
 if "%1"=="" (
