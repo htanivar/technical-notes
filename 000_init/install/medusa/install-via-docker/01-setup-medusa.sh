@@ -203,6 +203,10 @@ services:
       POSTGRES_PASSWORD: $DB_PASS
     ports:
       - "$DB_PORT:$DEFAULT_DB_PORT" # Host Port:Container Port
+    deploy:
+          resources:
+            limits:
+              memory: 512M
     volumes:
       - ${ENV_NAME}_postgres_data:/var/lib/postgresql/${ENV_NAME}_data
     networks:
