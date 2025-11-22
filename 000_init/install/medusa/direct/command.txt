@@ -1,0 +1,52 @@
+Please generate the installation script & configuration scripts for NGINX
+* create a script execution log file to know what did happen
+* Check current user is root
+* Check OS is Linux
+* depending on the linux distribution
+> verify all the dependencies for nginx is installed, if not install it
+> create required dependencies private key, certs to have the site working in https
+> setup a https://nginx.localhost.com website with some simple examples
+>
+
+ALTER USER postgres WITH PASSWORD 'admin123';
+psql -U postgres -h localhost -d postgres
+
+
+PGVER=$(psql -V | awk '{print $3}' | cut -d. -f1)
+
+
+# backup and edit
+sudo cp /etc/postgresql/$PGVER/main/postgresql.conf /etc/postgresql/$PGVER/main/postgresql.conf.bak
+sudo sed -i "s/^#listen_addresses =.*/listen_addresses = 'localhost, 192.168.1.113'/" /etc/postgresql/$PGVER/main/postgresql.conf
+
+
+# restart PG
+sudo systemctl restart postgresql
+sleep 10
+sudo systemctl status postgresql
+
+
+
+sudo cp /etc/postgresql/$PGVER/main/pg_hba.conf /etc/postgresql/$PGVER/main/pg_hba.conf.bak
+sudo nano /etc/postgresql/$PGVER/main/pg_hba.conf
+sudo sed -i '$a host    all             all             192.168.1.79/32         md5   # Allow access from the host machine' /etc/postgresql/$PGVER/main/pg_hba.conf
+
+
+cd ~/ravi-store-storefront    # or the exact directory created by the installer
+# remove partially installed files so we get a clean install
+rm -rf node_modules package-lock.json
+# install a medusa-compatible swc version (>=1.7.28). 1.15.0 is known-good for 2.11.3
+npm install --save-dev @swc/core@1.15.0
+# now install the rest of the deps normally
+npm install
+# verify
+node -v && npm -v
+
+
+npm i next@canary
+
+
+# uses medusa-cli to create DB (if needed) and run migrations
+npx @medusajs/medusa-cli@latest db:setup
+
+
