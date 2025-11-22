@@ -203,6 +203,10 @@ services:
       POSTGRES_PASSWORD: $DB_PASS
     ports:
       - "$DB_PORT:$DEFAULT_DB_PORT" # Host Port:Container Port
+    deploy:
+          resources:
+            limits:
+              memory: 512M
     volumes:
       - ${ENV_NAME}_postgres_data:/var/lib/postgresql/${ENV_NAME}_data
     networks:
@@ -214,7 +218,7 @@ services:
     container_name: ${ENV_NAME}_medusa_redis
     restart: unless-stopped
     ports:
-      - "$DEFAULT_REDIS_PORT:$DEFAULT_REDIS_PORT" # Redis port is usually fixed
+      - "$REDIS_PORT:$DEFAULT_REDIS_PORT" # Redis port is usually fixed
     networks:
       - ${ENV_NAME}_network
 
