@@ -10,11 +10,11 @@ fi
 echo "Root privileges detected. Continuing script execution..."
 
 # --- Default Configuration Variables ---
-DEFAULT_DB_NAME="medusa-store"
-DEFAULT_DB_USER="postgres"
-DEFAULT_DB_PASS="postgres"
-DEFAULT_JWT_SECRET="supersecret"
-DEFAULT_COOKIE_SECRET="supersecret"
+DEFAULT_DB_NAME="$1-medusa-store"
+DEFAULT_DB_USER="$1-postgres"
+DEFAULT_DB_PASS="$1-postgres"
+DEFAULT_JWT_SECRET="$1-supersecret"
+DEFAULT_COOKIE_SECRET="$1-supersecret"
 DEFAULT_REDIS_PORT=6379
 DEFAULT_DB_PORT=5432
 DEFAULT_MEDUSA_PORT=9000
