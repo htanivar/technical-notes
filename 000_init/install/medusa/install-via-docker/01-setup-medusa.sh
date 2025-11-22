@@ -218,7 +218,7 @@ services:
     container_name: ${ENV_NAME}_medusa_redis
     restart: unless-stopped
     ports:
-      - "$DEFAULT_REDIS_PORT:$DEFAULT_REDIS_PORT" # Redis port is usually fixed
+      - "$REDIS_PORT:$DEFAULT_REDIS_PORT" # Redis port is usually fixed
     networks:
       - ${ENV_NAME}_network
 
