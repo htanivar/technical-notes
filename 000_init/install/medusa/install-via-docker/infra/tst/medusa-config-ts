@@ -24,7 +24,7 @@ module.exports = defineConfig({
                     ...(config.server.allowedHosts || []),
                     "lx-dev", // Add the blocked host name here
                     "v-dev", // Add the blocked host name here
-                    "dev.mobi.vdev.com", // Add the blocked host name here
+                    "tst.mobi.vdev.com", // Add the blocked host name here
                 ];
                 return config;
             },

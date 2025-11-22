@@ -144,7 +144,7 @@ DB_PORT=${DB_PORT}
 
 # Check for environment-specific configuration files
 ENV_PACKAGE_JSON="infra/${ENV_NAME}/package.json"
-ENV_MEDUSA_CONFIG="infra/${ENV_NAME}/medusa-config.ts"
+ENV_MEDUSA_CONFIG="infra/${ENV_NAME}/medusa-config-ts"
 
 if [ ! -f "$ENV_PACKAGE_JSON" ]; then
     log ERROR "Environment-specific package.json not found at: $ENV_PACKAGE_JSON"
