@@ -313,13 +313,13 @@ exec_cmd "npm install --legacy-peer-deps"
 
 ## 8. Copy environment-specific package.json
 log STEP "8. Copying environment-specific package.json..."
-exec_cmd "cp $ENV_PACKAGE_JSON $PACKAGE_JSON"
-log INFO "$PACKAGE_JSON updated from $ENV_PACKAGE_JSON"
+exec_cmd "cp ../$ENV_PACKAGE_JSON $PACKAGE_JSON"
+log INFO "$PACKAGE_JSON copied from ../$ENV_PACKAGE_JSON"
 
 ## 9. Copy environment-specific medusa-config.ts
 log STEP "9. Copying environment-specific medusa-config.ts..."
-exec_cmd "cp $ENV_MEDUSA_CONFIG $MEDUSA_CONFIG"
-log INFO "$MEDUSA_CONFIG updated from $ENV_MEDUSA_CONFIG"
+exec_cmd "cp ../$ENV_MEDUSA_CONFIG $MEDUSA_CONFIG"
+log INFO "$MEDUSA_CONFIG updated from ../$ENV_MEDUSA_CONFIG"
 
 ## 10. Create .dockerignore
 log STEP "10. Creating $DOCKERIGNORE_FILE..."
