@@ -51,6 +51,9 @@ fi
 # --- Parameter Assignment ---
 ENV_NAME=$(echo "$1" | tr '[:upper:]' '[:lower:]') # Convert to lowercase for paths/names
 PROJECT_DIR="${ENV_NAME}-shop"
+ENV_LOCAL="infra/${ENV_NAME}-shop/.env.local"
+LOCAL=".env.local"
+
 
 
 ## 1. Clone the Medusa starter repository
@@ -61,3 +64,14 @@ exec_cmd "git clone https://github.com/medusajs/nextjs-starter-medusa.git --dept
 ## 2. Change into the project directory
 log STEP "2. Changing directory to $PROJECT_DIR..."
 exec_cmd "cd $PROJECT_DIR"
+
+## 3. Copy .env.local to project directory
+log STEP "3. Copy .env.local  to $PROJECT_DIR..."
+exec_cmd "cp ../$ENV_LOCAL $LOCAL"
+
+
+log STEP "*** IMPORTANT ****"
+log STEP "help: https://docs.medusajs.com/resources/nextjs-starter"
+log STEP "configure .env.local in $PROJECT_DIR"
+log STEP "You can retrieve the publishable API key in on the Medusa Admin dashboard by going to Settings -> Publishable API Keys"
+
