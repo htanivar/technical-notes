@@ -5,6 +5,7 @@
 *.swp
 *.swo
 *~
+.aider*
 
 
 # OS
