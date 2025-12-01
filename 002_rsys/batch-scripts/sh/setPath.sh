@@ -22,6 +22,7 @@ declare -A SOFTWARE=(
     ["flutter"]="flutter/bin:flutter"
     ["java"]="jdk-21.0.9/bin:java"
     ["gradle"]="gradle/gradle-9.2.0/bin:gradle"
+    ["maven"]="maven/bin:mvn"
 )
 
 # Colors for output
