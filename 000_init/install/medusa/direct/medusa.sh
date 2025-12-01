@@ -1,0 +1,1 @@
+medusa db:setup
