@@ -15,7 +15,7 @@
 | 8  | **Ferrule (Bootlace Crimp)**             |         Crimp sleeve for stranded wire ends used in screw terminals. |   <img src="images/connectors/08-ferrule-bootlace-crimp.jpg" width="40">   |
 | 9  | **Ring Terminal**                        |               Ring-shaped lug for bolted connections (earth/ground). |       <img src="images/connectors/09-ring-terminal.jpg" width="40">        |
 | 10 | **Spade / Fork Terminal**                |                     Forked lug for quick screw-terminal connections. |    <img src="images/connectors/10-spade-fork-terminal.jpg" width="40">     |
-| 11 | **Blade / Faston / Faston Tab**          |                   Flat blade terminal used on appliances and relays. |                 <img src="images/connectors/" width="40">                  |
+| 11 | **Blade / Faston / Faston Tab**          |                   Flat blade terminal used on appliances and relays. |      <img src="images/connectors/11-blade-faston-tab.jpg" width="40">      |
 | 12 | **Crimp Pin / Socket (for housings)**    |       Individual crimp contacts for connector housings (Molex, JST). |                 <img src="images/connectors/" width="40">                  |
 | 13 | **Molex (KK) Connector**                 |                    Common board-to-wire power/data connector family. |                 <img src="images/connectors/" width="40">                  |
 | 14 | **JST (SM, PH, XH)**                     |              Small pitch PCB-to-wire connectors used in electronics. |                 <img src="images/connectors/" width="40">                  |
