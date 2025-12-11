@@ -16,12 +16,12 @@
 | 9  | **Ring Terminal**                        |               Ring-shaped lug for bolted connections (earth/ground). |       <img src="images/connectors/09-ring-terminal.jpg" width="40">        |
 | 10 | **Spade / Fork Terminal**                |                     Forked lug for quick screw-terminal connections. |    <img src="images/connectors/10-spade-fork-terminal.jpg" width="40">     |
 | 11 | **Blade / Faston / Faston Tab**          |                   Flat blade terminal used on appliances and relays. |      <img src="images/connectors/11-blade-faston-tab.jpg" width="40">      |
-| 12 | **Crimp Pin / Socket (for housings)**    |       Individual crimp contacts for connector housings (Molex, JST). |                 <img src="images/connectors/" width="40">                  |
-| 13 | **Molex (KK) Connector**                 |                    Common board-to-wire power/data connector family. |                 <img src="images/connectors/" width="40">                  |
-| 14 | **JST (SM, PH, XH)**                     |              Small pitch PCB-to-wire connectors used in electronics. |                 <img src="images/connectors/" width="40">                  |
-| 15 | **Dupont / IDC Header**                  |                   Simple 2.54mm header and crimp housings (jumpers). |                 <img src="images/connectors/" width="40">                  |
-| 16 | **RJ45 (Ethernet)**                      |                           8P8C modular connector for network cables. |                 <img src="images/connectors/" width="40">                  |
-| 17 | **RJ11 (Telephone)**                     |                           6P2/6P4 modular connector for phone lines. |                 <img src="images/connectors/" width="40">                  |
+| 12 | **Crimp Pin / Socket (for housings)**    |       Individual crimp contacts for connector housings (Molex, JST). |      <img src="images/connectors/12-crimp-pin-socket.jpg" width="40">      |
+| 13 | **Molex (KK) Connector**                 |                    Common board-to-wire power/data connector family. |      <img src="images/connectors/13-molex-connector.jpg" width="40">       |
+| 14 | **JST (SM, PH, XH)**                     |              Small pitch PCB-to-wire connectors used in electronics. |        <img src="images/connectors/14-jst-sm-ph-xh.jpg" width="40">        |
+| 15 | **Dupont / IDC Header**                  |                   Simple 2.54mm header and crimp housings (jumpers). |     <img src="images/connectors/15-dupont-idc-header.jpg" width="40">      |
+| 16 | **RJ45 (Ethernet)**                      |                           8P8C modular connector for network cables. |            <img src="images/connectors/16-rj45.jpg" width="40">            |
+| 17 | **RJ11 (Telephone)**                     |                           6P2/6P4 modular connector for phone lines. |            <img src="images/connectors/17-rj11.jpg" width="40">            |
 | 18 | **BNC (Bayonet)**                        |                         Coaxial connector for RF and test equipment. |                 <img src="images/connectors/" width="40">                  |
 | 19 | **SMA / RP-SMA**                         |                                  Small RF coax connector (antennas). |                 <img src="images/connectors/" width="40">                  |
 | 20 | **Banana Plug / Jack**                   |                                   4mm plug for lab/test connections. |                 <img src="images/connectors/" width="40">                  |
