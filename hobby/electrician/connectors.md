@@ -5,8 +5,8 @@
 
 | Connector                                |                                                    Short Description |                        Example Image                         |
 |------------------------------------------|---------------------------------------------------------------------:|:------------------------------------------------------------:|
-| **Wago / Push-in Connector**             | Push-in lever / push-in terminal for quick splices (solid/stranded). |  <img src="images/connectors/wago-push-in.jpeg" width="80">  |
-| **Screw Terminal (Barrier / Strip)**     |                    Screw-down terminals for panel wiring and blocks. | <img src="images/connectors/screw-terminal.jpeg" width="80"> |
+| **Wago / Push-in Connector**             | Push-in lever / push-in terminal for quick splices (solid/stranded). |  <img src="images/connectors/wago-push-in.jpeg" width="40">  |
+| **Screw Terminal (Barrier / Strip)**     |                    Screw-down terminals for panel wiring and blocks. | <img src="images/connectors/screw-terminal.jpeg" width="40"> |
 | **DIN-rail Terminal Block**              |                        Modular terminal blocks mounted on DIN rails. |      ![DIN rail terminal](images/din_rail_terminal.jpg)      |
 | **Wago / Lever Connector**               |                     Reusable lever-actuated connectors (multi-wire). |             ![Wago lever](images/wago_lever.jpg)             |
 | **Wire Nut / Twist Connector**           |           Insulating nut for twisting wires together (common in US). |               ![Wire nut](images/wire_nut.jpg)               |
