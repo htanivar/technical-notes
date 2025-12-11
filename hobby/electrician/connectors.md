@@ -5,10 +5,10 @@
 
 | #  | Connector                                |                                                    Short Description |                              Example Image                              |
 |----|------------------------------------------|---------------------------------------------------------------------:|:-----------------------------------------------------------------------:|
-| 1  | **Wago / Push-in Connector**             | Push-in lever / push-in terminal for quick splices (solid/stranded). |      <img src="images/connectors/01-wago-push-in.jpeg" width="40">      |
-| 2  | **Screw Terminal (Barrier / Strip)**     |                    Screw-down terminals for panel wiring and blocks. |     <img src="images/connectors/02-screw-terminal.jpeg" width="40">     |
+| 1  | **Wago / Push-in Connector**             | Push-in lever / push-in terminal for quick splices (solid/stranded). |      <img src="images/connectors/01-wago-push-in.jpg" width="40">       |
+| 2  | **Screw Terminal (Barrier / Strip)**     |                    Screw-down terminals for panel wiring and blocks. |     <img src="images/connectors/02-screw-terminal.jpg" width="40">      |
 | 3  | **DIN-rail Terminal Block**              |                        Modular terminal blocks mounted on DIN rails. | <img src="images/connectors/03-din-rail-terminal-block.jpg" width="40"> |
-| 4  | **Wago / Lever Connector**               |                     Reusable lever-actuated connectors (multi-wire). |  <img src="images/connectors/04-wago-lever-connector.jpg" width="40")   |
+| 4  | **Wago / Lever Connector**               |                     Reusable lever-actuated connectors (multi-wire). |  <img src="images/connectors/04-wago-lever-connector.jpg" width="40">   |
 | 5  | **Wire Nut / Twist Connector**           |           Insulating nut for twisting wires together (common in US). |                    ![Wire nut](images/wire_nut.jpg)                     |
 | 6  | **Butt Splice / Butt Connector**         |                           Crimp sleeve for joining two wires inline. |                 ![Butt splice](images/butt_splice.jpg)                  |
 | 7  | **Heat-Shrink Butt Connector**           |                Butt splice with adhesive and heat-shrink insulation. |            ![Heat shrink butt](images/heat_shrink_butt.jpg)             |
