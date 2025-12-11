@@ -13,7 +13,7 @@
 | 6  | **Butt Splice / Butt Connector**         |                           Crimp sleeve for joining two wires inline. | <img src="images/connectors/06-butt-Splice-butt-connector.jpg" width="40"> |
 | 7  | **Heat-Shrink Butt Connector**           |                Butt splice with adhesive and heat-shrink insulation. | <img src="images/connectors/07-heat-shrink-butt-connector.jpg" width="40"> |
 | 8  | **Ferrule (Bootlace Crimp)**             |         Crimp sleeve for stranded wire ends used in screw terminals. |   <img src="images/connectors/08-ferrule-bootlace-crimp.jpg" width="40">   |
-| 9  | **Ring Terminal**                        |               Ring-shaped lug for bolted connections (earth/ground). |                 <img src="images/connectors/" width="40">                  |
+| 9  | **Ring Terminal**                        |               Ring-shaped lug for bolted connections (earth/ground). |       <img src="images/connectors/09-ring-terminal.jpg" width="40">        |
 | 10 | **Spade / Fork Terminal**                |                     Forked lug for quick screw-terminal connections. |                 <img src="images/connectors/" width="40">                  |
 | 11 | **Blade / Faston / Faston Tab**          |                   Flat blade terminal used on appliances and relays. |                 <img src="images/connectors/" width="40">                  |
 | 12 | **Crimp Pin / Socket (for housings)**    |       Individual crimp contacts for connector housings (Molex, JST). |                 <img src="images/connectors/" width="40">                  |
