@@ -2,6 +2,46 @@
 
 This guide helps you choose the right **mm² wire sizes** to keep as backup for common home electrical work.
 
+## 📦 Quick Backup Kit Summary (with Gauge & International Measurements)
+
+This table includes **mm²**, **AWG (Gauge)**, and **approximate diameter** so you can compare across countries.
+
+| Wire Size (mm²) | AWG (Gauge) | Approx. Diameter (mm) | Usage                | Suggested Backup |
+|-----------------|-------------|-----------------------|----------------------|------------------|
+| **1.0 mm²**     | ~17 AWG     | 1.13 mm               | Lights               | 10–20 m          |
+| **1.5 mm²**     | ~15 AWG     | 1.38 mm               | Lights + Fans        | 20–30 m          |
+| **2.5 mm²**     | ~13 AWG     | 1.78 mm               | Power Sockets        | 20–30 m          |
+| **4.0 mm²**     | ~11 AWG     | 2.25 mm               | Heavy Appliances     | 10–15 m          |
+| **6.0 mm²**     | ~9 AWG      | 2.76 mm               | Main Line / Inverter | 5–10 m           |
+
+---
+
+### 🌍 International Wire Measurement Systems (Table Format)
+
+| Region / System          | Measurement Type               | Key Points                                                                                                       |
+|--------------------------|--------------------------------|------------------------------------------------------------------------------------------------------------------|
+| 🇮🇳 India / 🇪🇺 Europe | **mm² (cross-sectional area)** | - Standard for home wiring<br>- More precise for load calculations                                               |
+| 🇺🇸 USA / Canada        | **AWG (American Wire Gauge)**  | - Higher AWG number = thinner wire<br>- Common in electronics & home wiring                                      |
+| General                  | **Approx. Diameter (mm)**      | - Not the mm² size<br>- Measures conductor diameter (without insulation)<br>- Useful for physical identification |
+
+---
+
+### ⚠️ Safety Guidelines (Table Format)
+
+| Safety Rule                     | Description                                                                       |
+|---------------------------------|-----------------------------------------------------------------------------------|
+| Do not mix wire sizes           | Ensures stable load handling within the same circuit                              |
+| Match MCB to smallest wire size | Prevents overheating and fire hazards                                             |
+| Use certified wires             | Prefer **ISI-marked** or **CE-certified** copper wires for safety and reliability |
+
+---
+
+If you want, I can also generate:
+
+- A **full AWG ↔ mm² conversion chart**
+- A **DIY electrician full toolkit guide in .md**
+- A **home wiring safety checklist**
+
 ---
 
 ## 🔌 Recommended Wire Sizes to Keep
@@ -42,20 +82,6 @@ This guide helps you choose the right **mm² wire sizes** to keep as backup for 
 - Choose **FR/FRLS (Fire Resistant / Low Smoke)** type when possible.
 - Buy a mix of **red, black, and green** for phase, neutral, and earth.
 - Keep extra length (10–15%) for loops, box entry, and routing.
-
----
-
-## 📦 Quick Backup Kit Summary
-
-| Wire Size   | Usage                | Suggested Backup |
-|-------------|----------------------|------------------|
-| **1.0 mm²** | Lights               | 10–20 m          |
-| **1.5 mm²** | Lights + Fans        | 20–30 m          |
-| **2.5 mm²** | Power Sockets        | 20–30 m          |
-| **4 mm²**   | Heavy Appliances     | 10–15 m          |
-| **6 mm²**   | Main Line / Inverter | 5–10 m           |
-
----
 
 ## 📝 Notes
 
