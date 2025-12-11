@@ -11,7 +11,7 @@
 | 4  | **Wago / Lever Connector**               |                     Reusable lever-actuated connectors (multi-wire). |    <img src="images/connectors/04-wago-lever-connector.jpg" width="40">    |
 | 5  | **Wire Nut / Twist Connector**           |           Insulating nut for twisting wires together (common in US). |  <img src="images/connectors/05-wire-nut-twist-connector.jpg" width="40">  |
 | 6  | **Butt Splice / Butt Connector**         |                           Crimp sleeve for joining two wires inline. | <img src="images/connectors/06-butt-Splice-butt-connector.jpg" width="40"> |
-| 7  | **Heat-Shrink Butt Connector**           |                Butt splice with adhesive and heat-shrink insulation. |                 <img src="images/connectors/" width="40">                  |
+| 7  | **Heat-Shrink Butt Connector**           |                Butt splice with adhesive and heat-shrink insulation. | <img src="images/connectors/07-heat-shrink-butt-connector.jpg" width="40"> |
 | 8  | **Ferrule (Bootlace Crimp)**             |         Crimp sleeve for stranded wire ends used in screw terminals. |                 <img src="images/connectors/" width="40">                  |
 | 9  | **Ring Terminal**                        |               Ring-shaped lug for bolted connections (earth/ground). |                 <img src="images/connectors/" width="40">                  |
 | 10 | **Spade / Fork Terminal**                |                     Forked lug for quick screw-terminal connections. |                 <img src="images/connectors/" width="40">                  |
