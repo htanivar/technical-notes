@@ -22,20 +22,20 @@
 | 15 | **Dupont / IDC Header**                  |                   Simple 2.54mm header and crimp housings (jumpers). |     <img src="images/connectors/15-dupont-idc-header.jpg" width="40">      |
 | 16 | **RJ45 (Ethernet)**                      |                           8P8C modular connector for network cables. |            <img src="images/connectors/16-rj45.jpg" width="40">            |
 | 17 | **RJ11 (Telephone)**                     |                           6P2/6P4 modular connector for phone lines. |            <img src="images/connectors/17-rj11.jpg" width="40">            |
-| 18 | **BNC (Bayonet)**                        |                         Coaxial connector for RF and test equipment. |                 <img src="images/connectors/" width="40">                  |
-| 19 | **SMA / RP-SMA**                         |                                  Small RF coax connector (antennas). |                 <img src="images/connectors/" width="40">                  |
-| 20 | **Banana Plug / Jack**                   |                                   4mm plug for lab/test connections. |                 <img src="images/connectors/" width="40">                  |
-| 21 | **Anderson Powerpole / SB50**            |              Genderless power connectors for DC power and batteries. |                 <img src="images/connectors/" width="40">                  |
-| 22 | **XT60 / XT90**                          |              High-current RC battery connectors (commonly for LiPo). |                 <img src="images/connectors/" width="40">                  |
-| 23 | **MC4 (Solar)**                          |                           Waterproof PV connectors for solar panels. |                 <img src="images/connectors/" width="40">                  |
-| 24 | **IEC C13 / C14**                        |                 Mains appliance inlet and cord connector (PC power). |                 <img src="images/connectors/" width="40">                  |
-| 25 | **USB-A / USB-C / Micro-USB**            |                            Common data/power connectors for devices. |                 <img src="images/connectors/" width="40">                  |
-| 26 | **Coax F-connector**                     |                            Threaded RF connector for TV/coax cables. |                 <img src="images/connectors/" width="40">                  |
-| 27 | **Solder Sleeve / Solder Seal**          |                   Heat-activated solder tube for waterproof splices. |                 <img src="images/connectors/" width="40">                  |
+| 18 | **BNC (Bayonet)**                        |                         Coaxial connector for RF and test equipment. |        <img src="images/connectors/18-bnc-bayonet.jpg" width="40">         |
+| 19 | **SMA / RP-SMA**                         |                                  Small RF coax connector (antennas). |         <img src="images/connectors/19-sma-rp-sma.jpg" width="40">         |
+| 20 | **Banana Plug / Jack**                   |                                   4mm plug for lab/test connections. |      <img src="images/connectors/20-banana-plug-jack.jpg" width="40">      |
+| 21 | **Anderson Powerpole / SB50**            |              Genderless power connectors for DC power and batteries. |  <img src="images/connectors/21-anderson-powerpole-sb50.jpg" width="40">   |
+| 22 | **XT60 / XT90**                          |              High-current RC battery connectors (commonly for LiPo). |         <img src="images/connectors/22-xt60-xt90.jpg" width="40">          |
+| 23 | **MC4 (Solar)**                          |                           Waterproof PV connectors for solar panels. |         <img src="images/connectors/23-mc4-solar.jpg" width="40">          |
+| 24 | **IEC C13 / C14**                        |                 Mains appliance inlet and cord connector (PC power). |        <img src="images/connectors/24-iec-c13-c14.jpg" width="40">         |
+| 25 | **USB-A / USB-C / Micro-USB**            |                            Common data/power connectors for devices. |            <img src="images/connectors/25-usb.jpg" width="40">             |
+| 26 | **Coax F-connector**                     |                            Threaded RF connector for TV/coax cables. |      <img src="images/connectors/26-coax-f-connector.jpg" width="40">      |
+| 27 | **Solder Sleeve / Solder Seal**          |                   Heat-activated solder tube for waterproof splices. | <img src="images/connectors/27-solder-sleeve-solder-seal.jpg" width="40">  |
 | 28 | **Push-In (Backstab) Socket Connectors** |           Quick push-in connectors inside some outlets and fixtures. |                 <img src="images/connectors/" width="40">                  |
 | 29 | **Wire-to-Board IDC**                    |         Insulation-displacement connector for ribbon or flat cables. |                 <img src="images/connectors/" width="40">                  |
-| 30 | **Terminal Lug / Cable Lug**             |               Heavy-duty lug for bolting large cross-section cables. |                 <img src="images/connectors/" width="40">                  |
-| 31 | **Heat Shrink Tubing (with adhesive)**   |           Not a connector but used to insulate and seal connections. |                 <img src="images/connectors/" width="40">                  |
+| 30 | **Terminal Lug / Cable Lug**             |               Heavy-duty lug for bolting large cross-section cables. |        <img src="images/connectors/30-terminal-lug.jpg" width="40">        |
+| 31 | **Heat Shrink Tubing (with adhesive)**   |           Not a connector but used to insulate and seal connections. |     <img src="images/connectors/31-heat-shrink-tubing.jpg" width="40">     |
 
 ---
 
