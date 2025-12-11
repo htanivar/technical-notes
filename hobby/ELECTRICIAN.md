@@ -1,5 +1,12 @@
 # DIY Home Wiring Backup Wire Guide
 
+## Table of Contents
+
+- [Terminology](electrician/terminology.md)
+- [Tools](#tools)
+- [Connctors](electrician/connectors.md)
+- [Wiring Guide](electrician/wiring-guide.md)
+
 This guide helps you choose the right **mm² wire sizes** to keep as backup for common home electrical work.
 
 ## 📦 Quick Backup Kit Summary (with Gauge & International Measurements)
@@ -83,12 +90,14 @@ If you want, I can also generate:
 - Buy a mix of **red, black, and green** for phase, neutral, and earth.
 - Keep extra length (10–15%) for loops, box entry, and routing.
 
-## 📝 Notes
+## 📝 Notes (with consequences explained)
 
-- Avoid aluminum wires for home DIY work.
-- Never mix wire sizes in the same circuit.
-- Ensure MCB ratings match the wire size.
-- Use proper connectors (Wagos or screw terminals).
+| Advice                                            | Meaning                                                                   | Why Not to Ignore / Possible Damage                                                                           |
+|---------------------------------------------------|---------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------|
+| Avoid aluminum wires for home DIY work.           | Aluminum has higher resistance and oxidizes easily.                       | Can overheat, loosen over time, cause **sparks, fire risk, melting insulation**, and poor current flow.       |
+| Never mix wire sizes in the same circuit.         | Using different mm² wires in one circuit creates uneven current handling. | Thinner wire may overload → **overheating, fire, circuit failure**, and MCB may not trip in time.             |
+| Ensure MCB ratings match the wire size.           | MCB must trip before the wire overheats.                                  | Oversized MCB = wire burns before MCB trips → **severe fire hazard**, melted insulation, electric shock risk. |
+| Use proper connectors (Wagos or screw terminals). | Ensures secure, low-resistance connections.                               | Loose/poor connections cause **arcing**, high heat, flickering lights, burning smell, and fire.               |
 
 ---
 
