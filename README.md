@@ -12,3 +12,7 @@
 | -                             | -                             | [GRADLE](gradle.md)           |                           |
 | -                             | -                             | [GITLAB](gitlab/GITLAB.md)    |                           |
 
+# Technical Notes Home page
+| Hobbies              |
+|----------------------|
+| [Elecrician](hobby/ELECTRICIAN.md) |
