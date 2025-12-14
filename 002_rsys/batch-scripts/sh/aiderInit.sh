@@ -32,8 +32,8 @@ launch_aider() {
     echo -e "\nLaunching Aider with DeepSeek model: $DEEPSEEK_MODEL"
     echo "Using API base: $OPENAI_API_BASE"
 
-    # Launch aider with the correct parameters
-    exec aider --model "openai/$DEEPSEEK_MODEL" \
+    # Launch aider.sh with the correct parameters
+    exec aider.sh --model "openai/$DEEPSEEK_MODEL" \
         --openai-api-base "$OPENAI_API_BASE" \
         --openai-api-key "$DEEPSEEK_API_KEY" \
         "$@"
@@ -42,6 +42,6 @@ launch_aider() {
 # --- Main script logic ---
 if check_env_vars; then
     echo -e "\nVerification complete. Launching Aider..."
-    # Launch aider with all arguments passed to this script
+    # Launch aider.sh with all arguments passed to this script
     launch_aider "$@"
 fi

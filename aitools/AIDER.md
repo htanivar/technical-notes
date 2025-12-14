@@ -8,7 +8,7 @@ This guide explains how to use **Aider** with your **DeepSeek API key** for cost
 
 ### Install Aider
 ```bash
-pipx install aider-chat
+pipx install aider.sh-chat
 ```
 
 ### Configure DeepSeek API
@@ -20,7 +20,7 @@ export OPENAI_API_BASE="https://api.deepseek.com/v1"
 
 ### Verify
 ```bash
-aider --version
+aider.sh --version
 ```
 
 ---
@@ -32,7 +32,7 @@ aider --version
 
 Run:
 ```bash
-aider --model deepseek-coder
+aider.sh --model deepseek-coder
 ```
 
 ---
@@ -42,7 +42,7 @@ aider --model deepseek-coder
 ### 🔹 Start Aider in your project
 ```bash
 cd ~/your/project
-aider --model deepseek-coder
+aider.sh --model deepseek-coder
 ```
 
 ### 🔹 Add files to work on (context)
