@@ -1,3 +1,7 @@
+# Personal
+*bash-rc*
+
+
 # IDE
 .idea/
 .vscode/
@@ -59,7 +63,7 @@ jspm_packages/
 
 # User-specific files
 .bashrc
-.bash_profile
+tmp/.bash_profile
 .bash_history
 .zshrc
 .zsh_history

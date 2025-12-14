@@ -8,6 +8,8 @@ SITES["chatgpt"]="https://chatgpt.com"
 SITES["gemini"]="https://gemini.google.com"
 SITES["aistudio"]="https://aistudio.google.com"
 SITES["google"]="https://google.com"
+SITES["yahoo"]="https://www.yahoo.com"
+SITES["stackoverflow"]="https://stackoverflow.com"
 SITES["github"]="https://github.com"
 SITES["gitlab"]="https://gitlab.com"
 SITES["vikatan"]="https://vikatan.com"
@@ -17,6 +19,11 @@ SITES["veda"]="https://veda.jaganathan.co.uk"
 SITES["local-taga"]="https://localhost:1703"
 SITES["taga"]="https://taga.jaganathan.co.uk:1703"
 SITES["devtaga"]="http://localhost:8080"
+
+
+
+
+
 
 # Check for argument
 if [ -z "$1" ]; then
