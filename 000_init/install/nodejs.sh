@@ -1,11 +1,15 @@
 #!/bin/bash
 
+set -e
+
 # Identify Linux distribution
 distro=$(lsb_release -is | tr '[:upper:]' '[:lower:]')
 
+echo "Installing Node.js 20 on $distro..."
+
 # Install pre-requisites
-if [[ "$distro" == "ubuntu" || "$distro" == "debian" ]]; then
-  sudo apt update && sudo apt install -y curl
+if [[ "$distro" == "ubuntu" || "$distro" == "debian" || "$distro" == "zorin" ]]; then
+  sudo apt update && sudo apt install -y curl ca-certificates gnupg
 elif [[ "$distro" == "centos" || "$distro" == "redhat" ]]; then
   sudo yum update -y && sudo yum install -y curl
 else
@@ -13,43 +17,25 @@ else
   exit 1
 fi
 
-# Check if Node.js is already installed
-node_version=$(node -v 2>/dev/null)
-if [[ -z "$node_version" ]]; then
-  # Install Node.js version 20 (using NodeSource)
-  case $distro in
-    ubuntu|debian)
-      curl -sL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-      sudo apt install -y nodejs
-      ;;
-    centos|redhat)
-      curl -sL https://rpm.nodesource.com/setup_latest.x | sudo -E bash -
-      sudo yum install -y nodejs
-      ;;
-    *)
-      echo "Unsupported distribution: $distro"
-      exit 1
-  esac
+# Install Node.js 20 (Modern NodeSource Method)
+if [[ "$distro" == "ubuntu" || "$distro" == "debian" || "$distro" == "zorin" ]]; then
+  curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+  sudo apt install -y nodejs
+else
+  curl -fsSL https://rpm.nodesource.com/setup_20.x | sudo -E bash -
+  sudo yum install -y nodejs
 fi
 
-# Verify Node.js and npm installation
-node_version=$(node -v)
-if [[ -z "$node_version" ]]; then
-  echo "Failed to install Node.js!"
-  exit 1
-fi
-npm_version=$(npm -v)
-if [[ -z "$npm_version" ]]; then
-  echo "Failed to install npm!"
-  exit 1
-fi
+# Verify Node.js
+echo "Node.js version: $(node -v)"
 
-# Install Angular CLI globally
-npm install -g @angular/cli
+# Enable Corepack (for Yarn) and install PM2 system-wide
+echo "Installing Yarn and PM2..."
+sudo corepack enable
+sudo npm install -g pm2
 
-# Verify installation
-echo "Node.js version: $node_version"
-echo "npm version: $npm_version"
-echo "Angular CLI version: $(ng --version)"
+# Verify Tools
+echo "Yarn version: $(yarn -version)"
+echo "PM2 version: $(pm2 -version)"
 
-echo "Installation complete!"
+echo "Installation complete! Node, Yarn, and PM2 are now available for all users."
