@@ -1,19 +1,21 @@
 #!/bin/bash
 
 # docker-wipe.sh
-# Removes EVERYTHING related to Docker except volumes
+# Wipes everything Docker-related EXCEPT volumes
+# Also disables BuildKit permanently for stability
 
 set -e
 
 echo "⚠ This will remove:"
 echo "  - All containers (running + stopped)"
 echo "  - All images"
-echo "  - All networks (except default)"
+echo "  - All custom networks"
 echo "  - All build cache"
 echo "  - All container logs"
-echo "  - All dangling data"
+echo "  - All dangling Docker data"
+echo "  - Disable BuildKit permanently"
 echo ""
-read -p "Are you sure? (yes/no): " confirm
+read -p "Type 'yes' to continue: " confirm
 
 if [ "$confirm" != "yes" ]; then
   echo "Aborted."
@@ -22,6 +24,9 @@ fi
 
 echo "Stopping Docker..."
 sudo systemctl stop docker
+
+echo "Removing BuildKit cache..."
+sudo rm -rf /var/lib/docker/buildkit 2>/dev/null || true
 
 echo "Starting Docker..."
 sudo systemctl start docker
@@ -35,16 +40,29 @@ docker rmi -f $(docker images -aq) 2>/dev/null || true
 echo "Removing all custom networks..."
 docker network rm $(docker network ls -q | grep -v "bridge\|host\|none") 2>/dev/null || true
 
-echo "Pruning build cache..."
-docker builder prune -a -f
+echo "Pruning builder cache..."
+docker builder prune -a -f || true
 
-echo "Pruning system (without volumes)..."
-docker system prune -a -f
+echo "Pruning system (excluding volumes)..."
+docker system prune -a -f || true
 
 echo "Clearing container logs..."
 sudo find /var/lib/docker/containers/ -type f -name "*.log" -exec truncate -s 0 {} \; 2>/dev/null || true
 
-echo "Removing leftover build cache directory..."
-sudo rm -rf /var/lib/docker/buildkit 2>/dev/null || true
+echo "Disabling BuildKit permanently..."
+sudo mkdir -p /etc/docker
 
-echo "Docker wipe completed (volumes preserved)."
+sudo tee /etc/docker/daemon.json > /dev/null <<EOF
+{
+  "features": {
+    "buildkit": false
+  }
+}
+EOF
+
+echo "Restarting Docker..."
+sudo systemctl restart docker
+
+echo "Docker wipe completed."
+echo "Volumes preserved."
+echo "BuildKit disabled."
