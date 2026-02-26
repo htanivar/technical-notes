@@ -25,6 +25,15 @@ help_menu() {
     echo "    container rm <name/id> - Remove a container."
     echo "    container connect <name/id>- connect to container in bash."
     echo ""
+    echo "  compose <subcommand>"
+    echo "    compose up            - Start all services defined in docker-compose.yml"
+    echo "    compose down          - Stop and remove all services"
+    echo "    compose restart       - Restart all services"
+    echo "    compose purge         - Stop, remove containers, and remove volumes"
+    echo "    compose logs [service]- View logs (optionally for a specific service)"
+    echo "    compose ps            - List all compose services"
+    echo "    compose build         - Build or rebuild services"
+    echo ""
     echo "  help                    - Display this help menu."
 }
 
@@ -176,6 +185,50 @@ setup_port_mappings() {
     echo "$port_mappings"
 }
 
+# Function to handle compose-related operations
+handle_compose_ops() {
+    case "$1" in
+        "up")
+            echo "Starting all services defined in docker-compose.yml..."
+            docker compose up -d
+            ;;
+        "down")
+            echo "Stopping and removing all services..."
+            docker compose down
+            ;;
+        "restart")
+            echo "Restarting all services..."
+            docker compose restart
+            ;;
+        "purge")
+            echo "Stopping, removing containers, and removing volumes..."
+            docker compose down -v
+            ;;
+        "logs")
+            if [ -z "$2" ]; then
+                echo "Showing logs for all services..."
+                docker compose logs -f
+            else
+                echo "Showing logs for service '$2'..."
+                docker compose logs -f "$2"
+            fi
+            ;;
+        "ps")
+            echo "Listing all compose services..."
+            docker compose ps
+            ;;
+        "build")
+            echo "Building or rebuilding services..."
+            docker compose build
+            ;;
+        *)
+            echo "Error: Unknown compose subcommand: '$1'"
+            help_menu
+            exit 1
+            ;;
+    esac
+}
+
 # Function to handle container-related operations
 handle_container_ops() {
     case "$1" in
@@ -298,6 +351,10 @@ case "$1" in
 
     "container")
         handle_container_ops "${@:2}"
+        ;;
+    
+    "compose")
+        handle_compose_ops "${@:2}"
         ;;
     
     "help")
