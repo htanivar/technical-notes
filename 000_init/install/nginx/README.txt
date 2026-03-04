@@ -69,7 +69,6 @@ Use these commands to verify the installation:
 
 * **Check the current test site**:
     $ curl -s -k -H "Host: nginx.localhost.com" https://127.0.0.1/
-    $ curl -s -k -H "Host: mobi.localhost.com" https://127.0.0.1/
 
 * **View the full installation log**:
-    $ cat /var/log/nginx_install_20251106_090212.log
+    $ cat /var/log/nginx_install_20260304_103414.log
