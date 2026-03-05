@@ -38,18 +38,37 @@ print_error() {
 detect_os() {
     print_header "SYSTEM INFORMATION"
 
+    # Check for Raspberry Pi first
+    IS_RASPBERRY_PI=false
+    if [[ -f /proc/device-tree/model ]]; then
+        MODEL=$(tr -d '\0' < /proc/device-tree/model)
+        if [[ "$MODEL" == *"Raspberry Pi"* ]]; then
+            IS_RASPBERRY_PI=true
+        fi
+    fi
+
     if [[ "$OSTYPE" == "linux-gnu"* ]]; then
         # Linux detection
         if [ -f /etc/os-release ]; then
             . /etc/os-release
             OS_NAME=$NAME
             OS_VERSION=$VERSION_ID
-            echo -e "Operating System: ${GREEN}$OS_NAME $OS_VERSION${NC}"
+            if [ "$IS_RASPBERRY_PI" = true ]; then
+                echo -e "Operating System: ${GREEN}Raspberry Pi OS ($OS_NAME $OS_VERSION)${NC}"
+                echo -e "Model: ${CYAN}$MODEL${NC}"
+            else
+                echo -e "Operating System: ${GREEN}$OS_NAME $OS_VERSION${NC}"
+            fi
         elif [ -f /etc/redhat-release ]; then
             OS_NAME=$(cat /etc/redhat-release)
             echo -e "Operating System: ${GREEN}$OS_NAME${NC}"
         else
-            echo -e "Operating System: ${GREEN}Linux (Unknown Distro)${NC}"
+            if [ "$IS_RASPBERRY_PI" = true ]; then
+                echo -e "Operating System: ${GREEN}Raspberry Pi OS (Unknown Distro)${NC}"
+                echo -e "Model: ${CYAN}$MODEL${NC}"
+            else
+                echo -e "Operating System: ${GREEN}Linux (Unknown Distro)${NC}"
+            fi
         fi
         OS_TYPE="linux"
 
@@ -77,6 +96,22 @@ detect_os() {
     echo -e "Hostname: ${CYAN}$(hostname)${NC}"
     echo -e "Kernel: ${CYAN}$(uname -r)${NC}"
     echo -e "Architecture: ${CYAN}$(uname -m)${NC}"
+    
+    # Additional Raspberry Pi info
+    if [ "$IS_RASPBERRY_PI" = true ]; then
+        # Check for serial number
+        if [[ -f /proc/cpuinfo ]]; then
+            SERIAL=$(grep -i "serial" /proc/cpuinfo | head -1 | awk '{print $3}')
+            if [ ! -z "$SERIAL" ]; then
+                echo -e "Serial Number: ${CYAN}$SERIAL${NC}"
+            fi
+        fi
+        # Check for revision
+        REVISION=$(grep -i "revision" /proc/cpuinfo | head -1 | awk '{print $3}')
+        if [ ! -z "$REVISION" ]; then
+            echo -e "Hardware Revision: ${CYAN}$REVISION${NC}"
+        fi
+    fi
 }
 
 # CPU Information
@@ -119,14 +154,71 @@ check_cpu() {
         echo -e "Load Average: ${CYAN}$CPU_LOAD${NC}"
 
         # CPU Temperature (if available)
-        if [[ "$OS_TYPE" == "linux" ]] && [ -f /sys/class/thermal/thermal_zone0/temp ]; then
-            CPU_TEMP=$(($(cat /sys/class/thermal/thermal_zone0/temp) / 1000))
-            if [ $CPU_TEMP -gt 80 ]; then
-                echo -e "CPU Temperature: ${RED}${CPU_TEMP}°C (High)${NC}"
-            elif [ $CPU_TEMP -gt 60 ]; then
-                echo -e "CPU Temperature: ${YELLOW}${CPU_TEMP}°C (Moderate)${NC}"
+        if [[ "$OS_TYPE" == "linux" ]]; then
+            # Try multiple temperature sources for Raspberry Pi
+            TEMP_SOURCES=()
+            if [ -f /sys/class/thermal/thermal_zone0/temp ]; then
+                TEMP_SOURCES+=("/sys/class/thermal/thermal_zone0/temp")
+            fi
+            # Raspberry Pi specific temperature
+            if [ -f /sys/class/thermal/thermal_zone1/temp ]; then
+                TEMP_SOURCES+=("/sys/class/thermal/thermal_zone1/temp")
+            fi
+            # vcgencmd for Raspberry Pi
+            if command -v vcgencmd &> /dev/null; then
+                CPU_TEMP_VC=$(vcgencmd measure_temp | cut -d= -f2 | cut -d\' -f1)
+                if [ ! -z "$CPU_TEMP_VC" ]; then
+                    CPU_TEMP=${CPU_TEMP_VC%.*}
+                    if [ $CPU_TEMP -gt 80 ]; then
+                        echo -e "CPU Temperature: ${RED}${CPU_TEMP_VC} (High)${NC}"
+                    elif [ $CPU_TEMP -gt 60 ]; then
+                        echo -e "CPU Temperature: ${YELLOW}${CPU_TEMP_VC} (Moderate)${NC}"
+                    else
+                        echo -e "CPU Temperature: ${GREEN}${CPU_TEMP_VC} (Normal)${NC}"
+                    fi
+                fi
             else
-                echo -e "CPU Temperature: ${GREEN}${CPU_TEMP}°C (Normal)${NC}"
+                # Fall back to thermal zone files
+                for temp_file in "${TEMP_SOURCES[@]}"; do
+                    if [ -f "$temp_file" ]; then
+                        CPU_TEMP=$(($(cat "$temp_file") / 1000))
+                        if [ $CPU_TEMP -gt 80 ]; then
+                            echo -e "CPU Temperature: ${RED}${CPU_TEMP}°C (High)${NC}"
+                        elif [ $CPU_TEMP -gt 60 ]; then
+                            echo -e "CPU Temperature: ${YELLOW}${CPU_TEMP}°C (Moderate)${NC}"
+                        else
+                            echo -e "CPU Temperature: ${GREEN}${CPU_TEMP}°C (Normal)${NC}"
+                        fi
+                        break
+                    fi
+                done
+            fi
+            
+            # Additional Raspberry Pi information using vcgencmd
+            if command -v vcgencmd &> /dev/null; then
+                echo -e "\n${PURPLE}Raspberry Pi Specific:${NC}"
+                # Get clock frequencies
+                ARM_CLOCK=$(vcgencmd measure_clock arm | cut -d= -f2)
+                if [ ! -z "$ARM_CLOCK" ]; then
+                    ARM_CLOCK_MHZ=$((ARM_CLOCK / 1000000))
+                    echo -e "ARM Clock: ${CYAN}${ARM_CLOCK_MHZ} MHz${NC}"
+                fi
+                
+                # Get core voltage
+                CORE_VOLTAGE=$(vcgencmd measure_volts core | cut -d= -f2)
+                if [ ! -z "$CORE_VOLTAGE" ]; then
+                    echo -e "Core Voltage: ${CYAN}${CORE_VOLTAGE}${NC}"
+                fi
+                
+                # Get throttling status
+                THROTTLED=$(vcgencmd get_throttled | cut -d= -f2)
+                if [ ! -z "$THROTTLED" ]; then
+                    if [ "$THROTTLED" != "0x0" ]; then
+                        echo -e "Throttling Status: ${YELLOW}${THROTTLED} (Active)${NC}"
+                    else
+                        echo -e "Throttling Status: ${GREEN}${THROTTLED} (Inactive)${NC}"
+                    fi
+                fi
             fi
         fi
 
@@ -406,6 +498,31 @@ check_system_info() {
 
     # System date
     echo -e "\nSystem Date/Time: ${CYAN}$(date)${NC}"
+    
+    # Additional Raspberry Pi information
+    if command -v vcgencmd &> /dev/null; then
+        echo -e "\n${PURPLE}Raspberry Pi Additional Info:${NC}"
+        # GPU temperature
+        GPU_TEMP=$(vcgencmd measure_temp | cut -d= -f2 | cut -d\' -f1)
+        if [ ! -z "$GPU_TEMP" ]; then
+            GPU_TEMP_INT=${GPU_TEMP%.*}
+            if [ $GPU_TEMP_INT -gt 80 ]; then
+                echo -e "GPU Temperature: ${RED}${GPU_TEMP}°C (High)${NC}"
+            elif [ $GPU_TEMP_INT -gt 60 ]; then
+                echo -e "GPU Temperature: ${YELLOW}${GPU_TEMP}°C (Moderate)${NC}"
+            else
+                echo -e "GPU Temperature: ${GREEN}${GPU_TEMP}°C (Normal)${NC}"
+            fi
+        fi
+        
+        # Memory split between CPU and GPU
+        GPU_MEM=$(vcgencmd get_mem gpu | cut -d= -f2)
+        ARM_MEM=$(vcgencmd get_mem arm | cut -d= -f2)
+        if [ ! -z "$GPU_MEM" ] && [ ! -z "$ARM_MEM" ]; then
+            echo -e "GPU Memory: ${CYAN}${GPU_MEM}${NC}"
+            echo -e "ARM Memory: ${CYAN}${ARM_MEM}${NC}"
+        fi
+    fi
 }
 
 # Main execution
@@ -453,6 +570,37 @@ main() {
         if [ $ZOMBIES -gt 0 ]; then
             HEALTHY=false
             print_error "Zombie processes found: $ZOMBIES"
+        fi
+        
+        # Raspberry Pi specific checks
+        if command -v vcgencmd &> /dev/null; then
+            # Check for throttling
+            THROTTLED=$(vcgencmd get_throttled | cut -d= -f2)
+            if [ "$THROTTLED" != "0x0" ]; then
+                HEALTHY=false
+                print_warning "Raspberry Pi throttling detected: $THROTTLED"
+                # Decode throttling bits
+                if [ $((THROTTLED & 0x1)) -ne 0 ]; then
+                    print_error "  Under-voltage detected"
+                fi
+                if [ $((THROTTLED & 0x2)) -ne 0 ]; then
+                    print_error "  ARM frequency capped"
+                fi
+                if [ $((THROTTLED & 0x4)) -ne 0 ]; then
+                    print_error "  Currently throttled"
+                fi
+                if [ $((THROTTLED & 0x8)) -ne 0 ]; then
+                    print_error "  Soft temperature limit active"
+                fi
+            fi
+            
+            # Check temperature
+            CPU_TEMP_VC=$(vcgencmd measure_temp | cut -d= -f2 | cut -d\' -f1)
+            CPU_TEMP=${CPU_TEMP_VC%.*}
+            if [ $CPU_TEMP -gt 85 ]; then
+                HEALTHY=false
+                print_error "High CPU temperature detected: ${CPU_TEMP}°C"
+            fi
         fi
     fi
 
