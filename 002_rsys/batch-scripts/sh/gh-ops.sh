@@ -1,13 +1,26 @@
 #!/usr/bin/env bash
-
 set -e
 
 BRANCH=$(git branch --show-current)
+echo "Current branch: $BRANCH"
 
-git push -u origin "$BRANCH"
+BASE=$(git symbolic-ref refs/remotes/origin/HEAD | sed 's@^refs/remotes/origin/@@')
+echo "Base branch detected: $BASE"
 
-PR_URL=$(gh pr create --fill --head "$BRANCH")
+echo "Pushing branch..."
+git push origin "$BRANCH"
 
-PR_NUMBER=$(echo "$PR_URL" | grep -o '[0-9]\+$')
+echo "Checking PR..."
+PR=$(gh pr list --head "$BRANCH" --json number --jq '.[0].number' 2>/dev/null || true)
 
-gh pr merge "$PR_NUMBER" --squash --delete-branch --auto
+if [ -z "$PR" ]; then
+    echo "Creating PR..."
+    gh pr create --base "$BASE" --head "$BRANCH" --fill
+else
+    echo "Existing PR: #$PR"
+fi
+
+echo "Merging PR..."
+gh pr merge "$BRANCH" --squash --delete-branch --auto
+
+echo "Done."
