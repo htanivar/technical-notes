@@ -285,7 +285,8 @@ handle_container_ops() {
             fi
 
             # Add image and command
-            cmd="$cmd \"$image_name\" tail -f /dev/null"
+#            cmd="$cmd \"$image_name\" tail -f /dev/null"
+            cmd="$cmd \"$image_name\""
 
             echo "Creating a new container named '$container_name' from image '$image_name'..."
             echo "Executing: $cmd"
