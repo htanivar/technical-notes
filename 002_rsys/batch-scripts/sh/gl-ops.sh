@@ -52,21 +52,30 @@ if [ -z "$MR" ] || [ "$MR" = "null" ]; then
     echo "Creating merge request..."
     # Get the first commit message to use as title
     TITLE=$(git log --oneline -1 --format="%s" 2>/dev/null || echo "Merge $BRANCH into $BASE")
-    # Create MR non-interactively, but if it fails due to existing MR, continue
-    if ! glab mr create --source-branch="$BRANCH" --target-branch="$BASE" --title="$TITLE" --description="Automated merge request" --yes 2>/dev/null; then
+    # Create MR non-interactively
+    # Temporarily disable set -e to handle potential failure
+    set +e
+    glab mr create --source-branch="$BRANCH" --target-branch="$BASE" --title="$TITLE" --description="Automated merge request" --yes
+    CREATE_STATUS=$?
+    set -e
+    
+    # Check if creation was successful or failed due to existing MR
+    if [ $CREATE_STATUS -eq 0 ]; then
+        # Get the MR number after successful creation
+        MR=$(glab mr list --source-branch="$BRANCH" --json iid --jq '.[0].iid' 2>/dev/null)
+        if [ -z "$MR" ] || [ "$MR" = "null" ]; then
+            echo "Error: Failed to retrieve MR number after creation."
+            exit 1
+        fi
+    else
         echo "MR creation may have failed (possibly already exists). Trying to retrieve MR number..."
         # Try to get the MR number again
         MR=$(glab mr list --source-branch="$BRANCH" --json iid --jq '.[0].iid' 2>/dev/null)
         if [ -z "$MR" ] || [ "$MR" = "null" ]; then
             echo "Error: Failed to create or retrieve MR number."
             exit 1
-        fi
-    else
-        # Get the MR number after successful creation
-        MR=$(glab mr list --source-branch="$BRANCH" --json iid --jq '.[0].iid' 2>/dev/null)
-        if [ -z "$MR" ] || [ "$MR" = "null" ]; then
-            echo "Error: Failed to retrieve MR number after creation."
-            exit 1
+        else
+            echo "Found existing MR: !$MR"
         fi
     fi
 else
