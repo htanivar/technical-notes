@@ -1,146 +1,100 @@
 #!/usr/bin/env bash
 set -e
 
-# Check if glab is installed
+# 1. Environment & Branch Setup
 if ! command -v glab &> /dev/null; then
     echo "Error: GitLab CLI (glab) is not installed."
-    echo "Please install it first:"
-    echo "  brew install glab        # macOS"
-    echo "  apt install glab         # Debian/Ubuntu"
-    echo "  yum install glab         # RHEL/Fedora"
-    echo "Or see: https://gitlab.com/gitlab-org/cli#installation"
     exit 1
 fi
 
-# Get current branch
-BRANCH=$(git branch --show-current)
-echo "Current branch: $BRANCH"
+# Store the branch we are currently working on
+FEATURE_BRANCH=$(git branch --show-current)
 
-# Get default branch (usually main or master)
-# Try to get from git symbolic-ref first, fallback to glab
+# Determine the default/base branch
 if BASE=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@'); then
-    echo "Base branch detected via git: $BASE"
+    echo "Detected base branch: $BASE"
 else
-    # Use glab to get the default branch
     BASE=$(glab repo view --json defaultBranch --jq '.defaultBranch' 2>/dev/null || echo "main")
-    echo "Base branch detected via glab: $BASE"
 fi
 
-# Prevent running on protected branch
-if [ "$BRANCH" = "$BASE" ]; then
-    echo "Error: You are on the protected branch '$BASE'."
-    echo "Create a feature branch before running this script."
+# Guardrail: Don't run this on the base branch itself
+if [ "$FEATURE_BRANCH" = "$BASE" ]; then
+    echo "Error: You are already on the base branch ($BASE). Please switch to a feature branch."
     exit 1
 fi
 
-# Check if working tree is clean
+# 2. Logic to Find and Increment RBOT ID
+echo "🔍 Searching for the highest RBOT ticket number..."
+HIGHEST_NUM=$(git log --all --format="%s" | grep -oP 'RBOT-\K[0-9]+' | sort -rn | head -n 1 || echo "")
+
+if [ -z "$HIGHEST_NUM" ] || [ "$HIGHEST_NUM" -lt 1030 ]; then
+    NEXT_NUM=1030
+    echo "⚠️ Starting sequence at $NEXT_NUM (Historical highest: $HIGHEST_NUM)"
+else
+    NEXT_NUM=$((HIGHEST_NUM + 1))
+    echo "✅ Highest found was RBOT-$HIGHEST_NUM. Incrementing to RBOT-$NEXT_NUM"
+fi
+
+NEW_TICKET="RBOT-$NEXT_NUM"
+
+# 3. Handle Local Changes (Automatic Commit/Amend)
 if [ -n "$(git status --porcelain)" ]; then
-    echo "Working tree is not clean."
-    echo "Please commit or stash your changes before running this script."
-    git status --short
-    exit 1
+    echo "📦 Committing changes with $NEW_TICKET..."
+    git add .
+    git commit -m "$NEW_TICKET: Automated update"
+else
+    CURRENT_MSG=$(git log -1 --format="%s")
+    if [[ ! $CURRENT_MSG =~ RBOT-[0-9]+ ]]; then
+        echo "📝 Amending last commit to include $NEW_TICKET..."
+        git commit --amend -m "$NEW_TICKET: $CURRENT_MSG" --no-edit
+    fi
 fi
 
-echo "Pushing branch..."
-git push origin "$BRANCH"
+# 4. Push and Create MR
+echo "Pushing $FEATURE_BRANCH to origin (forced)..."
+git push origin "$FEATURE_BRANCH" -f
 
-echo "Checking for existing merge request..."
-# Check if MR already exists for this branch
-MR=$(glab mr list --source-branch="$BRANCH" --json iid --jq '.[0].iid' 2>/dev/null || true)
+echo "Handling Merge Request..."
+TITLE=$(git log --oneline -1 --format="%s")
+
+CREATE_OUTPUT=$(glab mr create \
+    --source-branch="$FEATURE_BRANCH" \
+    --target-branch="$BASE" \
+    --title="$TITLE" \
+    --description="Automated sync for $NEW_TICKET" \
+    --yes 2>&1) || true
+
+MR=$(echo "$CREATE_OUTPUT" | grep -oP '!\K[0-9]+' | head -n 1)
 
 if [ -z "$MR" ] || [ "$MR" = "null" ]; then
-    echo "Creating merge request..."
-    glab mr create --source-branch="$BRANCH" --target-branch="$BASE" --fill
-    # Get the MR number after creation
-    MR=$(glab mr list --source-branch="$BRANCH" --json iid --jq '.[0].iid' 2>/dev/null)
-    if [ -z "$MR" ] || [ "$MR" = "null" ]; then
-        echo "Error: Failed to create or retrieve MR number."
-        exit 1
-    fi
-else
-    echo "Existing MR found: !$MR"
+    echo "Wait... Syncing with GitLab API..."
+    sleep 2
+    MR=$(glab mr list --source-branch="$FEATURE_BRANCH" --json iid --jq '.[0].iid' 2>/dev/null || echo "")
 fi
-
-echo "Merging MR..."
-# Merge the MR with squash and delete source branch
-glab mr merge "$MR" --squash --delete-source-branch
-
-echo "Updating local repository..."
-# Switch to base branch and pull latest changes
-git checkout "$BASE"
-git pull origin "$BASE"
-
-echo "Done."
-#!/usr/bin/env bash
-set -e
-
-# Check if glab is installed
-if ! command -v glab &> /dev/null; then
-    echo "Error: GitLab CLI (glab) is not installed."
-    echo "Please install it first:"
-    echo "  brew install glab        # macOS"
-    echo "  apt install glab         # Debian/Ubuntu"
-    echo "  yum install glab         # RHEL/Fedora"
-    echo "Or see: https://gitlab.com/gitlab-org/cli#installation"
-    exit 1
-fi
-
-# Get current branch
-BRANCH=$(git branch --show-current)
-echo "Current branch: $BRANCH"
-
-# Get default branch (usually main or master)
-# Try to get from git symbolic-ref first, fallback to glab
-if BASE=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@'); then
-    echo "Base branch detected via git: $BASE"
-else
-    # Use glab to get the default branch
-    BASE=$(glab repo view --json defaultBranch --jq '.defaultBranch' 2>/dev/null || echo "main")
-    echo "Base branch detected via glab: $BASE"
-fi
-
-# Prevent running on protected branch
-if [ "$BRANCH" = "$BASE" ]; then
-    echo "Error: You are on the protected branch '$BASE'."
-    echo "Create a feature branch before running this script."
-    exit 1
-fi
-
-# Check if working tree is clean
-if [ -n "$(git status --porcelain)" ]; then
-    echo "Working tree is not clean."
-    echo "Please commit or stash your changes before running this script."
-    git status --short
-    exit 1
-fi
-
-echo "Pushing branch..."
-git push origin "$BRANCH"
-
-echo "Checking for existing merge request..."
-# Check if MR already exists for this branch
-MR=$(glab mr list --source-branch="$BRANCH" --json iid --jq '.[0].iid' 2>/dev/null || true)
 
 if [ -z "$MR" ] || [ "$MR" = "null" ]; then
-    echo "Creating merge request..."
-    glab mr create --source-branch="$BRANCH" --target-branch="$BASE" --fill
-    # Get the MR number after creation
-    MR=$(glab mr list --source-branch="$BRANCH" --json iid --jq '.[0].iid' 2>/dev/null)
-    if [ -z "$MR" ] || [ "$MR" = "null" ]; then
-        echo "Error: Failed to create or retrieve MR number."
-        exit 1
-    fi
-else
-    echo "Existing MR found: !$MR"
+    echo "❌ Error: Could not identify MR ID."
+    exit 1
 fi
 
-echo "Merging MR..."
-# Merge the MR with squash and delete source branch
-glab mr merge "$MR" --squash --delete-source-branch
+# 5. Automated Merge
+echo "Merging MR !$MR..."
+glab mr merge "$MR" \
+    --yes \
+    --squash \
+    --message "$TITLE" \
+    --remove-source-branch \
+    --when-pipeline-succeeds
 
-echo "Updating local repository..."
-# Switch to base branch and pull latest changes
+# 6. Final Local Cleanup & Reset
+echo "🔄 Returning to default branch: $BASE"
 git checkout "$BASE"
+
+echo "📥 Pulling latest changes..."
 git pull origin "$BASE"
 
-echo "Done."
+echo "🧹 Deleting local feature branch: $FEATURE_BRANCH"
+# Using -D to force delete since it was merged via squash (Git might not recognize it as merged)
+git branch -D "$FEATURE_BRANCH"
+
+echo "✨ Done! Processed $NEW_TICKET. You are now on $BASE."
