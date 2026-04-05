@@ -126,7 +126,10 @@ MR=$(glab mr list --source-branch="$BRANCH" --json iid --jq '.[0].iid' 2>/dev/nu
 
 if [ -z "$MR" ] || [ "$MR" = "null" ]; then
     echo "Creating merge request..."
-    glab mr create --source-branch="$BRANCH" --target-branch="$BASE" --fill
+    # Get the first commit message to use as title
+    TITLE=$(git log --oneline -1 --format="%s" 2>/dev/null || echo "Merge $BRANCH into $BASE")
+    # Create MR non-interactively
+    glab mr create --source-branch="$BRANCH" --target-branch="$BASE" --title="$TITLE" --description="Automated merge request" --yes
     # Get the MR number after creation
     MR=$(glab mr list --source-branch="$BRANCH" --json iid --jq '.[0].iid' 2>/dev/null)
     if [ -z "$MR" ] || [ "$MR" = "null" ]; then
