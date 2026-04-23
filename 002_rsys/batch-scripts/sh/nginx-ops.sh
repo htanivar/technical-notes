@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # nginx-ops.sh - Nginx operations script
-# Usage: ./nginx-ops.sh status
+# Usage: sudo ./nginx-ops.sh [status|start|stop|restart|help]
 
 set -euo pipefail
 
@@ -10,6 +10,7 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
+CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
 # Function to print colored output
@@ -17,6 +18,35 @@ print_color() {
     local color="$1"
     local msg="$2"
     echo -e "${color}${msg}${NC}"
+}
+
+# Function to display help
+show_help() {
+    cat << EOF
+$(print_color "${CYAN}" "nginx-ops.sh - Nginx Operations Script")
+$(print_color "${BLUE}" "Usage: sudo $0 [command]")
+
+Commands:
+  status    Check if nginx is installed, its location, and running status
+  start     Start nginx service (requires sudo)
+  stop      Stop nginx service (requires sudo)
+  restart   Restart nginx service (requires sudo)
+  help      Show this help message
+
+Examples:
+  $0 status
+  sudo $0 start
+  sudo $0 restart
+EOF
+}
+
+# Function to check if running with sufficient privileges
+check_privileges() {
+    if [[ $EUID -ne 0 ]]; then
+        print_color "${RED}" "This operation requires sudo privileges."
+        print_color "${YELLOW}" "Please run with: sudo $0 $1"
+        exit 1
+    fi
 }
 
 # Function to check if nginx is installed and get its location
@@ -104,33 +134,141 @@ show_nginx_version() {
     fi
 }
 
+# Function to start nginx
+start_nginx() {
+    print_color "${BLUE}" "Starting nginx..."
+    if command -v systemctl &> /dev/null; then
+        if systemctl start nginx; then
+            print_color "${GREEN}" "✓ Nginx started successfully via systemctl."
+        else
+            print_color "${RED}" "✗ Failed to start nginx via systemctl."
+            exit 1
+        fi
+    elif command -v service &> /dev/null; then
+        if service nginx start; then
+            print_color "${GREEN}" "✓ Nginx started successfully via service."
+        else
+            print_color "${RED}" "✗ Failed to start nginx via service."
+            exit 1
+        fi
+    else
+        # Try direct nginx binary
+        if nginx &> /dev/null; then
+            print_color "${GREEN}" "✓ Nginx started via direct binary."
+        else
+            print_color "${RED}" "✗ Failed to start nginx directly."
+            exit 1
+        fi
+    fi
+}
+
+# Function to stop nginx
+stop_nginx() {
+    print_color "${BLUE}" "Stopping nginx..."
+    if command -v systemctl &> /dev/null; then
+        if systemctl stop nginx; then
+            print_color "${GREEN}" "✓ Nginx stopped successfully via systemctl."
+        else
+            print_color "${RED}" "✗ Failed to stop nginx via systemctl."
+            exit 1
+        fi
+    elif command -v service &> /dev/null; then
+        if service nginx stop; then
+            print_color "${GREEN}" "✓ Nginx stopped successfully via service."
+        else
+            print_color "${RED}" "✗ Failed to stop nginx via service."
+            exit 1
+        fi
+    else
+        # Try to kill nginx processes
+        if pkill nginx; then
+            print_color "${GREEN}" "✓ Nginx processes terminated."
+        else
+            print_color "${RED}" "✗ No nginx processes found or failed to kill."
+            exit 1
+        fi
+    fi
+}
+
+# Function to restart nginx
+restart_nginx() {
+    print_color "${BLUE}" "Restarting nginx..."
+    if command -v systemctl &> /dev/null; then
+        if systemctl restart nginx; then
+            print_color "${GREEN}" "✓ Nginx restarted successfully via systemctl."
+        else
+            print_color "${RED}" "✗ Failed to restart nginx via systemctl."
+            exit 1
+        fi
+    elif command -v service &> /dev/null; then
+        if service nginx restart; then
+            print_color "${GREEN}" "✓ Nginx restarted successfully via service."
+        else
+            print_color "${RED}" "✗ Failed to restart nginx via service."
+            exit 1
+        fi
+    else
+        # Try to stop and start
+        stop_nginx
+        sleep 2
+        start_nginx
+    fi
+}
+
 # Main function
 main() {
-    local command="${1:-}"
+    local command="${1:-help}"
     
-    if [ "$command" != "status" ]; then
-        print_color "${BLUE}" "Usage: $0 status"
-        echo "  status   - Check nginx installation and status"
-        exit 1
-    fi
-    
-    echo "========================================"
-    echo "Nginx Status Check"
-    echo "========================================"
-    
-    # Check installation
-    if check_nginx_installed; then
-        # Show version
-        show_nginx_version
-        echo "----------------------------------------"
-        # Check running status
-        check_nginx_status
-    else
-        echo "----------------------------------------"
-        print_color "${YELLOW}" "No further status to check."
-    fi
-    
-    echo "========================================"
+    case "$command" in
+        status)
+            echo "========================================"
+            echo "Nginx Status Check"
+            echo "========================================"
+            
+            # Check installation
+            if check_nginx_installed; then
+                # Show version
+                show_nginx_version
+                echo "----------------------------------------"
+                # Check running status
+                check_nginx_status
+            else
+                echo "----------------------------------------"
+                print_color "${YELLOW}" "No further status to check."
+            fi
+            
+            echo "========================================"
+            ;;
+        start)
+            check_privileges "start"
+            if ! check_nginx_installed; then
+                exit 1
+            fi
+            start_nginx
+            ;;
+        stop)
+            check_privileges "stop"
+            if ! check_nginx_installed; then
+                exit 1
+            fi
+            stop_nginx
+            ;;
+        restart)
+            check_privileges "restart"
+            if ! check_nginx_installed; then
+                exit 1
+            fi
+            restart_nginx
+            ;;
+        help|--help|-h)
+            show_help
+            ;;
+        *)
+            print_color "${RED}" "Unknown command: $command"
+            show_help
+            exit 1
+            ;;
+    esac
 }
 
 # Run main with all arguments
