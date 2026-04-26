@@ -1,4 +1,5 @@
 # Technical Notes Home page
+[GENERIC-ASK.md](aitools/templates/GENERIC-ASK.md)
 
 | OS                            | Infra                         | Programming                   | Tools                         | AI Tools                                 |
 |-------------------------------|-------------------------------|-------------------------------|-------------------------------|------------------------------------------|
