@@ -101,13 +101,21 @@ check_security_headers() {
     echo -e "${BOLD}🔒 SECURITY HEADERS ANALYSIS${NC}"
     echo -e "${CYAN}══════════════════════════════════════════════════════════════${NC}"
     
-    local headers=$(curl -s -I -k "$1" | tr -d '\r')
+    local headers=$(curl -s -I -k --http1.1 "$1" 2>/dev/null | tr -d '\r')
+    local headers_lower=$(echo "$headers" | tr '[:upper:]' '[:lower:]')
+    
+    # DEBUG: Show first few lines
+    echo "DEBUG: First 5 lines of lowercase headers:"
+    echo "$headers_lower" | head -5
+    echo "DEBUG: End debug"
     
     check_header() {
         local header="$1"
         local description="$2"
-        if echo "$headers" | grep -qi "^$header:"; then
-            local value=$(echo "$headers" | grep -i "^$header:" | cut -d' ' -f2-)
+        local header_lower=$(echo "$header" | tr '[:upper:]' '[:lower:]')
+        
+        if echo "$headers_lower" | grep -q "^${header_lower}: "; then
+            local value=$(echo "$headers_lower" | grep "^${header_lower}:" | head -1 | cut -d':' -f2- | sed 's/^[[:space:]]*//')
             echo -e "${GREEN}✅ $header: $value${NC}"
         else
             echo -e "${RED}❌ $header - $description${NC}"
@@ -123,6 +131,14 @@ check_security_headers() {
     check_header "Permissions-Policy" "Missing - browser features not restricted"
 }
 
+
+
+
+
+
+
+
+
 # SSL/TLS Security Check
 check_ssl_security() {
     echo -e "\n${CYAN}══════════════════════════════════════════════════════════════${NC}"
@@ -137,14 +153,48 @@ check_ssl_security() {
     
     # Check SSL protocols
     echo -e "\n${YELLOW}[*] Checking supported SSL/TLS versions...${NC}"
+    
+    # Define versions and their security status
+    declare -A tls_status=(
+        ["ssl2"]="insecure (obsolete)"
+        ["ssl3"]="insecure (obsolete)"
+        ["tls1"]="insecure (deprecated - POODLE vulnerability)"
+        ["tls1_1"]="insecure (deprecated - recommended to disable)"
+        ["tls1_2"]="secure (modern - keep enabled)"
+        ["tls1_3"]="secure (best - keep enabled)"
+    )
+    
     for version in ssl2 ssl3 tls1 tls1_1 tls1_2 tls1_3; do
         if echo | openssl s_client -$version -connect "$domain":443 2>/dev/null | grep -q "CONNECTED"; then
-            echo -e "${RED}⚠️  $version is ENABLED (insecure)${NC}"
+            if [[ "$version" == "tls1_2" ]] || [[ "$version" == "tls1_3" ]]; then
+                echo -e "${GREEN}✅ $version is ENABLED - ${tls_status[$version]}${NC}"
+            else
+                echo -e "${RED}⚠️  $version is ENABLED - ${tls_status[$version]}${NC}"
+            fi
         else
-            echo -e "${GREEN}✅ $version is disabled${NC}"
+            if [[ "$version" == "tls1_2" ]] || [[ "$version" == "tls1_3" ]]; then
+                echo -e "${RED}❌ $version is DISABLED - ${tls_status[$version]} (should be enabled)${NC}"
+            else
+                echo -e "${GREEN}✅ $version is disabled - good${NC}"
+            fi
         fi
     done
+    
+    # Additional security checks
+    echo -e "\n${YELLOW}[*] Additional SSL checks:${NC}"
+    
+    # Check for weak ciphers
+    weak_ciphers=$(echo | openssl s_client -connect "$domain":443 -cipher 'EXP:LOW:MEDIUM:!HIGH:!aNULL:!eNULL' 2>/dev/null | grep -c "Cipher")
+    if [ "$weak_ciphers" -gt 0 ]; then
+        echo -e "${RED}⚠️  Weak ciphers detected${NC}"
+    else
+        echo -e "${GREEN}✅ No weak ciphers detected${NC}"
+    fi
 }
+
+
+
+
 
 # Check for common vulnerabilities
 check_vulnerabilities() {
