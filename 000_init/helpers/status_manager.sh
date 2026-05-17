@@ -4,6 +4,26 @@
 # Author: Security Researcher
 # Disclaimer: Use only on websites you own or have explicit permission to test
 
+# Authorized users (space-separated list of usernames)
+AUTHORIZED_USERS="root"
+
+# Check if the script is run by an authorized user
+check_authorized_user() {
+    local current_user
+    current_user=$(whoami)
+    for user in $AUTHORIZED_USERS; do
+        if [ "$current_user" = "$user" ]; then
+            return 0
+        fi
+    done
+    echo -e "\033[0;31m[!] This script must be run by an authorized user (root).\033[0m"
+    echo -e "\033[1;33m[*] Please run with: sudo $0 $*\033[0m"
+    exit 1
+}
+
+# Run authorization check early
+check_authorized_user "$@"
+
 # Color codes for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -37,8 +57,30 @@ check_dependencies() {
     
     if [ ${#missing[@]} -ne 0 ]; then
         echo -e "${RED}[!] Missing dependencies: ${missing[*]}${NC}"
-        echo -e "${YELLOW}[*] Install with: sudo apt-get install ${missing[*]} -y${NC}"
-        exit 1
+        echo -e "${YELLOW}[*] Would you like to install them now? (y/N)${NC}"
+        read -r answer
+        if [[ "$answer" =~ ^[Yy]$ ]]; then
+            echo -e "${YELLOW}[*] Installing missing packages...${NC}"
+            sudo apt-get update -qq
+            sudo apt-get install -y "${missing[@]}"
+            # Verify installation
+            local still_missing=()
+            for dep in "${missing[@]}"; do
+                if ! command -v "$dep" &> /dev/null; then
+                    still_missing+=("$dep")
+                fi
+            done
+            if [ ${#still_missing[@]} -ne 0 ]; then
+                echo -e "${RED}[!] Failed to install: ${still_missing[*]}${NC}"
+                echo -e "${YELLOW}[*] Please install them manually and re-run the script.${NC}"
+                exit 1
+            fi
+            echo -e "${GREEN}[+] Dependencies installed successfully${NC}"
+        else
+            echo -e "${RED}[!] Cannot proceed without required dependencies.${NC}"
+            echo -e "${YELLOW}[*] Install with: sudo apt-get install ${missing[*]} -y${NC}"
+            exit 1
+        fi
     fi
     echo -e "${GREEN}[+] All dependencies satisfied${NC}"
 }
