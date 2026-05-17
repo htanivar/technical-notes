@@ -1,13 +1,22 @@
 #!/bin/bash
 # 02_configure_db.sh - Unified script for PostgreSQL/Redis setup and remote access configuration.
 
-set -euo pipefail
+# Source core utilities for logging and helper functions
+SCRIPT_DIR="$(dirname "${BASH_SOURCE[0]}")"
+source "$SCRIPT_DIR/../../helpers/core_utils.sh"
+
+# Enable strict mode for error handling
+set_strict_mode
 
 # --- Core Global Variables ---
 LOG_FILE=$(cat /tmp/medusa_log_path.txt 2>/dev/null || echo "$(pwd)/medusa_db_$(date +%Y%m%d_%H%M%S).log")
-DB_USER="medusa_user"
-DB_PASS="medusa_password"
-DB_NAME="medusa_db"
+
+# Load database credentials from environment variables if set, otherwise generate secure defaults
+DB_USER="${MEDUSA_DB_USER:-medusa_user}"
+DB_PASS="${MEDUSA_DB_PASS:-$(generate_random_string 16)}"
+DB_NAME="${MEDUSA_DB_NAME:-medusa_db}"
+# Store generated credentials securely for later use
+{ echo "MEDUSA_DB_USER=$DB_USER"; echo "MEDUSA_DB_PASS=$DB_PASS"; echo "MEDUSA_DB_NAME=$DB_NAME"; } > /tmp/medusa_db_credentials.sh
 
 log() {
   local msg="$1"
