@@ -1,14 +1,12 @@
 #!/bin/bash
-
 ###############################################################################
 # Wine Uninstall Script
-# This script restores your system to the state before Wine installation
-# Generated: 2026-06-20
+# Generated: Sat Jun 20 11:31:52 PM IST 2026
+# Version: 2.1 - Fixed SCRIPT_DIR and complete wine32 removal
 ###############################################################################
 
 set -euo pipefail
 
-# Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -103,12 +101,10 @@ log_success "Detected OS family: $OS_FAMILY"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BACKUP_DIR=""
 
-# Check for backup location file
 if [[ -f "$SCRIPT_DIR/.wine-backup-location" ]]; then
     BACKUP_DIR=$(cat "$SCRIPT_DIR/.wine-backup-location")
 fi
 
-# If not found, search for latest backup
 if [[ -z "$BACKUP_DIR" || ! -d "$BACKUP_DIR" ]]; then
     BACKUP_DIR=$(find "$SCRIPT_DIR" -maxdepth 1 -name "wine-backup-*" -type d | sort | tail -1)
 fi
@@ -133,16 +129,17 @@ case "$OS_FAMILY" in
     debian)
         log "Removing Wine packages (Debian-based)..."
 
-        # Remove Wine packages
-        apt-get remove --purge -y winehq-stable wine-stable wine-stable-amd64 wine-stable-i386 wine winetricks 2>/dev/null || true
+        # Remove all wine-related packages including wine32
+        apt-get remove --purge -y winehq-stable wine-stable wine-stable-amd64 wine-stable-i386:i386 wine winetricks 2>/dev/null || true
         apt-get remove --purge -y winehq-staging wine-staging 2>/dev/null || true
         apt-get remove --purge -y winehq-devel wine-devel 2>/dev/null || true
+        apt-get remove --purge -y wine32:i386 wine32 2>/dev/null || true
+        apt-get remove --purge -y wine64 2>/dev/null || true
 
-        # Autoremove dependencies
         apt-get autoremove -y
         apt-get autoclean
 
-        # Remove WineHQ repository
+        # Remove WineHQ repository files
         rm -f /etc/apt/sources.list.d/winehq-*.sources
         rm -f /etc/apt/sources.list.d/winehq-*.list
         rm -f /etc/apt/keyrings/winehq-archive.key
@@ -153,7 +150,6 @@ case "$OS_FAMILY" in
             log_success "Restored original sources.list"
         fi
         if [[ -d "$BACKUP_DIR/sources.list.d" ]]; then
-            rm -rf /etc/apt/sources.list.d/*
             cp -r "$BACKUP_DIR/sources.list.d"/* /etc/apt/sources.list.d/ 2>/dev/null || true
             log_success "Restored original sources.list.d"
         fi
@@ -171,8 +167,6 @@ case "$OS_FAMILY" in
             yum remove -y wine winehq-stable winehq-staging winehq-devel winetricks 2>/dev/null || true
             yum autoremove -y
         fi
-
-        # Remove WineHQ repo
         rm -f /etc/yum.repos.d/winehq.repo
         ;;
 
@@ -180,8 +174,6 @@ case "$OS_FAMILY" in
         log "Removing Wine packages (Arch-based)..."
 
         pacman -Rns --noconfirm wine winetricks 2>/dev/null || true
-
-        # Note about multilib - we don't disable it as it might be needed by other packages
         log_warning "Note: multilib repository was left enabled. Disable in /etc/pacman.conf if needed."
         ;;
 
@@ -189,7 +181,6 @@ case "$OS_FAMILY" in
         log "Removing Wine packages (openSUSE)..."
 
         zypper remove -y wine winetricks 2>/dev/null || true
-        zypper packages --unneeded | awk -F'|' 'NR>2 && $1 ~ /wine/ {print $3}' | xargs -r zypper remove -y 2>/dev/null || true
         ;;
 
     macos)
@@ -225,22 +216,24 @@ rm -f /usr/local/bin/wine-wrapper
 rm -f /usr/share/applications/wine*.desktop 2>/dev/null || true
 rm -f /usr/local/share/applications/wine*.desktop 2>/dev/null || true
 
-# Remove Wine prefix (ask user)
-if [[ -d "$HOME/.wine" ]]; then
-    echo
-    log_warning "Wine prefix found at $HOME/.wine"
-    log "This contains all installed Windows applications and data."
-    read -p "Remove Wine prefix? [y/N]: " response
-    if [[ "$response" =~ ^[Yy]$ ]]; then
-        rm -rf "$HOME/.wine"
-        log_success "Wine prefix removed"
-    else
-        log "Wine prefix preserved at $HOME/.wine"
+# Remove Wine prefix (ask user) - check for root and selected user
+for wine_home in "/root" "$HOME"; do
+    if [[ -d "$wine_home/.wine" ]]; then
+        echo
+        log_warning "Wine prefix found at $wine_home/.wine"
+        log "This contains all installed Windows applications and data."
+        read -p "Remove $wine_home/.wine? [y/N]: " response
+        if [[ "$response" =~ ^[Yy]$ ]]; then
+            rm -rf "$wine_home/.wine"
+            log_success "Wine prefix removed from $wine_home"
+        else
+            log "Wine prefix preserved at $wine_home/.wine"
+        fi
     fi
-fi
+done
 
 # Remove other common Wine prefixes
-for prefix in "$HOME/.wine-new" "$HOME/.wine-custom" "$HOME/.local/share/wineprefixes"; do
+for prefix in "$HOME/.wine-new" "$HOME/.wine-custom" "$HOME/.wine32" "$HOME/.local/share/wineprefixes"; do
     if [[ -d "$prefix" ]]; then
         log_warning "Additional Wine prefix found: $prefix"
         read -p "Remove $prefix? [y/N]: " response
@@ -253,6 +246,7 @@ done
 
 # Remove Wine cache
 rm -rf "$HOME/.cache/wine" 2>/dev/null || true
+rm -rf /root/.cache/wine 2>/dev/null || true
 
 # Remove generated files
 rm -f "$SCRIPT_DIR/.wine-backup-location"

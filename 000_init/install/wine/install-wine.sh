@@ -2,10 +2,10 @@
 
 ###############################################################################
 # Universal Wine Installation Script
-# Supports: Debian/Ubuntu, Fedora/RHEL/CentOS, Arch/Manjaro, openSUSE, 
+# Supports: Debian/Ubuntu, Fedora/RHEL/CentOS, Arch/Manjaro, openSUSE,
 #           macOS (via Homebrew), Windows (Git Bash / WSL2)
-# Author: Automated Script Generator
 # Date: 2026-06-20
+# Version: 3.0 - Added post-install verification and auto-fix
 ###############################################################################
 
 set -euo pipefail
@@ -15,12 +15,18 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+CYAN='\033[0;36m'
+MAGENTA='\033[0;35m'
+NC='\033[0m'
 
 # Logging
 LOG_FILE="/var/log/wine-install-$(date +%Y%m%d-%H%M%S).log"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BACKUP_DIR="$SCRIPT_DIR/wine-backup-$(date +%Y%m%d-%H%M%S)"
+
+# User profile selection (will be set interactively)
+TARGET_USER=""
+TARGET_USER_HOME=""
 
 ###############################################################################
 # UTILITY FUNCTIONS
@@ -42,6 +48,14 @@ log_error() {
     echo -e "${RED}[$(date '+%Y-%m-%d %H:%M:%S')] ✗${NC} $1" | tee -a "$LOG_FILE"
 }
 
+log_info() {
+    echo -e "${CYAN}[$(date '+%Y-%m-%d %H:%M:%S')] ℹ${NC} $1" | tee -a "$LOG_FILE"
+}
+
+log_test() {
+    echo -e "${MAGENTA}[$(date '+%Y-%m-%d %H:%M:%S')] TEST${NC} $1" | tee -a "$LOG_FILE"
+}
+
 die() {
     log_error "$1"
     exit 1
@@ -55,7 +69,6 @@ check_sudo() {
     log "Checking for root/sudo privileges..."
 
     if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
-        # Windows Git Bash - no sudo needed, but check for admin
         if ! net session &>/dev/null; then
             die "This script requires Administrator privileges on Windows. Please run as Administrator."
         fi
@@ -64,7 +77,6 @@ check_sudo() {
     fi
 
     if [[ "$OSTYPE" == "darwin"* ]]; then
-        # macOS - check for sudo
         if [[ $EUID -ne 0 ]]; then
             if ! sudo -n true 2>/dev/null; then
                 die "This script requires sudo privileges on macOS. Please run with sudo or ensure passwordless sudo is configured."
@@ -83,6 +95,88 @@ check_sudo() {
 }
 
 ###############################################################################
+# USER PROFILE SELECTION
+###############################################################################
+
+select_user_profile() {
+    echo
+    echo -e "${CYAN}╔════════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${CYAN}║           User Profile Selection for Wine                      ║${NC}"
+    echo -e "${CYAN}╚════════════════════════════════════════════════════════════════╝${NC}"
+    echo
+
+    local SUDO_USER_NAME="${SUDO_USER:-}"
+    local CURRENT_USER="$(logname 2>/dev/null || echo "$SUDO_USER_NAME")"
+
+    log_info "Detecting available user profiles..."
+    local users=()
+    while IFS=: read -r username _ uid _ _ home _; do
+        if [[ "$uid" -ge 1000 && "$uid" -lt 65534 && -d "$home" ]]; then
+            users+=("$username")
+        fi
+    done < /etc/passwd
+
+    if [[ ${#users[@]} -eq 0 ]]; then
+        log_warning "No regular users found. Using root profile."
+        TARGET_USER="root"
+        TARGET_USER_HOME="/root"
+        return
+    fi
+
+    if [[ -n "$CURRENT_USER" && "$CURRENT_USER" != "root" ]]; then
+        log_info "Current user detected: $CURRENT_USER"
+    fi
+
+    echo
+    echo -e "${CYAN}Available user profiles:${NC}"
+    local i=1
+    for user in "${users[@]}"; do
+        local marker=""
+        if [[ "$user" == "$CURRENT_USER" ]]; then
+            marker=" (current)"
+        fi
+        echo "  $i) $user$marker"
+        ((i++))
+    done
+    echo "  $i) root (not recommended)"
+    echo
+
+    local choice
+    read -p "Select user profile for Wine installation [1-$i, default: $CURRENT_USER]: " choice
+
+    if [[ -z "$choice" ]]; then
+        choice="$CURRENT_USER"
+    fi
+
+    if [[ "$choice" =~ ^[0-9]+$ ]]; then
+        if [[ "$choice" -eq $i ]]; then
+            TARGET_USER="root"
+            TARGET_USER_HOME="/root"
+        elif [[ "$choice" -ge 1 && "$choice" -lt $i ]]; then
+            TARGET_USER="${users[$((choice-1))]}"
+            TARGET_USER_HOME="$(getent passwd "$TARGET_USER" | cut -d: -f6)"
+        else
+            log_warning "Invalid selection. Using current user: $CURRENT_USER"
+            TARGET_USER="$CURRENT_USER"
+            TARGET_USER_HOME="$(getent passwd "$TARGET_USER" | cut -d: -f6)"
+        fi
+    else
+        if getent passwd "$choice" &>/dev/null; then
+            TARGET_USER="$choice"
+            TARGET_USER_HOME="$(getent passwd "$TARGET_USER" | cut -d: -f6)"
+        else
+            log_warning "User '$choice' not found. Using current user: $CURRENT_USER"
+            TARGET_USER="$CURRENT_USER"
+            TARGET_USER_HOME="$(getent passwd "$TARGET_USER" | cut -d: -f6)"
+        fi
+    fi
+
+    echo
+    log_success "Selected user profile: $TARGET_USER (home: $TARGET_USER_HOME)"
+    echo
+}
+
+###############################################################################
 # DETECT OPERATING SYSTEM
 ###############################################################################
 
@@ -96,6 +190,7 @@ detect_os() {
             OS_VERSION_ID="$VERSION_ID"
             OS_NAME="$PRETTY_NAME"
             OS_FAMILY="debian"
+            OS_CODENAME="${VERSION_CODENAME:-unknown}"
 
             case "$ID" in
                 ubuntu|debian|linuxmint|pop|elementary|zorin|mx)
@@ -118,6 +213,7 @@ detect_os() {
         else
             OS_FAMILY="debian"
             OS_NAME="Unknown Linux"
+            OS_CODENAME="unknown"
             log_warning "Cannot detect Linux distribution. Defaulting to Debian-based procedures."
         fi
 
@@ -133,7 +229,7 @@ detect_os() {
         die "Unsupported operating system: $OSTYPE"
     fi
 
-    log_success "Detected: $OS_NAME (Family: $OS_FAMILY)"
+    log_success "Detected: $OS_NAME (Family: $OS_FAMILY, Codename: $OS_CODENAME)"
 }
 
 ###############################################################################
@@ -145,7 +241,6 @@ check_prerequisites() {
 
     local missing_prereqs=()
 
-    # Check for essential commands
     case "$OS_FAMILY" in
         debian|rhel|arch|suse)
             command -v curl &>/dev/null || missing_prereqs+=("curl")
@@ -156,7 +251,6 @@ check_prerequisites() {
             command -v brew &>/dev/null || missing_prereqs+=("homebrew")
             ;;
         windows)
-            # Check for WSL or native Windows
             if [[ -f /proc/version ]] && grep -q "Microsoft" /proc/version; then
                 IS_WSL=true
                 log "WSL2 detected"
@@ -167,7 +261,6 @@ check_prerequisites() {
             ;;
     esac
 
-    # Check architecture
     ARCH=$(uname -m)
     log "Architecture: $ARCH"
 
@@ -175,15 +268,13 @@ check_prerequisites() {
         log_warning "Architecture $ARCH may not be fully supported by Wine. x86_64/amd64 recommended."
     fi
 
-    # Check disk space (need at least 2GB free)
     if [[ "$OS_FAMILY" != "windows" ]]; then
         local available_space=$(df /tmp 2>/dev/null | awk 'NR==2 {print $4}' || echo "0")
-        if [[ "$available_space" != "0" && "$available_space" -lt 2097152 ]]; then  # 2GB in KB
+        if [[ "$available_space" != "0" && "$available_space" -lt 2097152 ]]; then
             log_warning "Low disk space in /tmp. At least 2GB recommended."
         fi
     fi
 
-    # Check internet connectivity
     if ! ping -c 1 -W 5 deb.debian.org &>/dev/null && ! ping -c 1 -W 5 google.com &>/dev/null; then
         missing_prereqs+=("internet connectivity")
     fi
@@ -225,7 +316,6 @@ create_backup() {
 
     mkdir -p "$BACKUP_DIR"
 
-    # Backup package lists
     case "$OS_FAMILY" in
         debian)
             dpkg --get-selections > "$BACKUP_DIR/dpkg-selections.txt" 2>/dev/null || true
@@ -249,13 +339,12 @@ create_backup() {
             ;;
     esac
 
-    # Backup Wine config if exists
-    if [[ -d "$HOME/.wine" ]]; then
-        log_warning "Existing Wine prefix found at ~/.wine. It will be preserved."
-        echo "$HOME/.wine" > "$BACKUP_DIR/wine-prefix-location.txt"
+    local target_wine="$TARGET_USER_HOME/.wine"
+    if [[ -d "$target_wine" ]]; then
+        log_warning "Existing Wine prefix found at $target_wine. It will be preserved."
+        echo "$target_wine" > "$BACKUP_DIR/wine-prefix-location.txt"
     fi
 
-    # Save environment state
     env > "$BACKUP_DIR/environment.txt" 2>/dev/null || true
 
     log_success "Backup created at: $BACKUP_DIR"
@@ -269,60 +358,123 @@ create_backup() {
 install_wine_debian() {
     log "Installing Wine on Debian-based system..."
 
+    local CODENAME="$OS_CODENAME"
+    local WINEHQ_BASE="https://dl.winehq.org/wine-builds"
+
     # Enable 32-bit architecture
-    dpkg --add-architecture i386
+    dpkg --add-architecture i386 2>/dev/null || log_warning "i386 architecture may already be enabled"
 
     # Update package list
     apt-get update
 
     # Install prerequisites
-    apt-get install -y wget gnupg2 software-properties-common
+    apt-get install -y wget ca-certificates curl gnupg2
+
+    # Download WineHQ GPG key from ROOT of wine-builds
+    log "Adding WineHQ GPG key..."
+    mkdir -pm755 /etc/apt/keyrings
+
+    local TEMP_KEY="/tmp/winehq.key.$$"
+    if curl -fsSLo "$TEMP_KEY" "${WINEHQ_BASE}/winehq.key"; then
+        log "Downloaded WineHQ key, dearmoring..."
+        if gpg --dearmor --yes -o /etc/apt/keyrings/winehq-archive.key "$TEMP_KEY"; then
+            log_success "WineHQ GPG key installed successfully"
+        else
+            log_warning "gpg dearmor failed, copying raw key as fallback..."
+            cp "$TEMP_KEY" /etc/apt/keyrings/winehq-archive.key
+        fi
+        rm -f "$TEMP_KEY"
+    else
+        log_error "Failed to download WineHQ GPG key from ${WINEHQ_BASE}/winehq.key"
+        log "Attempting alternative download method with wget..."
+        if wget -O "$TEMP_KEY" "${WINEHQ_BASE}/winehq.key" 2>&1 | tee -a "$LOG_FILE"; then
+            if gpg --dearmor --yes -o /etc/apt/keyrings/winehq-archive.key "$TEMP_KEY"; then
+                log_success "WineHQ GPG key installed via wget fallback"
+            else
+                cp "$TEMP_KEY" /etc/apt/keyrings/winehq-archive.key
+            fi
+            rm -f "$TEMP_KEY"
+        else
+            die "Cannot download WineHQ GPG key."
+        fi
+    fi
+    chmod 644 /etc/apt/keyrings/winehq-archive.key
 
     # Add WineHQ repository
-    local CODENAME
-    if [[ -f /etc/os-release ]]; then
-        CODENAME=$(. /etc/os-release && echo "$VERSION_CODENAME")
+    log "Adding WineHQ repository..."
+
+    if [[ "$CODENAME" == "trixie" || "$CODENAME" == "unknown" ]]; then
+        log "Debian 13 (Trixie) detected. Using native WineHQ Trixie repository."
+        CODENAME="trixie"
+
+        local SOURCE_FILE="winehq-trixie.sources"
+        local TEMP_SOURCE="/tmp/${SOURCE_FILE}.$$"
+        if curl -fsSLo "$TEMP_SOURCE" "${WINEHQ_BASE}/debian/dists/trixie/${SOURCE_FILE}"; then
+            if grep -q "Types: deb" "$TEMP_SOURCE" 2>/dev/null; then
+                mv "$TEMP_SOURCE" "/etc/apt/sources.list.d/${SOURCE_FILE}"
+                log_success "Downloaded official WineHQ .sources file for Trixie"
+            else
+                rm -f "$TEMP_SOURCE"
+                create_sources_file "$CODENAME"
+            fi
+        else
+            rm -f "$TEMP_SOURCE"
+            create_sources_file "$CODENAME"
+        fi
     else
-        CODENAME="bookworm"
+        create_sources_file "$CODENAME"
     fi
-
-    # For Debian 13 (trixie), use bookworm repo as trixie might not have dedicated WineHQ repo yet
-    if [[ "$CODENAME" == "trixie" ]]; then
-        CODENAME="bookworm"
-        log_warning "Debian 13 (trixie) detected. Using bookworm WineHQ repository."
-    fi
-
-    # Add WineHQ GPG key
-    mkdir -pm755 /etc/apt/keyrings
-    wget -qO - https://dl.winehq.org/wine-builds/winehq.key | gpg --dearmor -o /etc/apt/keyrings/winehq-archive.key
-
-    # Add repository
-    echo "deb [signed-by=/etc/apt/keyrings/winehq-archive.key] https://dl.winehq.org/wine-builds/debian/ $CODENAME main" > /etc/apt/sources.list.d/winehq-$CODENAME.sources
 
     apt-get update
 
-    # Install Wine
+    # Check if WineHQ packages are available
+    if ! apt-cache policy winehq-stable 2>/dev/null | grep -q "dl.winehq.org"; then
+        log_warning "WineHQ repository not properly configured. Falling back to Debian native packages."
+        apt-get install -y wine wine64 winetricks
+
+        # Install wine32:i386 in fallback path
+        log "Installing wine32:i386 for 32-bit application support (fallback path)..."
+        apt-get install -y wine32:i386 || log_warning "wine32:i386 installation failed, continuing anyway"
+
+        return
+    fi
+
+    # Install Wine from WineHQ
     apt-get install -y --install-recommends winehq-stable
 
-    # Install Winetricks
-    apt-get install -y winetricks
+    # Install wine32:i386 for 32-bit application support (WineHQ path)
+    log "Installing wine32:i386 for 32-bit application support..."
+    apt-get install -y wine32:i386 || log_warning "wine32:i386 installation failed, continuing anyway"
+
+    # Install Winetricks and utilities
+    apt-get install -y winetricks cabextract p7zip-full
 
     log_success "Wine installed successfully on Debian-based system"
+}
+
+# Helper function to create .sources file manually
+create_sources_file() {
+    local codename="$1"
+    cat > "/etc/apt/sources.list.d/winehq-${codename}.sources" << EOF
+Types: deb
+URIs: https://dl.winehq.org/wine-builds/debian
+Suites: ${codename}
+Components: main
+Signed-By: /etc/apt/keyrings/winehq-archive.key
+Architectures: amd64 i386
+EOF
+    log_success "Created WineHQ .sources file for ${codename}"
 }
 
 install_wine_rhel() {
     log "Installing Wine on RHEL-based system..."
 
-    # Enable EPEL repository
     if command -v dnf &>/dev/null; then
         dnf install -y epel-release
         dnf config-manager --set-enabled crb 2>/dev/null || true
-
-        # Add WineHQ repository
         dnf config-manager --add-repo https://dl.winehq.org/wine-builds/fedora/$(rpm -E %fedora)/winehq.repo 2>/dev/null || {
             log_warning "WineHQ repo not available for this version. Using distribution packages."
         }
-
         dnf install -y wine
         dnf install -y winetricks
     else
@@ -337,7 +489,6 @@ install_wine_rhel() {
 install_wine_arch() {
     log "Installing Wine on Arch-based system..."
 
-    # Enable multilib repository
     if ! grep -q "^\[multilib\]" /etc/pacman.conf; then
         log "Enabling multilib repository..."
         cat >> /etc/pacman.conf << 'EOF'
@@ -369,7 +520,6 @@ install_wine_macos() {
         die "Homebrew is required but not installed. Please install Homebrew first: https://brew.sh"
     fi
 
-    # Install Xcode Command Line Tools if not present
     if ! xcode-select -p &>/dev/null; then
         log "Installing Xcode Command Line Tools..."
         xcode-select --install
@@ -377,7 +527,6 @@ install_wine_macos() {
         exit 0
     fi
 
-    # Install Wine using Homebrew
     brew install --cask wine-stable
     brew install winetricks
 
@@ -407,16 +556,8 @@ install_wine_windows() {
                 ;;
         esac
     else
-        # Native Windows with Git Bash
-        log "Native Windows detected. Wine is not typically needed on Windows as it's a Windows compatibility layer for Linux/macOS."
-        log "If you need to run Windows applications, you can run them natively."
-        log "If you need Wine for development/testing purposes, consider using WSL2."
-
-        # Optionally install Chocolatey for package management
-        if ! command -v choco &>/dev/null; then
-            log_warning "Chocolatey not found. For Windows package management, consider installing Chocolatey."
-        fi
-
+        log "Native Windows detected. Wine is not typically needed on Windows."
+        log "If you need Wine for development/testing, consider using WSL2."
         die "Wine installation on native Windows is not supported. Use WSL2 for Wine on Windows."
     fi
 }
@@ -428,19 +569,32 @@ install_wine_windows() {
 post_install() {
     log "Performing post-installation configuration..."
 
-    # Initialize Wine prefix
+    # Initialize Wine prefix for the SELECTED user
     if command -v wine &>/dev/null; then
-        log "Initializing Wine prefix..."
-        WINEARCH=win64 winecfg &>/dev/null || true
+        log "Initializing Wine prefix for user: $TARGET_USER..."
+
+        # CRITICAL: Remove any corrupted prefix first
+        local target_wine="$TARGET_USER_HOME/.wine"
+        if [[ -d "$target_wine" ]]; then
+            log_warning "Existing Wine prefix detected at $target_wine"
+            log_info "Removing potentially corrupted prefix to ensure clean initialization..."
+            rm -rf "$target_wine"
+        fi
+
+        # Run winecfg as the target user to create prefix in their home
+        if [[ "$TARGET_USER" != "root" ]]; then
+            sudo -u "$TARGET_USER" WINEARCH=win64 winecfg &>/dev/null || true
+        else
+            WINEARCH=win64 winecfg &>/dev/null || true
+        fi
 
         # Verify installation
         WINE_VERSION=$(wine --version 2>/dev/null || echo "unknown")
         log_success "Wine version: $WINE_VERSION"
     fi
 
-    # Create useful aliases and desktop entries (Linux only)
+    # Create wrapper script
     if [[ "$OS_FAMILY" != "macos" && "$OS_FAMILY" != "windows" ]]; then
-        # Create a simple wrapper script
         cat > /usr/local/bin/wine-wrapper << 'EOF'
 #!/bin/bash
 # Wine wrapper script for better integration
@@ -461,6 +615,136 @@ EOF
 }
 
 ###############################################################################
+# POST-INSTALLATION VERIFICATION
+###############################################################################
+
+verify_installation() {
+    echo
+    echo -e "${MAGENTA}╔════════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${MAGENTA}║           Post-Installation Verification                       ║${NC}"
+    echo -e "${MAGENTA}╚════════════════════════════════════════════════════════════════╝${NC}"
+    echo
+
+    local tests_passed=0
+    local tests_failed=0
+    local target_wine="$TARGET_USER_HOME/.wine"
+
+    # TEST 1: wine command exists
+    log_test "TEST 1/5: Checking wine command availability..."
+    if command -v wine &>/dev/null; then
+        log_success "wine command found"
+        ((tests_passed++))
+    else
+        log_error "wine command NOT found in PATH"
+        ((tests_failed++))
+    fi
+
+    # TEST 2: wine --version works
+    log_test "TEST 2/5: Checking wine --version..."
+    local version_output
+    if version_output=$(sudo -u "$TARGET_USER" wine --version 2>&1); then
+        log_success "wine --version works: $version_output"
+        ((tests_passed++))
+    else
+        log_error "wine --version FAILED: $version_output"
+        ((tests_failed++))
+    fi
+
+    # TEST 3: Wine prefix exists and is not empty
+    log_test "TEST 3/5: Checking Wine prefix at $target_wine..."
+    if [[ -d "$target_wine" && -d "$target_wine/drive_c/windows" ]]; then
+        log_success "Wine prefix exists and contains Windows system files"
+        ((tests_passed++))
+    else
+        log_error "Wine prefix is missing or incomplete"
+        ((tests_failed++))
+    fi
+
+    # TEST 4: winecfg can run
+    log_test "TEST 4/5: Testing winecfg execution..."
+    local cfg_output
+    if cfg_output=$(sudo -u "$TARGET_USER" timeout 10 winecfg /? 2>&1); then
+        log_success "winecfg responds correctly"
+        ((tests_passed++))
+    else
+        # winecfg /? might fail but that's ok - check if it at least starts
+        if [[ "$cfg_output" == *"Usage"* || "$cfg_output" == *"winecfg"* ]]; then
+            log_success "winecfg responds correctly"
+            ((tests_passed++))
+        else
+            log_error "winecfg test FAILED: $cfg_output"
+            ((tests_failed++))
+        fi
+    fi
+
+    # TEST 5: Check for kernel32.dll (critical system file)
+    log_test "TEST 5/5: Checking critical Windows system files..."
+    if [[ -f "$target_wine/drive_c/windows/system32/kernel32.dll" ]]; then
+        log_success "kernel32.dll found - prefix is healthy"
+        ((tests_passed++))
+    else
+        log_error "kernel32.dll NOT found - prefix may be corrupted"
+        ((tests_failed++))
+    fi
+
+    # Summary
+    echo
+    echo -e "${MAGENTA}╔════════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${MAGENTA}║           Verification Summary                                   ║${NC}"
+    echo -e "${MAGENTA}╚════════════════════════════════════════════════════════════════╝${NC}"
+    echo
+    log_info "Tests passed: $tests_passed/5"
+    if [[ $tests_failed -gt 0 ]]; then
+        log_error "Tests failed: $tests_failed/5"
+        echo
+        log_warning "Some tests failed. Attempting automatic repair..."
+        repair_installation
+    else
+        log_success "ALL TESTS PASSED - Wine is ready to use!"
+    fi
+    echo
+}
+
+###############################################################################
+# AUTOMATIC REPAIR
+###############################################################################
+
+repair_installation() {
+    log "Attempting to repair Wine installation..."
+
+    local target_wine="$TARGET_USER_HOME/.wine"
+
+    # Repair 1: Remove corrupted prefix and recreate
+    if [[ -d "$target_wine" ]]; then
+        log_info "Removing corrupted Wine prefix at $target_wine..."
+        rm -rf "$target_wine"
+    fi
+
+    # Repair 2: Reinstall wine32:i386 if missing
+    if [[ "$OS_FAMILY" == "debian" ]]; then
+        log_info "Reinstalling wine32:i386..."
+        apt-get install --reinstall -y wine32:i386 || true
+    fi
+
+    # Repair 3: Reinitialize prefix
+    log_info "Reinitializing Wine prefix for user $TARGET_USER..."
+    if [[ "$TARGET_USER" != "root" ]]; then
+        sudo -u "$TARGET_USER" WINEARCH=win64 winecfg &>/dev/null || true
+    else
+        WINEARCH=win64 winecfg &>/dev/null || true
+    fi
+
+    # Repair 4: Verify again
+    log_info "Running verification after repair..."
+    if [[ -f "$target_wine/drive_c/windows/system32/kernel32.dll" ]]; then
+        log_success "Repair successful! Wine prefix is now healthy."
+    else
+        log_error "Repair FAILED. Manual intervention may be required."
+        log_info "Try running: rm -rf $target_wine && WINEARCH=win64 winecfg"
+    fi
+}
+
+###############################################################################
 # GENERATE UNINSTALL SCRIPT
 ###############################################################################
 
@@ -475,16 +759,16 @@ generate_uninstall_script() {
 ###############################################################################
 # Wine Uninstall Script
 # Generated: $(date)
-# This script restores your system to the state before Wine installation
+# Version: 3.0 - Fixed SCRIPT_DIR and complete wine32 removal
 ###############################################################################
 
 set -euo pipefail
 
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m'
+RED='\\033[0;31m'
+GREEN='\\033[0;32m'
+YELLOW='\\033[1;33m'
+BLUE='\\033[0;34m'
+NC='\\033[0m'
 
 log() {
     echo -e "\${BLUE}[\$(date '+%Y-%m-%d %H:%M:%S')]\${NC} \$1"
@@ -502,53 +786,95 @@ log_error() {
     echo -e "\${RED}[\$(date '+%Y-%m-%d %H:%M:%S')] ✗\${NC} \$1"
 }
 
-# Check for root/sudo
-if [[ \$EUID -ne 0 ]]; then
-    echo "This script must be run as root or with sudo."
+die() {
+    log_error "\$1"
     exit 1
-fi
+}
 
-BACKUP_DIR="$BACKUP_LOC"
+###############################################################################
+# SUDO CHECK
+###############################################################################
 
-if [[ ! -d "\$BACKUP_DIR" ]]; then
-    log_warning "Backup directory not found at \$BACKUP_DIR"
-    log "Attempting to locate backup..."
-    BACKUP_DIR=\$(find "$(dirname "$BACKUP_DIR")" -maxdepth 1 -name "wine-backup-*" -type d | sort | tail -1)
-    if [[ -z "\$BACKUP_DIR" ]]; then
-        die "No backup found. Cannot safely uninstall."
+log "Checking for root/sudo privileges..."
+
+if [[ "\$OSTYPE" == "msys" || "\$OSTYPE" == "cygwin" ]]; then
+    if ! net session &>/dev/null; then
+        die "This script requires Administrator privileges on Windows."
+    fi
+elif [[ "\$OSTYPE" == "darwin"* ]]; then
+    if [[ \$EUID -ne 0 ]]; then
+        if ! sudo -n true 2>/dev/null; then
+            die "This script requires sudo privileges on macOS."
+        fi
+    fi
+else
+    if [[ \$EUID -ne 0 ]]; then
+        die "This script must be run as root or with sudo on Linux."
     fi
 fi
 
-log "Using backup from: \$BACKUP_DIR"
+log_success "Privileges verified"
 
 ###############################################################################
 # DETECT OS
 ###############################################################################
 
+log "Detecting operating system..."
+
+OS_FAMILY="unknown"
+
 if [[ -f /etc/os-release ]]; then
     . /etc/os-release
-    OS_ID="\$ID"
-else
-    OS_ID="unknown"
+    case "\$ID" in
+        ubuntu|debian|linuxmint|pop|elementary|zorin|mx)
+            OS_FAMILY="debian"
+            ;;
+        fedora|rhel|centos|rocky|almalinux|oracle)
+            OS_FAMILY="rhel"
+            ;;
+        arch|manjaro|endeavouros|garuda)
+            OS_FAMILY="arch"
+            ;;
+        opensuse*|suse*)
+            OS_FAMILY="suse"
+            ;;
+        *)
+            OS_FAMILY="debian"
+            ;;
+    esac
+elif [[ "\$OSTYPE" == "darwin"* ]]; then
+    OS_FAMILY="macos"
+    OS_NAME="macOS"
+elif [[ "\$OSTYPE" == "msys" || "\$OSTYPE" == "cygwin" ]]; then
+    OS_FAMILY="windows"
 fi
 
-case "\$OS_ID" in
-    ubuntu|debian|linuxmint|pop|elementary|zorin|mx)
-        OS_FAMILY="debian"
-        ;;
-    fedora|rhel|centos|rocky|almalinux|oracle)
-        OS_FAMILY="rhel"
-        ;;
-    arch|manjaro|endeavouros|garuda)
-        OS_FAMILY="arch"
-        ;;
-    opensuse*|suse*)
-        OS_FAMILY="suse"
-        ;;
-    *)
-        OS_FAMILY="unknown"
-        ;;
-esac
+log_success "Detected OS family: \$OS_FAMILY"
+
+###############################################################################
+# FIND BACKUP
+###############################################################################
+
+SCRIPT_DIR="\$(cd "\$(dirname "\${BASH_SOURCE[0]}")" && pwd)"
+BACKUP_DIR=""
+
+if [[ -f "\$SCRIPT_DIR/.wine-backup-location" ]]; then
+    BACKUP_DIR=\$(cat "\$SCRIPT_DIR/.wine-backup-location")
+fi
+
+if [[ -z "\$BACKUP_DIR" || ! -d "\$BACKUP_DIR" ]]; then
+    BACKUP_DIR=\$(find "\$SCRIPT_DIR" -maxdepth 1 -name "wine-backup-*" -type d | sort | tail -1)
+fi
+
+if [[ -z "\$BACKUP_DIR" || ! -d "\$BACKUP_DIR" ]]; then
+    log_warning "No backup directory found. Proceeding with caution..."
+    read -p "Continue without backup? [y/N]: " response
+    if [[ ! "\$response" =~ ^[Yy]\$ ]]; then
+        exit 0
+    fi
+else
+    log_success "Found backup at: \$BACKUP_DIR"
+fi
 
 ###############################################################################
 # UNINSTALL WINE
@@ -558,20 +884,28 @@ log "Uninstalling Wine..."
 
 case "\$OS_FAMILY" in
     debian)
-        # Remove Wine packages
-        apt-get remove --purge -y winehq-stable wine-stable wine-stable-amd64 wine-stable-i386 wine winetricks 2>/dev/null || true
-        apt-get autoremove -y
+        log "Removing Wine packages (Debian-based)..."
 
-        # Remove WineHQ repository
+        apt-get remove --purge -y winehq-stable wine-stable wine-stable-amd64 wine-stable-i386:i386 wine winetricks 2>/dev/null || true
+        apt-get remove --purge -y winehq-staging wine-staging 2>/dev/null || true
+        apt-get remove --purge -y winehq-devel wine-devel 2>/dev/null || true
+        apt-get remove --purge -y wine32:i386 wine32 2>/dev/null || true
+        apt-get remove --purge -y wine64 2>/dev/null || true
+
+        apt-get autoremove -y
+        apt-get autoclean
+
         rm -f /etc/apt/sources.list.d/winehq-*.sources
+        rm -f /etc/apt/sources.list.d/winehq-*.list
         rm -f /etc/apt/keyrings/winehq-archive.key
 
-        # Restore original sources if backed up
         if [[ -f "\$BACKUP_DIR/sources.list" ]]; then
             cp "\$BACKUP_DIR/sources.list" /etc/apt/sources.list
+            log_success "Restored original sources.list"
         fi
         if [[ -d "\$BACKUP_DIR/sources.list.d" ]]; then
             cp -r "\$BACKUP_DIR/sources.list.d"/* /etc/apt/sources.list.d/ 2>/dev/null || true
+            log_success "Restored original sources.list.d"
         fi
 
         apt-get update
@@ -579,26 +913,34 @@ case "\$OS_FAMILY" in
 
     rhel)
         if command -v dnf &>/dev/null; then
-            dnf remove -y wine winetricks 2>/dev/null || true
+            dnf remove -y wine winehq-stable winehq-staging winehq-devel winetricks 2>/dev/null || true
+            dnf autoremove -y
         else
-            yum remove -y wine winetricks 2>/dev/null || true
+            yum remove -y wine winehq-stable winehq-staging winehq-devel winetricks 2>/dev/null || true
+            yum autoremove -y
         fi
-
-        # Remove WineHQ repo
         rm -f /etc/yum.repos.d/winehq.repo
         ;;
 
     arch)
         pacman -Rns --noconfirm wine winetricks 2>/dev/null || true
-
-        # Disable multilib if it was enabled by us (check if it was in backup)
-        if [[ ! -d "\$BACKUP_DIR/pacman.d" ]]; then
-            log_warning "Multilib repository may have been enabled. Please disable manually in /etc/pacman.conf if needed."
-        fi
+        log_warning "Note: multilib repository was left enabled. Disable in /etc/pacman.conf if needed."
         ;;
 
     suse)
         zypper remove -y wine winetricks 2>/dev/null || true
+        ;;
+
+    macos)
+        if command -v brew &>/dev/null; then
+            brew uninstall --cask wine-stable 2>/dev/null || true
+            brew uninstall wine 2>/dev/null || true
+            brew uninstall winetricks 2>/dev/null || true
+        fi
+        ;;
+
+    windows)
+        log_warning "On native Windows, Wine is not typically installed. If using WSL, uninstall from within WSL."
         ;;
 
     *)
@@ -606,27 +948,53 @@ case "\$OS_FAMILY" in
         ;;
 esac
 
-# Remove wrapper script
+###############################################################################
+# CLEANUP
+###############################################################################
+
+log "Performing cleanup..."
+
 rm -f /usr/local/bin/wine-wrapper
-
-# Remove Wine prefix (ask user)
-if [[ -d "\$HOME/.wine" ]]; then
-    log_warning "Wine prefix found at \$HOME/.wine"
-    read -p "Remove Wine prefix? This will delete all installed Windows apps and data. [y/N]: " response
-    if [[ "\$response" =~ ^[Yy]\$ ]]; then
-        rm -rf "\$HOME/.wine"
-        log_success "Wine prefix removed"
-    else
-        log "Wine prefix preserved at \$HOME/.wine"
-    fi
-fi
-
-# Remove desktop entries
 rm -f /usr/share/applications/wine*.desktop 2>/dev/null || true
-rm -f \$HOME/.local/share/applications/wine*.desktop 2>/dev/null || true
+rm -f /usr/local/share/applications/wine*.desktop 2>/dev/null || true
 
-log_success "Wine has been uninstalled successfully"
-log "If you encounter issues, you can restore from backup at: \$BACKUP_DIR"
+for wine_home in "/root" "\$HOME"; do
+    if [[ -d "\$wine_home/.wine" ]]; then
+        echo
+        log_warning "Wine prefix found at \$wine_home/.wine"
+        log "This contains all installed Windows applications and data."
+        read -p "Remove \$wine_home/.wine? [y/N]: " response
+        if [[ "\$response" =~ ^[Yy]\$ ]]; then
+            rm -rf "\$wine_home/.wine"
+            log_success "Wine prefix removed from \$wine_home"
+        else
+            log "Wine prefix preserved at \$wine_home/.wine"
+        fi
+    fi
+done
+
+for prefix in "\$HOME/.wine-new" "\$HOME/.wine-custom" "\$HOME/.wine32" "\$HOME/.local/share/wineprefixes"; do
+    if [[ -d "\$prefix" ]]; then
+        log_warning "Additional Wine prefix found: \$prefix"
+        read -p "Remove \$prefix? [y/N]: " response
+        if [[ "\$response" =~ ^[Yy]\$ ]]; then
+            rm -rf "\$prefix"
+            log_success "Removed \$prefix"
+        fi
+    fi
+done
+
+rm -rf "\$HOME/.cache/wine" 2>/dev/null || true
+rm -rf /root/.cache/wine 2>/dev/null || true
+rm -f "\$SCRIPT_DIR/.wine-backup-location"
+
+log_success "Wine has been uninstalled successfully!"
+log "Your system has been restored to its pre-installation state."
+
+if [[ -n "\$BACKUP_DIR" && -d "\$BACKUP_DIR" ]]; then
+    log "Backup preserved at: \$BACKUP_DIR"
+    log "You can delete this directory when you're satisfied everything is working correctly."
+fi
 EOF
 
     chmod +x "$UNINSTALL_SCRIPT"
@@ -643,177 +1011,276 @@ generate_usage_guide() {
     local GUIDE_FILE="$SCRIPT_DIR/WINE-USAGE-GUIDE.md"
     local WINE_VERSION=$(wine --version 2>/dev/null || echo "installed version")
 
-    cat > "$GUIDE_FILE" << 'EOF'
+    cat > "$GUIDE_FILE" << 'GUIDE_EOF'
 # Wine Usage Guide
 
-## Table of Contents
-1. [Introduction](#introduction)
-2. [Basic Commands](#basic-commands)
-3. [Configuration](#configuration)
-4. [Installing Windows Applications](#installing-windows-applications)
-5. [Winetricks](#winetricks)
-6. [Troubleshooting](#troubleshooting)
-7. [Performance Tuning](#performance-tuning)
-8. [Uninstallation](#uninstallation)
+> **Generated:** 2026-06-20
+> **Purpose:** Comprehensive guide for using Wine on Linux, macOS, and Windows (WSL)
 
 ---
 
-## Introduction
+## Table of Contents
 
-Wine (Wine Is Not an Emulator) is a compatibility layer capable of running Windows applications on Linux, macOS, and other POSIX-compliant operating systems. It translates Windows API calls into POSIX calls on-the-fly, eliminating the performance and memory penalties of other methods.
+1. [What is Wine?](#what-is-wine)
+2. [Quick Start](#quick-start)
+3. [Basic Commands](#basic-commands)
+4. [Wine Prefix Management](#wine-prefix-management)
+5. [Configuration (winecfg)](#configuration-winecfg)
+6. [Installing Windows Applications](#installing-windows-applications)
+7. [Winetricks](#winetricks)
+8. [Common Windows Components](#common-windows-components)
+9. [Performance Tuning](#performance-tuning)
+10. [Troubleshooting](#troubleshooting)
+11. [Application-Specific Tips](#application-specific-tips)
+12. [Uninstallation](#uninstallation)
+13. [Additional Resources](#additional-resources)
 
-**Installed Version:** See output of `wine --version`
+---
+
+## What is Wine?
+
+**Wine** (originally an acronym for "Wine Is Not an Emulator") is a compatibility layer capable of running Windows applications on several POSIX-compliant operating systems, such as Linux, macOS, and BSD.
+
+Unlike a virtual machine or emulator, Wine translates Windows API calls into POSIX calls on-the-fly, eliminating the performance and memory penalties of other methods and allowing you to cleanly integrate Windows applications into your desktop.
+
+### Key Features
+- **No Windows License Required** — Runs Windows apps without a Windows installation
+- **No Virtual Machine Overhead** — Native performance, no emulation layer
+- **Seamless Integration** — Windows apps appear alongside native Linux/macOS apps
+- **Active Development** — Regular updates with improved compatibility
+
+---
+
+## Quick Start
+
+### 1. Verify Installation
+```bash
+wine --version
+```
+Expected output: `wine-11.0` or similar (version may vary)
+
+### 2. Initialize Wine for the First Time
+```bash
+winecfg
+```
+This creates the default Wine prefix at `~/.wine` and opens the configuration GUI.
+
+### 3. Run Your First Windows Application
+```bash
+wine /path/to/your-application.exe
+```
 
 ---
 
 ## Basic Commands
 
-### Check Wine Version
-```bash
-wine --version
-```
-
-### Initialize Wine Prefix
-```bash
-WINEARCH=win64 winecfg
-```
-
-### Run a Windows Application
-```bash
-wine /path/to/application.exe
-```
-
-### Run with Specific Windows Version
-```bash
-WINEPREFIX=~/.wine-custom winecfg
-# Set Windows version in the GUI, then run:
-WINEPREFIX=~/.wine-custom wine application.exe
-```
-
-### List Wine Processes
-```bash
-wineserver -p
-```
-
-### Kill All Wine Processes
-```bash
-wineserver -k
-```
+| Command | Description |
+|---------|-------------|
+| `wine --version` | Display Wine version |
+| `wine program.exe` | Run a Windows program |
+| `winecfg` | Open Wine configuration GUI |
+| `winefile` | Wine file manager |
+| `winetricks` | Helper script for installing libraries |
+| `wineserver -k` | Kill all Wine processes |
+| `wineserver -p` | Persistent Wine server |
+| `wineboot` | Simulate Windows reboot |
+| `wineconsole` | Run console applications |
+| `regedit` | Wine registry editor |
+| `msiexec /i setup.msi` | Install MSI packages |
+| `wine uninstaller` | Add/Remove Programs equivalent |
 
 ---
 
-## Configuration
+## Wine Prefix Management
 
-### Wine Prefix (Virtual C: Drive)
-- Default location: `~/.wine`
-- Environment variable: `WINEPREFIX`
-- Each prefix is an isolated Windows environment
+A **Wine prefix** (also called a "bottle") is a private Windows environment containing:
+- A virtual `C:` drive
+- Windows registry
+- Installed applications
+- Configuration files
 
-### Creating a New Prefix
-```bash
-WINEPREFIX=~/.wine-new winecfg
+### Default Prefix Location
+```
+~/.wine/
 ```
 
-### Architecture Selection
-- 64-bit (default): `WINEARCH=win64`
-- 32-bit: `WINEARCH=win32`
+### Create a New Prefix
+```bash
+# 64-bit prefix (default)
+WINEPREFIX=~/.wine-custom winecfg
 
-### Configuration Tool
+# 32-bit prefix
+WINEARCH=win32 WINEPREFIX=~/.wine32 winecfg
+```
+
+### Use a Specific Prefix
+```bash
+WINEPREFIX=~/.wine-custom wine application.exe
+```
+
+### Delete a Prefix
+```bash
+rm -rf ~/.wine-custom
+```
+
+### List All Prefixes
+```bash
+find ~ -maxdepth 2 -name ".wine*" -type d
+```
+
+### Best Practices
+- Use separate prefixes for different applications to avoid conflicts
+- Name prefixes descriptively (e.g., `~/.wine-games`, `~/.wine-office`)
+- Back up important prefixes before major changes
+
+---
+
+## Configuration (winecfg)
+
+Launch the configuration tool:
 ```bash
 winecfg
 ```
-- Set Windows version (Windows 7, 10, etc.)
-- Configure graphics (desktop emulation, resolution)
-- Configure audio drivers
-- Set drive mappings
+
+### Applications Tab
+Set the Windows version for specific applications:
+- Windows 10 (most compatible)
+- Windows 7 (for older apps)
+- Windows XP (for legacy software)
+
+### Graphics Tab
+- **Emulate a virtual desktop** — Run apps in a contained window
+- **Desktop size** — Set virtual desktop resolution
+- **Screen resolution** — DPI settings
+
+### Desktop Integration Tab
+- Configure file associations
+- Set theme and appearance
+
+### Drives Tab
+Manage drive mappings:
+- `C:` → `~/.wine/drive_c`
+- `D:` → `/mnt/data` (example)
+- `Z:` → `/` (root filesystem)
+
+### Audio Tab
+- Select audio driver (ALSA, PulseAudio, OSS)
+- Test sound
+
+### About Tab
+- Display Wine version and prefix information
 
 ---
 
 ## Installing Windows Applications
 
-### Standard Installation
+### Standard EXE Installer
 ```bash
 wine /path/to/installer.exe
 ```
 
-### MSI Installers
+### MSI Installer
 ```bash
 wine msiexec /i /path/to/installer.msi
 ```
 
-### Common Installation Directories
-- Programs: `~/.wine/drive_c/Program Files/`
-- System: `~/.wine/drive_c/windows/`
-- User data: `~/.wine/drive_c/users/$USER/`
+### Silent Installation
+```bash
+wine installer.exe /S
+wine msiexec /i setup.msi /quiet /norestart
+```
+
+### Common Installation Paths
+| Windows Path | Linux/macOS Equivalent |
+|-------------|----------------------|
+| `C:\\Program Files` | `~/.wine/drive_c/Program Files` |
+| `C:\\Program Files (x86)` | `~/.wine/drive_c/Program Files (x86)` |
+| `C:\\Users\\Username` | `~/.wine/drive_c/users/$USER` |
+| `C:\\Windows` | `~/.wine/drive_c/windows` |
+
+### Uninstalling Applications
+```bash
+wine uninstaller
+```
+This opens the "Add/Remove Programs" dialog.
 
 ---
 
 ## Winetricks
 
-Winetricks is a helper script to install libraries and components needed by some Windows applications.
+**Winetricks** is a helper script that downloads and installs various redistributable runtime libraries needed to run some programs in Wine.
 
-### Launch Winetricks GUI
+### Launch GUI
 ```bash
 winetricks
 ```
 
-### Install Common Components
+### Common Commands
 ```bash
-# Install .NET Framework
+# Install .NET Framework 4.8
 winetricks dotnet48
 
-# Install Visual C++ Runtimes
+# Install Visual C++ 2019 Redistributable
 winetricks vcrun2019
 
-# Install DirectX
+# Install all Visual C++ runtimes
+winetricks vcrun2005 vcrun2008 vcrun2010 vcrun2012 vcrun2013 vcrun2019
+
+# Install DirectX via DXVK
 winetricks dxvk
 
 # Install Core Fonts
 winetricks corefonts
 
-# Install All Common Components
-winetricks dotnet48 vcrun2019 corefonts dxvk
+# Install Windows Media Player
+winetricks wmp10
+
+# Install Internet Explorer 8
+winetricks ie8
 ```
 
-### List Available Components
+### List All Available Components
 ```bash
 winetricks list-all
 ```
 
+### List Installed Components
+```bash
+winetricks list-installed
+```
+
+### Force Reinstall a Component
+```bash
+winetricks --force dotnet48
+```
+
 ---
 
-## Troubleshooting
+## Common Windows Components
 
-### Application Won't Start
-1. Check if the application is supported: https://appdb.winehq.org
-2. Try different Windows version in `winecfg`
-3. Install required libraries using `winetricks`
-4. Check for missing DLLs: `WINEDEBUG=+loaddll wine app.exe`
-
-### Graphics Issues
+### Essential Components for Most Apps
 ```bash
-# Enable CSMT (Command Stream Multi-Threading)
-wine reg add "HKCU\Software\Wine\Direct3D" /v csmt /d 1 /t reg_dword
-
-# Use DXVK for DirectX 9/10/11
-winetricks dxvk
+winetricks corefonts vcrun2019 dotnet48 dxvk
 ```
 
-### Audio Issues
+### For Gaming
 ```bash
-winecfg
-# Go to Audio tab and select correct driver (usually ALSA or PulseAudio)
+winetricks dxvk vcrun2019 corefonts directx9
 ```
 
-### Reset Wine Prefix
+### For Microsoft Office
 ```bash
-rm -rf ~/.wine
-winecfg
+winetricks corefonts dotnet48 msxml6 gdiplus
 ```
 
-### Debug Output
+### For Adobe Software
 ```bash
-WINEDEBUG=+all wine app.exe 2>&1 | tee wine-debug.log
+winetricks corefonts vcrun2019 atmlib gdiplus msxml3 msxml6
+```
+
+### For Development Tools
+```bash
+winetricks dotnet48 vcrun2019 msxml6 gdiplus
 ```
 
 ---
@@ -821,69 +1288,297 @@ WINEDEBUG=+all wine app.exe 2>&1 | tee wine-debug.log
 ## Performance Tuning
 
 ### Environment Variables
+
+Add these to your `~/.bashrc` or `~/.zshrc` for persistent settings:
+
 ```bash
-# Disable debug messages (improves performance)
+# Disable debug output (significant performance boost)
 export WINEDEBUG=-all
 
-# Enable CSMT
+# Enable Esync (requires raised file descriptor limits)
 export WINEESYNC=1
 
-# Use Fsync (if kernel supports it)
+# Enable Fsync (Linux kernel 5.16+ with fsync patch)
 export WINEFSYNC=1
 
-# Enable large address aware
+# Enable large address aware for 32-bit apps
 export WINE_LARGE_ADDRESS_AWARE=1
+
+# Disable unused features
+export WINEDLLOVERRIDES="mscoree,mshtml="
 ```
 
 ### DXVK (Vulkan-based D3D9/10/11)
+
+DXVK translates Direct3D 9/10/11 calls to Vulkan, dramatically improving performance:
+
 ```bash
 winetricks dxvk
-# Requires Vulkan-capable GPU and drivers
 ```
 
-### Esync/Fsync
-- **Esync**: Requires raised file descriptor limits
-- **Fsync**: Requires Linux kernel 5.16+ with fsync patch
+**Requirements:**
+- Vulkan-capable GPU
+- Proper Vulkan drivers installed
 
-### GPU Drivers
-Ensure you have proper GPU drivers installed:
-- **NVIDIA**: proprietary drivers recommended
-- **AMD**: Mesa RADV (Vulkan) or AMDVLK
-- **Intel**: Mesa ANV (Vulkan)
+### GPU Driver Recommendations
+
+| GPU | Recommended Driver | Vulkan Support |
+|-----|-------------------|----------------|
+| NVIDIA | Proprietary `nvidia-driver` | Yes (via `libvulkan1`) |
+| AMD | Mesa `radeonsi` | Yes (RADV) |
+| Intel | Mesa `iris` | Yes (ANV) |
+
+### CPU Governor (Linux)
+For maximum performance while gaming:
+```bash
+# Set CPU governor to performance
+sudo cpupower frequency-set -g performance
+
+# Revert when done
+sudo cpupower frequency-set -g ondemand
+```
+
+### Gamemode (Linux)
+```bash
+# Install gamemode
+sudo apt install gamemode  # Debian/Ubuntu
+sudo dnf install gamemode  # Fedora
+
+# Run app with gamemode
+gamemoderun wine game.exe
+```
+
+---
+
+## Troubleshooting
+
+### Application Won't Start
+
+1. **Check Compatibility Database**
+   Visit [WineHQ AppDB](https://appdb.winehq.org) to see if your app is supported.
+
+2. **Try Different Windows Version**
+   ```bash
+   winecfg
+   # Set Windows version to 7 or 10
+   ```
+
+3. **Install Missing Libraries**
+   ```bash
+   winetricks corefonts vcrun2019
+   ```
+
+4. **Check for Missing DLLs**
+   ```bash
+   WINEDEBUG=+loaddll wine app.exe 2>&1 | grep "failed"
+   ```
+
+### Graphics Issues
+
+**Black screen or rendering issues:**
+```bash
+# Enable virtual desktop
+winecfg
+# Graphics → Emulate a virtual desktop
+
+# Or use DXVK
+winetricks dxvk
+```
+
+**NVIDIA-specific issues:**
+```bash
+# Enable NVIDIA optimizations
+export __GL_THREADED_OPTIMIZATIONS=1
+export __GL_SYNC_TO_VBLANK=0
+```
+
+### Audio Issues
+
+```bash
+winecfg
+# Go to Audio tab
+# Select correct driver (usually PulseAudio or ALSA)
+# Test sound
+```
+
+If audio is choppy:
+```bash
+export PULSE_LATENCY_MSEC=60
+wine app.exe
+```
+
+### Font Issues
+
+```bash
+winetricks corefonts
+# Or install all Windows fonts
+winetricks allfonts
+```
+
+### Reset Wine Prefix
+
+If everything is broken, start fresh:
+```bash
+# Backup and remove old prefix
+mv ~/.wine ~/.wine-backup
+
+# Create new prefix
+winecfg
+```
+
+### Debug Output
+
+For detailed debugging:
+```bash
+# All debug channels
+WINEDEBUG=+all wine app.exe 2>&1 | tee wine-debug.log
+
+# Specific channels
+WINEDEBUG=+dll,+file wine app.exe
+
+# Common useful channels
+WINEDEBUG=+loaddll,+seh,+relay wine app.exe
+```
+
+---
+
+## Application-Specific Tips
+
+### Microsoft Office
+```bash
+winetricks corefonts dotnet48 msxml6 gdiplus riched20
+# Install Office via:
+wine setup.exe
+```
+
+### Steam Games
+```bash
+winetricks dxvk vcrun2019 corefonts
+# Download Steam installer and run:
+wine SteamSetup.exe
+```
+
+### Adobe Photoshop
+```bash
+winetricks atmlib gdiplus msxml3 msxml6 vcrun2019 corefonts
+```
+
+### AutoCAD
+```bash
+winetricks dotnet48 vcrun2019 msxml6 corefonts
+```
+
+### Games (General)
+```bash
+winetricks dxvk vcrun2019 corefonts directx9
+# Consider using Lutris for game management
+```
 
 ---
 
 ## Uninstallation
 
-To completely remove Wine from your system, run the generated uninstall script:
+To completely remove Wine and restore your system:
 
 ```bash
 sudo bash uninstall-wine.sh
 ```
 
-This will:
-1. Remove Wine packages
-2. Remove WineHQ repositories
-3. Optionally remove your Wine prefix (and all installed Windows apps)
-4. Restore system configuration from backup
+This script will:
+1. ✅ Remove all Wine packages
+2. ✅ Remove WineHQ repositories
+3. ✅ Optionally remove Wine prefixes (with confirmation)
+4. ✅ Restore original system configuration from backup
+5. ✅ Clean up residual files
+
+### Manual Uninstallation (if script unavailable)
+
+**Debian/Ubuntu:**
+```bash
+sudo apt remove --purge winehq-stable wine-stable winetricks
+sudo apt autoremove
+sudo rm -rf ~/.wine
+```
+
+**Fedora/RHEL:**
+```bash
+sudo dnf remove wine winehq-stable winetricks
+rm -rf ~/.wine
+```
+
+**Arch:**
+```bash
+sudo pacman -Rns wine winetricks
+rm -rf ~/.wine
+```
+
+**macOS:**
+```bash
+brew uninstall --cask wine-stable
+brew uninstall winetricks
+rm -rf ~/.wine
+```
 
 ---
 
 ## Additional Resources
 
-- **WineHQ Official Website**: https://www.winehq.org
-- **Application Database**: https://appdb.winehq.org
-- **Winetricks Repository**: https://github.com/Winetricks/winetricks
-- **Wine Documentation**: https://wiki.winehq.org
-- **Community Support**: https://forum.winehq.org
+### Official Resources
+- **WineHQ Website:** https://www.winehq.org
+- **Application Database:** https://appdb.winehq.org
+- **Bug Tracker:** https://bugs.winehq.org
+- **Documentation:** https://wiki.winehq.org
+
+### Community Resources
+- **Wine Forums:** https://forum.winehq.org
+- **Reddit:** r/wine_gaming, r/linux_gaming
+- **Lutris (Game Manager):** https://lutris.net
+- **Bottles (Modern Wine Manager):** https://usebottles.com
+- **Proton (Steam's Wine fork):** https://github.com/ValveSoftware/Proton
+
+### Useful Tools
+| Tool | Purpose | Link |
+|------|---------|------|
+| **Lutris** | Game launcher & manager | https://lutris.net |
+| **Bottles** | Modern Wine prefix manager | https://usebottles.com |
+| **PlayOnLinux** | Wine prefix manager | https://www.playonlinux.com |
+| **Q4Wine** | Qt GUI for Wine | https://q4wine.brezblock.org.ua |
+| **Wine-GE** | GloriousEggroll's Wine builds | https://github.com/GloriousEggroll/wine-ge-custom |
 
 ---
 
-*Generated on: EOF
-    echo "$(date)" >> "$GUIDE_FILE"
-    cat >> "$GUIDE_FILE" << 'EOF'
-*
-EOF
+## Quick Reference Card
+
+```bash
+# Essential setup for new prefix
+WINEPREFIX=~/.wine-new WINEARCH=win64 winecfg
+winetricks corefonts vcrun2019 dxvk
+
+# Run app with optimizations
+WINEDEBUG=-all WINEESYNC=1 gamemoderun wine app.exe
+
+# Debug problems
+WINEDEBUG=+all wine app.exe 2>&1 | tee debug.log
+
+# Kill stuck Wine processes
+wineserver -k
+
+# Backup prefix
+tar czvf wine-backup.tar.gz ~/.wine
+
+# Restore prefix
+tar xzvf wine-backup.tar.gz -C ~
+```
+
+---
+
+> **Note:** Wine compatibility varies by application. Always check the [WineHQ AppDB](https://appdb.winehq.org) for specific application ratings and tips before installing complex software.
+
+---
+
+*This guide was generated alongside the Wine installation script.*
+*For support, visit https://forum.winehq.org*
+GUIDE_EOF
 
     log_success "Usage guide generated: $GUIDE_FILE"
 }
@@ -899,19 +1594,12 @@ main() {
     echo -e "${GREEN}╚════════════════════════════════════════════════════════════════╝${NC}"
     echo
 
-    # Check sudo first
     check_sudo
-
-    # Detect OS
     detect_os
-
-    # Check prerequisites
+    select_user_profile
     check_prerequisites
-
-    # Create backup
     create_backup
 
-    # Install Wine based on OS family
     case "$OS_FAMILY" in
         debian)
             install_wine_debian
@@ -936,13 +1624,9 @@ main() {
             ;;
     esac
 
-    # Post-installation
     post_install
-
-    # Generate uninstall script
+    verify_installation
     generate_uninstall_script
-
-    # Generate usage guide
     generate_usage_guide
 
     echo
@@ -950,19 +1634,18 @@ main() {
     echo -e "${GREEN}║              Installation Complete!                            ║${NC}"
     echo -e "${GREEN}╚════════════════════════════════════════════════════════════════╝${NC}"
     echo
-    log_success "Wine has been installed successfully!"
+    log_success "Wine has been installed and verified for user: $TARGET_USER!"
     log "Log file: $LOG_FILE"
     log "Backup location: $BACKUP_DIR"
     log "Uninstall script: $SCRIPT_DIR/uninstall-wine.sh"
     log "Usage guide: $SCRIPT_DIR/WINE-USAGE-GUIDE.md"
     echo
-    echo -e "${BLUE}Next steps:${NC}"
-    echo "  1. Run 'wine --version' to verify installation"
+    echo -e "${CYAN}Next steps:${NC}"
+    echo "  1. Run 'wine --version' to verify"
     echo "  2. Run 'winecfg' to configure Wine"
     echo "  3. Read WINE-USAGE-GUIDE.md for detailed usage instructions"
     echo "  4. Use 'winetricks' to install additional Windows components"
     echo
 }
 
-# Run main function
 main "$@"

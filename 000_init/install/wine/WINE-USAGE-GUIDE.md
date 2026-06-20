@@ -1,6 +1,6 @@
 # Wine Usage Guide
 
-> **Generated:** 2026-06-20  
+> **Generated:** 2026-06-20
 > **Purpose:** Comprehensive guide for using Wine on Linux, macOS, and Windows (WSL)
 
 ---
@@ -43,7 +43,7 @@ Unlike a virtual machine or emulator, Wine translates Windows API calls into POS
 ```bash
 wine --version
 ```
-Expected output: `wine-9.0` or similar (version may vary)
+Expected output: `wine-11.0` or similar (version may vary)
 
 ### 2. Initialize Wine for the First Time
 ```bash
@@ -179,10 +179,10 @@ wine msiexec /i setup.msi /quiet /norestart
 ### Common Installation Paths
 | Windows Path | Linux/macOS Equivalent |
 |-------------|----------------------|
-| `C:\Program Files` | `~/.wine/drive_c/Program Files` |
-| `C:\Program Files (x86)` | `~/.wine/drive_c/Program Files (x86)` |
-| `C:\Users\Username` | `~/.wine/drive_c/users/$USER` |
-| `C:\Windows` | `~/.wine/drive_c/windows` |
+| `C:\\Program Files` | `~/.wine/drive_c/Program Files` |
+| `C:\\Program Files (x86)` | `~/.wine/drive_c/Program Files (x86)` |
+| `C:\\Users\\Username` | `~/.wine/drive_c/users/$USER` |
+| `C:\\Windows` | `~/.wine/drive_c/windows` |
 
 ### Uninstalling Applications
 ```bash
@@ -562,5 +562,5 @@ tar xzvf wine-backup.tar.gz -C ~
 
 ---
 
-*This guide was generated alongside the Wine installation script.*  
+*This guide was generated alongside the Wine installation script.*
 *For support, visit https://forum.winehq.org*
