@@ -37,23 +37,46 @@ fi
 log "✅ OS check passed (Linux)."
 
 # 3. Determine Distribution and Package Manager
-if command -v apt &> /dev/null; then
+if command -v apt &>/dev/null; then
     DISTRO="DEBIAN"
-    INSTALL_CMD_UPDATE="apt update -y" # Add this for Debian/RHEL
-    INSTALL_CMD_INSTALL="apt install -y" # Add this for Debian
+    INSTALL_CMD_UPDATE="apt update -y"
+    INSTALL_CMD_INSTALL="apt install -y"
+    REMOVE_CMD="apt purge nginx -y"
     PACKAGE_LIST="nginx openssl curl"
-elif command -v yum &> /dev/null; then
+elif command -v dnf &>/dev/null; then
     DISTRO="RHEL"
-    INSTALL_CMD="yum install -y"
+    INSTALL_CMD_UPDATE=""
+    INSTALL_CMD_INSTALL="dnf install -y"
+    REMOVE_CMD="dnf remove nginx -y"
     PACKAGE_LIST="nginx openssl curl"
-elif command -v dnf &> /dev/null; then
+elif command -v yum &>/dev/null; then
     DISTRO="RHEL"
-    INSTALL_CMD="dnf install -y"
+    INSTALL_CMD_UPDATE=""
+    INSTALL_CMD_INSTALL="yum install -y"
+    REMOVE_CMD="yum remove nginx -y"
+    PACKAGE_LIST="nginx openssl curl"
+elif command -v pacman &>/dev/null; then
+    DISTRO="ARCH"
+    INSTALL_CMD_UPDATE="pacman -Sy"
+    INSTALL_CMD_INSTALL="pacman -S --noconfirm"
+    REMOVE_CMD="pacman -Rns --noconfirm nginx"
+    PACKAGE_LIST="nginx openssl curl"
+elif command -v apk &>/dev/null; then
+    DISTRO="ALPINE"
+    INSTALL_CMD_UPDATE="apk update"
+    INSTALL_CMD_INSTALL="apk add"
+    REMOVE_CMD="apk del nginx"
+    PACKAGE_LIST="nginx openssl curl"
+elif command -v zypper &>/dev/null; then
+    DISTRO="SUSE"
+    INSTALL_CMD_UPDATE="zypper refresh"
+    INSTALL_CMD_INSTALL="zypper install -y"
+    REMOVE_CMD="zypper remove -y nginx"
     PACKAGE_LIST="nginx openssl curl"
 else
-    fail_and_rollback "❌ Unsupported Linux distribution. Cannot determine package manager (apt/yum/dnf)."
+    fail_and_rollback "❌ Unsupported Linux distribution. Cannot determine package manager (apt/dnf/yum/pacman/apk/zypper)."
 fi
-log "✅ Detected distribution: **$DISTRO**. Using command: **$INSTALL_CMD**"
+log "✅ Detected distribution: **$DISTRO**. Using command: **$INSTALL_CMD_INSTALL**"
 
 # --- State Capture and Rollback Setup ---
 
@@ -62,11 +85,9 @@ verify_and_install_dependencies() {
 log "[STEP 1/4] Verifying and installing dependencies ($PACKAGE_LIST)..."
 
     # 1. Update package lists
-    if [ "$DISTRO" == "DEBIAN" ]; then
-        apt update -y
-    elif [ "$DISTRO" == "RHEL" ]; then
-        # No separate update needed for yum/dnf install commands
-        log "   (Skipping explicit update for $DISTRO)"
+    if [ -n "$INSTALL_CMD_UPDATE" ]; then
+        log "   Updating package lists..."
+        $INSTALL_CMD_UPDATE || true
     fi
 
     # 2. Install packages
@@ -83,8 +104,12 @@ capture_system_state() {
     # Capture a list of currently installed packages
     if [ "$DISTRO" == "DEBIAN" ]; then
         dpkg --get-selections > /tmp/installed_packages_before.list
-    elif [ "$DISTRO" == "RHEL" ]; then
+    elif [ "$DISTRO" == "RHEL" ] || [ "$DISTRO" == "SUSE" ]; then
         rpm -qa > /tmp/installed_packages_before.list
+    elif [ "$DISTRO" == "ARCH" ]; then
+        pacman -Q > /tmp/installed_packages_before.list
+    elif [ "$DISTRO" == "ALPINE" ]; then
+        apk info > /tmp/installed_packages_before.list
     fi
 
     # Capture key configuration directories (empty them out if they don't exist later)
@@ -98,13 +123,15 @@ rollback() {
         log "!!! Performing rollback..."
         # 1. Stop and purge NGINX (if installed)
         if command -v nginx &> /dev/null; then
-            systemctl stop nginx 2>/dev/null
-            systemctl disable nginx 2>/dev/null
+            if [ -d /run/systemd/system ]; then
+                systemctl stop nginx 2>/dev/null
+                systemctl disable nginx 2>/dev/null
+            else
+                service nginx stop 2>/dev/null || /etc/init.d/nginx stop 2>/dev/null || killall nginx 2>/dev/null
+            fi
 
-            if [ "$DISTRO" == "DEBIAN" ]; then
-                apt purge nginx -y
-            elif [ "$DISTRO" == "RHEL" ]; then
-                yum remove nginx -y || dnf remove nginx -y
+            if [ -n "$REMOVE_CMD" ]; then
+                $REMOVE_CMD
             fi
             log "   NGINX stopped and removed."
         fi
