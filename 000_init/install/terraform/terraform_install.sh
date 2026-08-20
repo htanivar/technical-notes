@@ -110,7 +110,7 @@ elif [ "$OS_TYPE" = "Linux" ]; then
 
         log_step "Installing/Updating Terraform via apt..."
         sudo apt-get update -y
-        sudo apt-get install -y --only-upgrade terraform 2>/dev/null || sudo apt-get install -y terraform
+        sudo apt-get install -y terraform
 
     # RHEL / CentOS / Fedora
     elif [[ "$DISTRO" =~ ^(fedora|rhel|centos|rocky|almalinux)$ ]] || [[ "$LIKE" =~ (rhel|fedora) ]]; then
