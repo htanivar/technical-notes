@@ -1,0 +1,2 @@
+look at the file, taga-test/tests/ui/02-public-journies_test.go use this style of coding 
+for all test files to start with refactor taga-test/tests/ui/03-login-scenarios_test.go
