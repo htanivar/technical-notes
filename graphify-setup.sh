@@ -130,6 +130,24 @@ get_files_sorted_by_size() {
     done | sort -n | cut -d' ' -f2-
 }
 
+# Function to parse retryDelay from error log
+parse_retry_delay() {
+    local log_file="$1"
+    if [ ! -f "$log_file" ]; then
+        echo 0
+        return
+    fi
+    # Check for retryDelay pattern (e.g. 'retryDelay': '20s' or 'retryDelay': '20.35s' or 'Please retry in 20.35s')
+    local raw_val=$(grep -o -E "retryDelay.*|Please retry in [0-9.]+" "$log_file" 2>/dev/null | head -n 1 | grep -o -E "[0-9.]+" | head -n 1)
+    if [ -n "$raw_val" ]; then
+        # Round up using awk
+        local int_sec=$(echo "$raw_val" | awk '{print int($1 == int($1) ? $1 : int($1)+1)}')
+        echo "${int_sec:-0}"
+    else
+        echo 0
+    fi
+}
+
 # Function to process files in batches with rate limiting
 process_with_rate_limiting() {
     local files=("$@")
@@ -215,19 +233,52 @@ process_with_rate_limiting() {
         print_progress "💰 Token usage this window: $token_usage/$TOKEN_LIMIT_PER_MIN"
         echo ""
         
-        # Process the file
+        # Process the file with retry logic for 429 quota error
         print_info "🔄 Processing: $filename"
+        local file_success=0
+        local max_retries=3
+        local attempt=0
+        local retry_sec=0
         
-        # Run graphify and capture output
-        if graphify extract "$file" --backend gemini --incremental 2>&1 | tee -a "/tmp/graphify_log_$$.txt"; then
-            processed=$((processed + 1))
-            token_usage=$((token_usage + est_tokens))
-            print_info "✅ Successfully processed: $filename"
-        else
+        while [ $attempt -le $max_retries ]; do
+            attempt=$((attempt + 1))
+            local file_log="/tmp/graphify_file_log_$$.txt"
+            
+            if graphify extract "$file" --backend gemini --incremental 2>&1 | tee "$file_log" | tee -a "/tmp/graphify_log_$$.txt"; then
+                processed=$((processed + 1))
+                token_usage=$((token_usage + est_tokens))
+                print_info "✅ Successfully processed: $filename"
+                file_success=1
+                rm -f "$file_log"
+                break
+            else
+                retry_sec=$(parse_retry_delay "$file_log")
+                rm -f "$file_log"
+                
+                if [ $retry_sec -gt 0 ]; then
+                    local total_wait=$((retry_sec + 5))
+                    print_warning "⚠️ Rate limit hit (retryDelay: ${retry_sec}s). Waiting ${total_wait}s (retryDelay + 5s buffer) before attempt $((attempt + 1))..."
+                    for ((w=total_wait; w>0; w--)); do
+                        echo -ne "\r${YELLOW}⏳ Waiting $w seconds...${NC}    "
+                        sleep 1
+                    done
+                    echo ""
+                    # Reset window after waiting
+                    window_start=$(date +%s)
+                    token_usage=0
+                else
+                    print_error "❌ Failed to process: $filename"
+                    sleep 10
+                    break
+                fi
+            fi
+        done
+        
+        if [ $file_success -eq 0 ]; then
             failed=$((failed + 1))
-            print_error "❌ Failed to process: $filename"
-            # Wait on error to avoid hammering the API
-            sleep 10
+            if [ $retry_sec -gt 0 ]; then
+                print_error "❌ Max retries exceeded for: $filename"
+            fi
         fi
         
         # Show summary after each file
