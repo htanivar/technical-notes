@@ -5,8 +5,8 @@
 |-------------------------------|-------------------------------|-------------------------------|-------------------------------|------------------------------------------|
 | [Linux](linux/LINUX.md)       | [Certbot](certbot/CERTBOT.md) | [GoLang](golang/GOLANG.md)    | [GIT](git/GIT.md)             | [Aider](aitools/AIDER.md)                |
 | [Windows](windows/WINDOWS.md) | [Nginx](nginx/NGINX.md)       | [Angular](angular/ANGULAR.md) | [REGEX](regex/REGEX.md)       | [Ollama](aitools/OLLAMA.md)              |
-| [AWS](aws/AWS.md)             | [Chef](chef/CHEF.md)          | [JQ](jq/JQ.md)                | -                             | [LM Studio](aitools/LMSTUDIO.md)         |
-| -                             | [Docker](docker/DOCKER.MD)    | [Bash](linux/BASH.md)         | [SSH](ssh/SSH.md)             | [Open Claude](aitools/OPENCLAUDE.md)     |
+| [MAC](mac/MAC.md)             | [Chef](chef/CHEF.md)          | [JQ](jq/JQ.md)                | -                             | [LM Studio](aitools/LMSTUDIO.md)         |
+| [AWS](aws/AWS.md)             | [Docker](docker/DOCKER.MD)    | [Bash](linux/BASH.md)         | [SSH](ssh/SSH.md)             | [Open Claude](aitools/OPENCLAUDE.md)     |
 | -                             | -                             | -                             | [OPENSSL](openssl/OPENSSL.md) | [Hermes](aitools/hermes/HERMES_GUIDE.md) |
 | -                             | -                             | -                             | [KEYTOOL](ssh/KEYTOOL.md)     | Warp                                     |
 | -                             | -                             | -                             | [MAVEN](mvn.md)               | -                                        |
