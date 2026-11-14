@@ -2,17 +2,196 @@
 
 # --- Global Variables & Logging Setup ---
 SCRIPT_NAME="install_nginx.sh"
-LOG_FILE="/var/log/nginx_install_$(date +%Y%m%d_%H%M%S).log"
-STATE_FILE="/tmp/nginx_install_state_$(date +%Y%m%d_%H%M%S).tar.gz"
+TS="$(date +%Y%m%d_%H%M%S)"
+LOG_FILE="/var/log/nginx_install_${TS}.log"
+STATE_FILE="/tmp/nginx_install_state_${TS}.tar.gz"
 CONFIG_SCRIPT="./configure_nginx.sh"
 ROLLBACK_NEEDED=0
+ROLLBACK_DONE=0
+NGINX_PREINSTALLED=0
+SHIM_DIR=""
 
-# Log function
+# Fall back to /tmp if /var/log is not writable
+touch "$LOG_FILE" 2>/dev/null || LOG_FILE="/tmp/nginx_install_${TS}.log"
+
 log() {
     echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" | tee -a "$LOG_FILE"
 }
 
-# Failure and Rollback function
+# --- Pre-Checks (no rollback needed: nothing has been changed yet) ---
+abort_early() {
+    log "!!! FATAL: $1"
+    exit 1
+}
+
+log "--- Starting $SCRIPT_NAME ---"
+
+# 1. Root check
+if [[ $EUID -ne 0 ]]; then
+    abort_early "This script must be run as root."
+fi
+log "✅ User check passed (running as root)."
+
+# 2. OS check
+if [[ "$(uname)" != "Linux" ]]; then
+    abort_early "Operating System is not Linux. Aborting."
+fi
+log "✅ OS check passed (Linux)."
+
+# 3. Distribution / package manager
+if command -v apt &>/dev/null; then
+    DISTRO="DEBIAN"
+    INSTALL_CMD_UPDATE="apt update -y"
+    INSTALL_CMD_INSTALL="apt install -y"
+    REMOVE_CMD="apt purge nginx -y"
+elif command -v dnf &>/dev/null; then
+    DISTRO="RHEL"
+    INSTALL_CMD_UPDATE=""
+    INSTALL_CMD_INSTALL="dnf install -y"
+    REMOVE_CMD="dnf remove nginx -y"
+elif command -v yum &>/dev/null; then
+    DISTRO="RHEL"
+    INSTALL_CMD_UPDATE=""
+    INSTALL_CMD_INSTALL="yum install -y"
+    REMOVE_CMD="yum remove nginx -y"
+elif command -v pacman &>/dev/null; then
+    DISTRO="ARCH"
+    INSTALL_CMD_UPDATE="pacman -Sy"
+    INSTALL_CMD_INSTALL="pacman -S --noconfirm"
+    REMOVE_CMD="pacman -Rns --noconfirm nginx"
+elif command -v apk &>/dev/null; then
+    DISTRO="ALPINE"
+    INSTALL_CMD_UPDATE="apk update"
+    INSTALL_CMD_INSTALL="apk add"
+    REMOVE_CMD="apk del nginx"
+elif command -v zypper &>/dev/null; then
+    DISTRO="SUSE"
+    INSTALL_CMD_UPDATE="zypper refresh"
+    INSTALL_CMD_INSTALL="zypper install -y"
+    REMOVE_CMD="zypper remove -y nginx"
+else
+    abort_early "Unsupported Linux distribution (apt/dnf/yum/pacman/apk/zypper not found)."
+fi
+PACKAGE_LIST="nginx openssl curl"
+log "✅ Detected distribution family: $DISTRO. Using: $INSTALL_CMD_INSTALL"
+
+# Remember whether nginx was already installed, so rollback never removes a pre-existing install
+if command -v nginx &>/dev/null; then
+    NGINX_PREINSTALLED=1
+    log "ℹ️  NGINX was already installed before this run; rollback will not remove it."
+fi
+
+# --- Init system handling (systemd vs SysVinit/OpenRC/containers/WSL) ---
+# configure_nginx.sh calls 'systemctl', which fails when systemd is not PID 1
+# (e.g. MX Linux with SysVinit, containers, WSL). In that case we put a small
+# 'systemctl' shim first in PATH that maps to 'service' / 'update-rc.d'.
+setup_init_compat() {
+    if [ -d /run/systemd/system ]; then
+        log "✅ systemd detected as init system."
+        return
+    fi
+
+    log "⚠️  systemd is not running (non-systemd init detected). Enabling systemctl compatibility shim."
+    SHIM_DIR="$(mktemp -d /tmp/systemctl_shim.XXXXXX)"
+    cat > "$SHIM_DIR/systemctl" <<'SHIM'
+#!/bin/bash
+# Minimal systemctl -> service/update-rc.d translator for non-systemd hosts
+action=""
+units=()
+for arg in "$@"; do
+    case "$arg" in
+        -*) ;;                       # ignore options like --now, -q
+        *)  if [ -z "$action" ]; then action="$arg"; else units+=("${arg%.service}"); fi ;;
+    esac
+done
+
+svc() {  # svc <unit> <action>
+    if command -v service &>/dev/null; then
+        service "$1" "$2"
+    elif [ -x "/etc/init.d/$1" ]; then
+        "/etc/init.d/$1" "$2"
+    elif command -v rc-service &>/dev/null; then
+        rc-service "$1" "$2"
+    else
+        return 1
+    fi
+}
+
+rc=0
+case "$action" in
+    start)
+        for u in "${units[@]}"; do svc "$u" start || svc "$u" restart || rc=1; done ;;
+    stop|restart|reload|status)
+        for u in "${units[@]}"; do svc "$u" "$action" || rc=1; done ;;
+    is-active)
+        svc "${units[0]}" status >/dev/null 2>&1 || rc=3 ;;
+    is-enabled)
+        ls /etc/rc?.d/S*"${units[0]}" >/dev/null 2>&1 || rc=1 ;;
+    enable)
+        for u in "${units[@]}"; do
+            if command -v update-rc.d &>/dev/null; then update-rc.d "$u" defaults >/dev/null 2>&1
+            elif command -v rc-update &>/dev/null; then rc-update add "$u" default >/dev/null 2>&1
+            elif command -v chkconfig &>/dev/null; then chkconfig "$u" on >/dev/null 2>&1
+            fi
+        done ;;
+    disable)
+        for u in "${units[@]}"; do
+            if command -v update-rc.d &>/dev/null; then update-rc.d -f "$u" remove >/dev/null 2>&1
+            elif command -v rc-update &>/dev/null; then rc-update del "$u" default >/dev/null 2>&1
+            elif command -v chkconfig &>/dev/null; then chkconfig "$u" off >/dev/null 2>&1
+            fi
+        done ;;
+    daemon-reload|reset-failed|mask|unmask) ;;   # no-ops
+    *) ;;                                        # unknown: succeed quietly
+esac
+exit $rc
+SHIM
+    chmod +x "$SHIM_DIR/systemctl"
+    export PATH="$SHIM_DIR:$PATH"
+    log "   Shim installed at $SHIM_DIR/systemctl"
+}
+
+# --- Rollback ---
+rollback() {
+    # Run at most once, even if called from both fail_and_rollback and the EXIT trap
+    [ "$ROLLBACK_DONE" -eq 1 ] && return
+    ROLLBACK_DONE=1
+
+    if [ "$ROLLBACK_NEEDED" -eq 1 ]; then
+        log "!!! Performing rollback..."
+
+        if command -v nginx &>/dev/null; then
+            if [ -d /run/systemd/system ]; then
+                systemctl stop nginx 2>/dev/null
+                systemctl disable nginx 2>/dev/null
+            else
+                service nginx stop 2>/dev/null || /etc/init.d/nginx stop 2>/dev/null || killall nginx 2>/dev/null
+            fi
+
+            if [ "$NGINX_PREINSTALLED" -eq 0 ] && [ -n "$REMOVE_CMD" ]; then
+                $REMOVE_CMD
+                log "   NGINX stopped and removed."
+            else
+                log "   NGINX stopped (kept: it was installed before this run)."
+            fi
+        fi
+
+        if [ -f "$STATE_FILE" ]; then
+            log "   Restoring files from $STATE_FILE..."
+            tar -xzf "$STATE_FILE" -C / 2>/dev/null
+            log "   Files restored."
+        fi
+
+        rm -f "$STATE_FILE" /tmp/installed_packages_before.list
+        log "   Temporary files cleaned."
+        log "!!! Rollback COMPLETE."
+    else
+        log "No rollback required."
+    fi
+
+    [ -n "$SHIM_DIR" ] && rm -rf "$SHIM_DIR"
+}
+
 fail_and_rollback() {
     log "!!! FATAL: $1"
     ROLLBACK_NEEDED=1
@@ -21,142 +200,41 @@ fail_and_rollback() {
     exit 1
 }
 
-# --- Pre-Checks ---
-log "--- Starting $SCRIPT_NAME ---"
+# --- Steps ---
+capture_system_state() {
+    log "[STEP 1/4] Capturing current system state for rollback..."
 
-# 1. Check current user is root
-if [[ $EUID -ne 0 ]]; then
-    fail_and_rollback "This script must be run as root."
-fi
-log "✅ User check passed (running as root)."
+    case "$DISTRO" in
+        DEBIAN) dpkg --get-selections > /tmp/installed_packages_before.list ;;
+        RHEL|SUSE) rpm -qa > /tmp/installed_packages_before.list ;;
+        ARCH) pacman -Q > /tmp/installed_packages_before.list ;;
+        ALPINE) apk info > /tmp/installed_packages_before.list ;;
+    esac
 
-# 2. Check OS is Linux
-if [[ "$(uname)" != "Linux" ]]; then
-    fail_and_rollback "❌ Operating System is not Linux. Aborting."
-fi
-log "✅ OS check passed (Linux)."
+    tar -czf "$STATE_FILE" /etc/nginx /etc/ssl/certs/nginx /tmp/installed_packages_before.list /etc/hosts 2>/dev/null
+    log "✅ System state captured to $STATE_FILE."
+}
 
-# 3. Determine Distribution and Package Manager
-if command -v apt &>/dev/null; then
-    DISTRO="DEBIAN"
-    INSTALL_CMD_UPDATE="apt update -y"
-    INSTALL_CMD_INSTALL="apt install -y"
-    REMOVE_CMD="apt purge nginx -y"
-    PACKAGE_LIST="nginx openssl curl"
-elif command -v dnf &>/dev/null; then
-    DISTRO="RHEL"
-    INSTALL_CMD_UPDATE=""
-    INSTALL_CMD_INSTALL="dnf install -y"
-    REMOVE_CMD="dnf remove nginx -y"
-    PACKAGE_LIST="nginx openssl curl"
-elif command -v yum &>/dev/null; then
-    DISTRO="RHEL"
-    INSTALL_CMD_UPDATE=""
-    INSTALL_CMD_INSTALL="yum install -y"
-    REMOVE_CMD="yum remove nginx -y"
-    PACKAGE_LIST="nginx openssl curl"
-elif command -v pacman &>/dev/null; then
-    DISTRO="ARCH"
-    INSTALL_CMD_UPDATE="pacman -Sy"
-    INSTALL_CMD_INSTALL="pacman -S --noconfirm"
-    REMOVE_CMD="pacman -Rns --noconfirm nginx"
-    PACKAGE_LIST="nginx openssl curl"
-elif command -v apk &>/dev/null; then
-    DISTRO="ALPINE"
-    INSTALL_CMD_UPDATE="apk update"
-    INSTALL_CMD_INSTALL="apk add"
-    REMOVE_CMD="apk del nginx"
-    PACKAGE_LIST="nginx openssl curl"
-elif command -v zypper &>/dev/null; then
-    DISTRO="SUSE"
-    INSTALL_CMD_UPDATE="zypper refresh"
-    INSTALL_CMD_INSTALL="zypper install -y"
-    REMOVE_CMD="zypper remove -y nginx"
-    PACKAGE_LIST="nginx openssl curl"
-else
-    fail_and_rollback "❌ Unsupported Linux distribution. Cannot determine package manager (apt/dnf/yum/pacman/apk/zypper)."
-fi
-log "✅ Detected distribution: **$DISTRO**. Using command: **$INSTALL_CMD_INSTALL**"
-
-# --- State Capture and Rollback Setup ---
-
-# Function to verify and install dependencies
 verify_and_install_dependencies() {
-log "[STEP 1/4] Verifying and installing dependencies ($PACKAGE_LIST)..."
+    log "[STEP 2/4] Verifying and installing dependencies ($PACKAGE_LIST)..."
 
-    # 1. Update package lists
     if [ -n "$INSTALL_CMD_UPDATE" ]; then
         log "   Updating package lists..."
         $INSTALL_CMD_UPDATE || true
     fi
 
-    # 2. Install packages
     if ! $INSTALL_CMD_INSTALL $PACKAGE_LIST; then
         fail_and_rollback "Failed to install required packages: $PACKAGE_LIST."
     fi
     log "✅ Dependencies installed/verified."
 }
 
-# Function to capture system state
-capture_system_state() {
-    log "[STEP 2/4] Capturing current system state for rollback..."
-
-    # Capture a list of currently installed packages
-    if [ "$DISTRO" == "DEBIAN" ]; then
-        dpkg --get-selections > /tmp/installed_packages_before.list
-    elif [ "$DISTRO" == "RHEL" ] || [ "$DISTRO" == "SUSE" ]; then
-        rpm -qa > /tmp/installed_packages_before.list
-    elif [ "$DISTRO" == "ARCH" ]; then
-        pacman -Q > /tmp/installed_packages_before.list
-    elif [ "$DISTRO" == "ALPINE" ]; then
-        apk info > /tmp/installed_packages_before.list
-    fi
-
-    # Capture key configuration directories (empty them out if they don't exist later)
-    tar -czf "$STATE_FILE" /etc/nginx /etc/ssl/certs/nginx /tmp/installed_packages_before.list /etc/hosts 2>/dev/null
-    log "✅ System state captured to $STATE_FILE."
-}
-
-# Function to handle rollback
-rollback() {
-    if [ $ROLLBACK_NEEDED -eq 1 ]; then
-        log "!!! Performing rollback..."
-        # 1. Stop and purge NGINX (if installed)
-        if command -v nginx &> /dev/null; then
-            if [ -d /run/systemd/system ]; then
-                systemctl stop nginx 2>/dev/null
-                systemctl disable nginx 2>/dev/null
-            else
-                service nginx stop 2>/dev/null || /etc/init.d/nginx stop 2>/dev/null || killall nginx 2>/dev/null
-            fi
-
-            if [ -n "$REMOVE_CMD" ]; then
-                $REMOVE_CMD
-            fi
-            log "   NGINX stopped and removed."
-        fi
-
-        # 2. Restore captured files
-        if [ -f "$STATE_FILE" ]; then
-             log "   Restoring files from $STATE_FILE..."
-             tar -xzf "$STATE_FILE" -C / 2>/dev/null
-             log "   Files restored."
-        fi
-
-        # 3. Clean up temporary files
-        rm -f "$STATE_FILE" /tmp/installed_packages_before.list
-        log "   Temporary files cleaned."
-        log "!!! Rollback COMPLETE. System is returned to its prior state."
-    else
-        log "No rollback required."
-    fi
-}
-
-# --- Installation & Configuration ---
-
-# 4. Run the detailed configuration script
 run_configuration() {
     log "[STEP 3/4] Starting NGINX configuration script ($CONFIG_SCRIPT)..."
+
+    if [ ! -f "$CONFIG_SCRIPT" ]; then
+        fail_and_rollback "Configuration script not found: $CONFIG_SCRIPT"
+    fi
 
     if ! bash "$CONFIG_SCRIPT" "$LOG_FILE"; then
         fail_and_rollback "Configuration script failed. Initiating full rollback."
@@ -164,36 +242,35 @@ run_configuration() {
     log "✅ Configuration complete."
 }
 
-# 5. Testing the final installation
 test_installation() {
     log "[STEP 4/4] Testing NGINX HTTPS setup..."
-    # The IP 127.0.0.1 must be used instead of hostname as not all environments
-    # resolve the hostname without user interaction or manual configuration.
-    # We will use 'curl' to check the specific host header.
 
-    if curl -s -k -H "Host: nginx.localhost.com" https://127.0.0.1/ | grep -q "Welcome to HTTPS NGINX Test Page"; then
-        log "✅ Installation Test SUCCESSFUL. HTTPS site is live."
-    else
-        fail_and_rollback "❌ Installation Test FAILED. HTTPS site did not return expected content."
-    fi
+    # Use 127.0.0.1 with a Host header so no hostname resolution is required.
+    # Retry briefly: on non-systemd hosts nginx may take a moment to come up.
+    local attempt
+    for attempt in 1 2 3 4 5; do
+        if curl -s -k -H "Host: nginx.localhost.com" https://127.0.0.1/ | grep -q "Welcome to HTTPS NGINX Test Page"; then
+            log "✅ Installation Test SUCCESSFUL. HTTPS site is live."
+            return
+        fi
+        log "   Attempt $attempt/5: site not ready yet, retrying..."
+        sleep 2
+    done
+    fail_and_rollback "Installation Test FAILED. HTTPS site did not return expected content."
 }
 
 # --- Main Execution Flow ---
-
-# Capture state BEFORE installing dependencies to enable full rollback
-capture_system_state
-
-# Ensure clean up happens even on unexpected exit (e.g., Ctrl+C)
 trap 'rollback' EXIT
 
-# Execution steps
+setup_init_compat
+capture_system_state
 verify_and_install_dependencies
 run_configuration
 test_installation
 
-# If all successful, we exit gracefully. The trap will run 'rollback', which will see ROLLBACK_NEEDED=0.
 log "--- NGINX Installation & Configuration COMPLETED SUCCESSFULLY ---"
 
-# We explicitly remove the state file if successful so that the trap doesn't try to restore non-existent data.
+# Success: no rollback; just clean up temp files (the EXIT trap removes the shim)
 ROLLBACK_NEEDED=0
-rm -f "$STATE_FILE"
+rm -f "$STATE_FILE" /tmp/installed_packages_before.list
+
