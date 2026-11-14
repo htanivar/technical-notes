@@ -31,11 +31,11 @@ log_error() {
 
 # Detect OS
 detect_os() {
-    if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+    if [[ "$OSTYPE" == "linux"* ]] || [[ "$(uname -s)" == "Linux" ]]; then
         OS="linux"
-    elif [[ "$OSTYPE" == "darwin"* ]]; then
+    elif [[ "$OSTYPE" == "darwin"* ]] || [[ "$(uname -s)" == "Darwin" ]]; then
         OS="macos"
-    elif [[ "$OSTYPE" == "msys" ]] || [[ "$OSTYPE" == "cygwin" ]]; then
+    elif [[ "$OSTYPE" == "msys" ]] || [[ "$OSTYPE" == "cygwin" ]] || [[ "$OSTYPE" == "win32" ]]; then
         OS="windows"
     else
         log_error "Unsupported OS: $OSTYPE"
@@ -72,15 +72,30 @@ detect_distro() {
         return
     fi
 
-    if command -v lsb_release >/dev/null 2>&1; then
-        DISTRO=$(lsb_release -si | tr '[:upper:]' '[:lower:]')
-    elif [[ -f /etc/os-release ]]; then
-        DISTRO=$(grep '^ID=' /etc/os-release | cut -d'=' -f2 | tr -d '"' | tr '[:upper:]' '[:lower:]')
+    DISTRO=""
+    DISTRO_LIKE=""
+
+    if [[ -f /etc/os-release ]]; then
+        DISTRO=$(grep '^ID=' /etc/os-release | cut -d'=' -f2 | tr -d '"'\'' ' | tr '[:upper:]' '[:lower:]')
+        DISTRO_LIKE=$(grep '^ID_LIKE=' /etc/os-release | cut -d'=' -f2 | tr -d '"'\'' ' | tr '[:upper:]' '[:lower:]')
+    elif [[ -f /usr/lib/os-release ]]; then
+        DISTRO=$(grep '^ID=' /usr/lib/os-release | cut -d'=' -f2 | tr -d '"'\'' ' | tr '[:upper:]' '[:lower:]')
+        DISTRO_LIKE=$(grep '^ID_LIKE=' /usr/lib/os-release | cut -d'=' -f2 | tr -d '"'\'' ' | tr '[:upper:]' '[:lower:]')
+    elif command -v lsb_release >/dev/null 2>&1; then
+        DISTRO=$(lsb_release -si 2>/dev/null | tr '[:upper:]' '[:lower:]')
     elif [[ -f /etc/redhat-release ]]; then
         DISTRO="rhel"
     elif [[ -f /etc/debian_version ]]; then
         DISTRO="debian"
-    else
+    elif [[ -f /etc/arch-release ]]; then
+        DISTRO="arch"
+    elif [[ -f /etc/alpine-release ]]; then
+        DISTRO="alpine"
+    elif [[ -f /etc/SuSE-release ]] || [[ -f /etc/suse-release ]]; then
+        DISTRO="opensuse"
+    fi
+
+    if [[ -z "$DISTRO" ]]; then
         DISTRO="unknown"
     fi
 }
@@ -99,42 +114,124 @@ check_existing() {
     fi
 }
 
+# Package manager installation helpers
+install_debian_ubuntu() {
+    log_info "Installing via APT (Debian/Ubuntu-based)"
+    sudo mkdir -p -m 755 /usr/share/keyrings
+    curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+    sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+    sudo apt update
+    sudo apt install -y gh
+}
+
+install_redhat() {
+    log_info "Installing via DNF/YUM (Red Hat-based)"
+    if command -v dnf >/dev/null 2>&1; then
+        sudo dnf config-manager --add-repo https://cli.github.com/packages/rpm/gh-cli.repo 2>/dev/null || \
+        sudo dnf config-manager addrepo --from-repofile=https://cli.github.com/packages/rpm/gh-cli.repo 2>/dev/null || \
+        (sudo mkdir -p /etc/yum.repos.d && curl -fsSL https://cli.github.com/packages/rpm/gh-cli.repo | sudo tee /etc/yum.repos.d/gh-cli.repo > /dev/null)
+        sudo dnf install -y gh
+    elif command -v yum >/dev/null 2>&1; then
+        sudo yum-config-manager --add-repo https://cli.github.com/packages/rpm/gh-cli.repo 2>/dev/null || \
+        (sudo mkdir -p /etc/yum.repos.d && curl -fsSL https://cli.github.com/packages/rpm/gh-cli.repo | sudo tee /etc/yum.repos.d/gh-cli.repo > /dev/null)
+        sudo yum install -y gh
+    else
+        install_binary
+    fi
+}
+
+install_suse() {
+    log_info "Installing via Zypper (openSUSE/SUSE)"
+    sudo zypper addrepo https://cli.github.com/packages/rpm/gh-cli.repo 2>/dev/null || true
+    sudo zypper refresh
+    sudo zypper install -y gh
+}
+
+install_arch() {
+    log_info "Installing via Pacman (Arch-based)"
+    sudo pacman -S --noconfirm github-cli
+}
+
+install_alpine() {
+    log_info "Installing via APK (Alpine)"
+    sudo apk add github-cli
+}
+
+install_void() {
+    log_info "Installing via XBPS (Void Linux)"
+    sudo xbps-install -Sy github-cli
+}
+
+install_gentoo() {
+    log_info "Installing via Portage (Gentoo)"
+    sudo emerge -v sys-apps/github-cli || install_binary
+}
+
+install_solus() {
+    log_info "Installing via eopkg (Solus)"
+    sudo eopkg it -y gh || install_binary
+}
+
 # Install via package manager (Linux)
 install_via_package_manager() {
     case $DISTRO in
-        ubuntu|debian|linuxmint|pop|elementary)
-            log_info "Installing via APT (Debian/Ubuntu-based)"
-            curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
-            sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
-            echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
-            sudo apt update
-            sudo apt install -y gh
+        ubuntu|debian|linuxmint|pop|elementary|zorin|kali|raspbian|parrot|neon|mx|deepin|pureos|astra|antix|tails|bodhi|peppermint|devuan)
+            install_debian_ubuntu
             ;;
-        fedora|centos|rhel|rocky|almalinux)
-            log_info "Installing via DNF/YUM (Red Hat-based)"
-            sudo dnf config-manager --add-repo https://cli.github.com/packages/rpm/gh-cli.repo 2>/dev/null || \
-            sudo yum-config-manager --add-repo https://cli.github.com/packages/rpm/gh-cli.repo
-            sudo dnf install -y gh 2>/dev/null || sudo yum install -y gh
+        fedora|centos|rhel|rocky|almalinux|amzn|ol|nobara|mageia|openeuler|scientific|cloudlinux|eurolinux)
+            install_redhat
             ;;
-        opensuse*|sles)
-            log_info "Installing via Zypper (openSUSE)"
-            sudo zypper addrepo https://cli.github.com/packages/rpm/gh-cli.repo
-            sudo zypper refresh
-            sudo zypper install -y gh
+        opensuse*|sles|suse)
+            install_suse
             ;;
-        arch|manjaro)
-            log_info "Installing via Pacman (Arch-based)"
-            sudo pacman -S --noconfirm github-cli
+        arch|manjaro*|endeavouros|garuda|artix|arcolinux|cachyos)
+            install_arch
             ;;
-        alpine)
-            log_info "Installing via APK (Alpine)"
-            sudo apk add github-cli
+        alpine|postmarketos)
+            install_alpine
+            ;;
+        void)
+            install_void
+            ;;
+        gentoo|funtoo)
+            install_gentoo
+            ;;
+        solus)
+            install_solus
             ;;
         *)
-            log_warn "Unknown/unsupported distribution: $DISTRO"
-            log_info "Falling back to binary installation"
-            install_binary
-            return
+            # Fallback by DISTRO_LIKE
+            if [[ "$DISTRO_LIKE" =~ (ubuntu|debian) ]]; then
+                install_debian_ubuntu
+            elif [[ "$DISTRO_LIKE" =~ (rhel|fedora|centos) ]]; then
+                install_redhat
+            elif [[ "$DISTRO_LIKE" =~ (suse) ]]; then
+                install_suse
+            elif [[ "$DISTRO_LIKE" =~ (arch) ]]; then
+                install_arch
+            elif [[ "$DISTRO_LIKE" =~ (alpine) ]]; then
+                install_alpine
+            # Fallback by package manager command availability
+            elif command -v apt-get >/dev/null 2>&1; then
+                install_debian_ubuntu
+            elif command -v dnf >/dev/null 2>&1 || command -v yum >/dev/null 2>&1; then
+                install_redhat
+            elif command -v zypper >/dev/null 2>&1; then
+                install_suse
+            elif command -v pacman >/dev/null 2>&1; then
+                install_arch
+            elif command -v apk >/dev/null 2>&1; then
+                install_alpine
+            elif command -v xbps-install >/dev/null 2>&1; then
+                install_void
+            elif command -v eopkg >/dev/null 2>&1; then
+                install_solus
+            else
+                log_warn "Unknown/unsupported distribution: $DISTRO"
+                log_info "Falling back to binary installation"
+                install_binary
+            fi
             ;;
     esac
 }
@@ -148,13 +245,13 @@ install_binary() {
 
     case $OS in
         linux)
-            BINARY_NAME="gh_*_linux_${ARCH}.tar.gz"
+            BINARY_NAME="gh_.*_linux_${ARCH}\.tar\.gz"
             ;;
         macos)
-            BINARY_NAME="gh_*_macOS_${ARCH}.tar.gz"
+            BINARY_NAME="gh_.*_macOS_${ARCH}\.tar\.gz"
             ;;
         windows)
-            BINARY_NAME="gh_*_windows_${ARCH}.zip"
+            BINARY_NAME="gh_.*_windows_${ARCH}\.zip"
             ;;
     esac
 
@@ -163,7 +260,7 @@ install_binary() {
     cd "$TEMP_DIR"
 
     log_info "Downloading latest GitHub CLI..."
-    DOWNLOAD_URL=$(curl -s "$LATEST_URL" | grep "browser_download_url.*$BINARY_NAME" | cut -d '"' -f 4)
+    DOWNLOAD_URL=$(curl -s "$LATEST_URL" | grep -E "browser_download_url.*$BINARY_NAME" | cut -d '"' -f 4 | head -n1)
 
     if [[ -z "$DOWNLOAD_URL" ]]; then
         log_error "Could not find download URL for $OS-$ARCH"
