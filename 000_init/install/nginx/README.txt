@@ -1,74 +1,92 @@
---- NGINX Installation and Configuration Summary ---
+# NGINX Production Site Summary — github.jaganathan.co.uk
 
-This guide details the steps to set up a new website (Virtual Host) on your NGINX server.
+Generated on: 2026-11-14 20:34:04 IST
 
-## I. Installed Test Site Details
-1. **Test URL**: https://nginx.localhost.com/
-2. **Configuration File**: /etc/nginx/conf.d/nginx.localhost.com.conf
-3. **Document Root**: /var/www/html/nginx.localhost.com
-4. **Self-Signed Certificate**: /etc/ssl/certs/nginx/nginx.crt
-5. **Self-Signed Key**: /etc/ssl/certs/nginx/nginx.key
+## I. Site Overview & Connection Details
 
-## II. How to Add a New Website (Virtual Host)
+| Property | Value |
+| :--- | :--- |
+| **Server Name (Domain)** | `github.jaganathan.co.uk`  |
+| **Site Mode** | `proxy` (Reverse Proxy -> http://127.0.0.1:3000 (WebSocket enabled)) |
+| **Primary App URL** | https://github.jaganathan.co.uk/ |
+| **HTTP Entry URL** | http://github.jaganathan.co.uk/ (301 Redirects to HTTPS) |
+| **Healthcheck URL** | https://github.jaganathan.co.uk/healthz |
+| **Host / LAN IP** | `192.168.1.2` |
+| **HTTP Listen Port** | `80` |
+| **HTTPS Listen Port** | `443` |
+| **Backend App Port** | `127.0.0.1:3000` |
 
-### 1. Create the Document Root
-Create the directory that will hold your website files (HTML, CSS, etc.).
+---
 
-$ sudo mkdir -p /var/www/html/mynewsite.com
+## II. File Locations (Config, Logs, Web Root & SSL Certificates)
 
-### 2. Create the Configuration File
-Create a new file in the conf.d directory. Use a descriptive name ending in .conf.
+| Resource | Path / Location |
+| :--- | :--- |
+| **Virtual Host Config** | `/etc/nginx/conf.d/github.jaganathan.co.uk.conf` |
+| **Global Hardening Config** | `/etc/nginx/conf.d/00-production-hardening.conf` |
+| **Main NGINX Config** | `/etc/nginx/nginx.conf` |
+| **Document Root / Upstream** | `http://127.0.0.1:3000` |
+| **Access Log** | `/var/log/nginx/github.jaganathan.co.uk.access.log` |
+| **Error Log** | `/var/log/nginx/github.jaganathan.co.uk.error.log` |
+| **Configuration Run Log** | `/var/log/nginx_configure_20261114_203032.log` |
+| **SSL Mode** | `self-signed` |
+| **SSL Certificate** | `/etc/ssl/certs/nginx/github.jaganathan.co.uk.crt` |
+| **SSL Private Key** | `/etc/ssl/certs/nginx/github.jaganathan.co.uk.key` (Permissions: `600`) |
+| **SSL Issuer & Expiry** | C = US, ST = State, L = City, O = ProductionNginx, CN = github.jaganathan.co.uk — Expires: `Nov 14 15:04:03 2027 GMT` |
 
-$ sudo nano /etc/nginx/conf.d/mynewsite.com.conf
+---
 
-### 3. Basic HTTP Configuration
-Paste the following structure into the file, replacing 'mynewsite.com' with your actual domain:
+## III. Verification & Testing Commands
 
-server {
-    listen 80;
-    server_name mynewsite.com www.mynewsite.com;
+1. **Test the site locally via Host header**:
+   ```bash
+   curl -s -k -H "Host: github.jaganathan.co.uk" https://127.0.0.1:443/
+   ```
 
-    root /var/www/html/mynewsite.com;
-    index index.html index.htm;
+2. **Test the site & inspect security headers via DNS override**:
+   ```bash
+   curl -k -i --resolve github.jaganathan.co.uk:443:127.0.0.1 https://github.jaganathan.co.uk/
+   ```
 
-    # Standard location block
-    location / {
-        try_files $uri $uri/ =404;
-    }
-}
+3. **Check the healthcheck endpoint**:
+   ```bash
+   curl -s -k -H "Host: github.jaganathan.co.uk" https://127.0.0.1:443/healthz
+   ```
 
-### 4. Optional: HTTPS (SSL) Configuration
-For HTTPS, you will need a valid SSL certificate (e.g., from Let's Encrypt or a vendor).
-A simple HTTPS block would look like this:
+4. **Test NGINX configuration syntax**:
+   ```bash
+   sudo nginx -t
+   ```
 
-server {
-    listen 443 ssl;
-    server_name mynewsite.com;
+---
 
-    # IMPORTANT: Update these paths to your actual certificate files
-    ssl_certificate /etc/ssl/certs/mynewsite.crt;
-    ssl_certificate_key /etc/ssl/private/mynewsite.key;
+## IV. Log Monitoring & Day-to-Day Operations
 
-    root /var/www/html/mynewsite.com;
-    index index.html;
+- **Tail site access & error logs in real time**:
+  ```bash
+  sudo tail -f /var/log/nginx/github.jaganathan.co.uk.access.log /var/log/nginx/github.jaganathan.co.uk.error.log
+  # Or using nginx-ops.sh:
+  /home/ubuntu/code/github/raviautopilot/technical-notes/000_init/install/nginx/nginx-ops.sh logs --domain github.jaganathan.co.uk --follow
+  ```
 
-    # ... rest of location blocks ...
-}
+- **Check service status, reload, or restart NGINX**:
+  ```bash
+  /home/ubuntu/code/github/raviautopilot/technical-notes/000_init/install/nginx/nginx-ops.sh status
+  sudo /home/ubuntu/code/github/raviautopilot/technical-notes/000_init/install/nginx/nginx-ops.sh reload
+  sudo /home/ubuntu/code/github/raviautopilot/technical-notes/000_init/install/nginx/nginx-ops.sh restart
+  ```
 
-### 5. Final Steps: Test and Restart
-After saving your new .conf file, you must check the syntax and reload NGINX.
+- **Run full security & configuration audit**:
+  ```bash
+  sudo /home/ubuntu/code/github/raviautopilot/technical-notes/000_init/install/nginx/status_nginx.sh
+  ```
 
-* **Test Config Syntax**:
-    $ sudo nginx -t
+---
 
-* **Reload NGINX**:
-    $ sudo systemctl reload nginx
+## V. Production Hardening Applied
 
-## III. Testing Commands
-Use these commands to verify the installation:
-
-* **Check the current test site**:
-    $ curl -s -k -H "Host: nginx.localhost.com" https://127.0.0.1/
-
-* **View the full installation log**:
-    $ cat /var/log/nginx_install_20261114_175714.log
+- **TLS 1.2 & TLS 1.3 Only**: Legacy `SSLv3`, `TLSv1`, and `TLSv1.1` disabled.
+- **AEAD Cipher Suites**: Configured Mozilla Intermediate ECDHE/GCM/CHACHA20 ciphers (`ssl_prefer_server_ciphers off`).
+- **OWASP Security Headers**: `Strict-Transport-Security`, `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, and `Content-Security-Policy`.
+- **DoS & Rate Limiting**: Per-IP rate limit (`20r/s`, burst `40`) and `client_max_body_size 25m`.
+- **Sensitive File Protection**: Blocks hidden dotfiles (`/.git`, `/.env`, `/.htpasswd`) and backup/SQL artifacts (`.bak`, `.sql`, `.old`, `.swp`).
