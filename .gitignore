@@ -20,6 +20,11 @@ graphify-out/.rebuild.lock
 *.test
 *.zip
 *.tgz
+*.tar
+*.tar.gz
+*.gz
+*.7z
+*.rar
 rbot.exe
 rbot.bin
 
@@ -32,45 +37,327 @@ rbot.bin
 ._*
 .Spotlight-V100
 .Trashes
+.AppleDouble
+.LSOverride
+.fseventsd
 
 # Windows
 ehthumbs.db
 Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+.directory
+.fuse_hidden*
+.Trash-*
+.nfs*
 
 # ============================================
 # IDE & EDITOR FILES
 # ============================================
-# JetBrains (IntelliJ, PyCharm, etc.)
+# JetBrains (IntelliJ, PyCharm, GoLand, RustRover, etc.)
 .idea/
 *.iml
+*.ipr
+*.iws
 *.suo
 
 # Visual Studio
 *.ntvs*
 *.njsproj
 *.sln
+.vs/
 
 # VSCode
 .vscode/
+*.code-workspace
+
+# Eclipse / STS / NetBeans
+.classpath
+.project
+.settings/
+.factorypath
+.springBeans
+.sts4-cache/
+nbproject/
+nbbuild/
+nbdist/
 
 # Vim/Neovim
 *.swp
 *.swo
 *.sw?
 *~
+.netrwhist
+Session.vim
+
+# Emacs
+\#*\#
+.\#*
+*.elc
+
+# Sublime Text
+*.sublime-workspace
+*.sublime-project
 
 # Other editors
 .todo/
 
 # ============================================
-# DEPENDENCY DIRECTORIES
+# NODE / JAVASCRIPT / TYPESCRIPT
 # ============================================
-vendor/
-local/
-bin/
-app-data/
 node_modules/
 jspm_packages/
+bower_components/
+web_modules/
+
+# Package manager caches & state
+.npm
+.pnpm-store/
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+.pnp.*
+.yarn-integrity
+.node_repl_history
+
+# TypeScript
+*.tsbuildinfo
+
+# Framework / bundler output
+.next/
+.nuxt/
+.svelte-kit/
+.angular/
+.astro/
+.vite/
+.turbo/
+.parcel-cache/
+.docusaurus/
+.expo/
+.serverless/
+.vercel/
+.netlify/
+.webpack/
+.rpt2_cache/
+.rts2_cache_*/
+storybook-static/
+
+# Linters & tool caches
+.eslintcache
+.stylelintcache
+.cache/
+.temp/
+
+# Runtime data
+*.pid
+*.seed
+*.pid.lock
+
+# ============================================
+# PYTHON
+# ============================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyd
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+.env/
+.python-version
+pyvenv.cfg
+
+# Packaging / build
+*.egg
+*.egg-info/
+.eggs/
+develop-eggs/
+wheels/
+pip-wheel-metadata/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Tool caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.pytype/
+.pyre/
+.dmypy.json
+dmypy.json
+.hypothesis/
+.tox/
+.nox/
+.ipynb_checkpoints/
+.pybuilder/
+__pypackages__/
+.pdm-python
+.pdm-build/
+.pixi/
+.cython_debug/
+
+# Coverage
+.coverage
+.coverage.*
+htmlcov/
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+
+# Django / Flask / Celery
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+.webassets-cache
+celerybeat-schedule
+celerybeat.pid
+
+# Documentation builds
+docs/_build/
+.scrapy
+
+# ============================================
+# RUST
+# ============================================
+# Cargo build output (Cargo.lock: commit for binaries, ignore for libraries)
+target/
+**/*.rs.bk
+*.pdb
+*.profraw
+*.profdata
+
+# ============================================
+# GO
+# ============================================
+*.a
+*.o
+go.work
+go.work.sum
+*.prof
+*.pprof
+coverage.out
+profile.cov
+
+# ============================================
+# JAVA / KOTLIN / SCALA - MAVEN
+# ============================================
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+pom.xml.bak
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+.mvn/.gradle-enterprise/
+# Keep the Maven wrapper jar
+
+# ============================================
+# JAVA / KOTLIN - GRADLE
+# ============================================
+.gradle/
+**/build/
+!**/src/**/build/
+gradle-app.setting
+.gradletasknamecache
+# Keep the Gradle wrapper jar
+!gradle/wrapper/gradle-wrapper.jar
+# Local Gradle overrides (may contain credentials)
+local.properties
+
+# ============================================
+# JAVA - COMPILED ARTIFACTS
+# ============================================
+*.class
+*.jar
+*.war
+*.ear
+*.nar
+*.jfr
+hs_err_pid*
+replay_pid*
+# Re-include wrappers excluded by *.jar above
+!.mvn/wrapper/maven-wrapper.jar
+!gradle/wrapper/gradle-wrapper.jar
+
+# Kotlin / Scala / sbt
+.kotlin/
+.bsp/
+.metals/
+.bloop/
+.scala-build/
+project/target/
+project/project/
+.history/
+
+# ============================================
+# .NET / C#
+# ============================================
+bin/
+obj/
+x64/
+x86/
+*.nupkg
+*.snupkg
+.nuget/
+TestResults/
+*.userprefs
+
+# ============================================
+# C / C++ / CMake
+# ============================================
+*.obj
+*.lib
+*.lo
+*.slo
+*.ko
+*.elf
+*.gch
+*.pch
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+CTestTestfile.cmake
+compile_commands.json
+cmake-build-*/
+
+# ============================================
+# PHP
+# ============================================
+vendor/
+composer.phar
+.phpunit.result.cache
+.phpunit.cache/
+.php-cs-fixer.cache
+.phpstan.cache
+
+# ============================================
+# RUBY
+# ============================================
+*.gem
+*.rbc
+.bundle/
+.byebug_history
+.rspec_status
+.sass-cache/
+.yardoc/
+_yardoc/
+/log/
+
+# ============================================
+# DEPENDENCY DIRECTORIES
+# ============================================
+local/
+app-data/
 
 # ============================================
 # BUILD OUTPUTS & DISTRIBUTIONS
@@ -78,53 +365,179 @@ jspm_packages/
 /dist/
 /build/
 /out/
+dist-ssr/
 coverage.*
 /coverage/
 *.lcov
 .nyc_output
 
+# Static site generators / docs
+_site/
+/site/
+.jekyll-cache/
+.jekyll-metadata
+.hugo_build.lock
+resources/_gen/
+public/hugo_stats.json
+
+# ============================================
+# DOCKER & CONTAINERS
+# ============================================
+docker-compose.override.yml
+compose.override.yaml
+.docker/
+.devcontainer/*.local.*
+
+# ============================================
+# INFRASTRUCTURE AS CODE
+# ============================================
+# Terraform / OpenTofu
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+*.tfvars
+*.tfvars.json
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+tfplan
+*.tfplan
+
+# Pulumi
+Pulumi.*.yaml
+.pulumi/
+
+# Ansible
+*.retry
+.vault_pass
+.vault_pass.txt
+vault_password*
+ansible.log
+
+# Vagrant
+.vagrant/
+
+# Helm / Kubernetes
+charts/*.tgz
+*.kubeconfig
+kubeconfig
+kubeconfig.*
+
+# AWS CDK / SAM / Serverless
+cdk.out/
+.aws-sam/
+
+# ============================================
+# DATABASES & DATA FILES
+# ============================================
+*.sqlite
+*.sqlite3
+*.sqlite-journal
+*.sqlite3-journal
+*.mdb
+*.ldb
+*.rdb
+dump.rdb
+*.sql.gz
+
+# ============================================
+# JUPYTER / DATA SCIENCE / ML
+# ============================================
+*.ipynb_checkpoints
+mlruns/
+wandb/
+lightning_logs/
+*.npy
+*.npz
+*.h5
+*.hdf5
+*.ckpt
+*.pt
+*.pth
+*.onnx
+*.safetensors
+
 # ============================================
 # LOG FILES
 # ============================================
 *.log
+logs/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
 pnpm-debug.log*
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
 # ============================================
-# TEMPORARY FILES
+# TEMPORARY & BACKUP FILES
 # ============================================
 tmp/
 /tmp/
 /temp/
 *.tmp
 *.temp
-*.pid
-*.seed
-*.pid.lock
 pids/
+*.bak
+*.backup
+*.orig
+*.rej
+*.old
+*.swx
+.#*
 
 # ============================================
-# ENVIRONMENT & CONFIGURATION
+# ENVIRONMENT & SECRETS
 # ============================================
 # Environment variables
 .env
 .env.*
 !.env.example
-.env.test
+!.env.sample
+!.env.template
+.envrc
+.direnv/
 infra/env.local
-.env.development.local
-.env.test.local
-.env.production.local
-.env.local
 
 # Application config
-infra/env.local
 cmd/config.json
 secret.json
+secrets.json
+secrets.yaml
+secrets.yml
+*.secret
+*.secrets
 http-client.private.env.json
+service-account*.json
+credentials.json
+.npmrc.local
+.pypirc
+.netrc
+
+# Keys & credentials
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+*.gpg
+*.asc
+id_rsa
+id_rsa.pub
+id_ed25519
+id_ed25519.pub
+.ssh/
+.aws/
+.azure/
+.gcloud/
+.kube/
 
 # Custom configs
 *--system_prompt=*
@@ -136,18 +549,19 @@ http-client.private.env.json
 .bash_history
 .zshrc
 .zsh_history
+.python_history
+.lesshst
+.viminfo
+.wget-hsts
 *bash-rc*
 tmp/.bash_profile
 ask-gpt.sh
 deep-ask.sh
+
 # ============================================
 # CACHE FILES
 # ============================================
-.cache/
-.eslintcache
-.npm
-.yarn-integrity
-.node_repl_history
+*.cache
 
 # ============================================
 # AIDER (AI Pair Programming)
@@ -155,23 +569,44 @@ deep-ask.sh
 .aider*
 
 # ============================================
+# AI CODING TOOLS & AGENTS
+# ============================================
+# ANTIGRAVITY (Google AI IDE)
+.antigravity*
+.agent
+.agents/
+
+# Claude Code (local, per-user settings)
+.claude/settings.local.json
+.claude/*.local.*
+CLAUDE.local.md
+
+# Cursor / Windsurf / Continue / Cline / Copilot
+.cursor/
+.cursorignore
+.cursorindexingignore
+.windsurf/
+.continue/
+.cline/
+.clinerules.local
+.codeium/
+
+# ============================================
 # CERTIFICATES
 # ============================================
 certs/
+*.crt
+*.cer
+*.csr
 
 # ============================================
 # PACKAGE MANAGER LOCK FILES
 # ============================================
+# Ignored by project convention. Remove these lines if you want
+# reproducible installs for a specific app in this repo.
 *package-lock.json
 *yarn.lock
 *pnpm-lock.yaml
-
-# ============================================
-# ANTIGRAVITY (Google AI IDE) & AGENTS
-# ============================================
-.antigravity*
-.agent
-.agents/
 
 # ============================================
 # SCREENSHOTS & PROMOTION HASHES
@@ -185,3 +620,9 @@ varam/.promote_hash
 # E2E ARTIFACTS & EVIDENCE
 # ============================================
 /evidence/
+playwright-report/
+test-results/
+blob-report/
+playwright/.cache/
+cypress/videos/
+cypress/screenshots/
