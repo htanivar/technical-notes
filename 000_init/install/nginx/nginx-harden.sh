@@ -1,3 +1,4 @@
+
 #!/usr/bin/env bash
 #
 # nginx-harden.sh - fix the nginx audit warnings (WARN-1 .. WARN-15) on Debian/Ubuntu
@@ -20,11 +21,11 @@
 #
 set -uo pipefail
 shopt -u patsub_replacement 2>/dev/null || true
-
+ 
 DOMAINS=(); EMAIL=""; WEBROOT=/var/www/html; PROXY=""
 DO_UPGRADE=0; DO_REBOOT=0; SKIP_F2B=0; ASSUME_YES=0
 CSP="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'"
-
+ 
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --domain)       DOMAINS+=("${2:?--domain needs a value}"); shift 2 ;;
@@ -40,19 +41,19 @@ while [[ $# -gt 0 ]]; do
     *) echo "Unknown option: $1"; exit 1 ;;
   esac
 done
-
+ 
 [[ $EUID -eq 0 ]] || { echo "Run as root (sudo)."; exit 1; }
 command -v apt-get >/dev/null || { echo "This script needs apt (Debian/Ubuntu)."; exit 1; }
-
+ 
 for d in "${DOMAINS[@]}"; do
   [[ $d =~ ^[A-Za-z0-9]([A-Za-z0-9.-]*[A-Za-z0-9])?$ ]] || { echo "Invalid domain: $d"; exit 1; }
 done
 SERVER_NAMES="${DOMAINS[*]:-}"
 PRIMARY="${DOMAINS[0]:-}"
-
+ 
 step() { echo; echo "[$1] $2"; }
 die()  { echo "ERROR: $*" >&2; exit 1; }
-
+ 
 # ------------------------------------------------------------ confirmation ---
 echo "== nginx hardening =="
 echo "Will: back up /etc/nginx, edit nginx.conf (comment out conflicting directives),"
@@ -68,24 +69,24 @@ if (( ! ASSUME_YES )); then
   read -r -p "Proceed? Type 'yes': " ans
   [[ $ans == yes ]] || { echo "Aborted."; exit 1; }
 fi
-
+ 
 # ------------------------------------------------- 1. packages and backup ---
 step 1/9 "Installing packages and backing up /etc/nginx"
 apt-get update -y
 PKGS=(nginx openssl curl)
 [[ -n $PRIMARY ]] && PKGS+=(certbot)
 DEBIAN_FRONTEND=noninteractive apt-get install -y "${PKGS[@]}" || die "package install failed"
-
+ 
 BACKUP=/root/nginx-harden-backup-$(date +%Y%m%d-%H%M%S).tar.gz
 tar -czf "$BACKUP" -C / etc/nginx || die "backup failed"
 echo "Backup: $BACKUP"
-
+ 
 rollback() {
   echo "Rolling back /etc/nginx from $BACKUP"
   rm -rf /etc/nginx && tar -xzf "$BACKUP" -C /
   nginx -t && { systemctl is-active --quiet nginx && systemctl reload nginx; }
 }
-
+ 
 apply() {   # test config; reload on success, roll back on failure
   if nginx -t; then
     systemctl enable nginx >/dev/null 2>&1
@@ -94,31 +95,38 @@ apply() {   # test config; reload on success, roll back on failure
     rollback; die "nginx -t failed; original config restored"
   fi
 }
-
+ 
 NGX=/etc/nginx/nginx.conf
 grep -Eq '^[[:space:]]*include[[:space:]]+/etc/nginx/conf\.d/\*\.conf;' "$NGX" \
   || die "nginx.conf does not include conf.d/*.conf inside http {}; add it and re-run"
 grep -Eq '^[[:space:]]*include[[:space:]]+/etc/nginx/sites-enabled/\*;' "$NGX" \
   || die "nginx.conf does not include sites-enabled/*; add it and re-run"
-
+ 
 # --------------------------------------- 2. neutralise conflicting directives
 step 2/9 "Commenting out directives in nginx.conf that we set in conf.d"
 for d in server_tokens ssl_protocols ssl_ciphers ssl_prefer_server_ciphers \
          ssl_session_cache ssl_session_timeout ssl_session_tickets; do
   sed -i -E "s|^([[:space:]]*)(${d}[[:space:]].*)\$|\1# \2  # moved to conf.d/00-security.conf|" "$NGX"
 done
-
+ 
+# If configure_nginx.sh already wrote its global snippet, drop the directives it shares with
+# ours (this script owns them now); otherwise nginx fails with "directive is duplicate".
+HP=/etc/nginx/conf.d/00-production-hardening.conf
+if [[ -f $HP ]]; then
+  sed -i -E '/^[[:space:]]*(server_tokens|ssl_session_cache|ssl_session_timeout|ssl_session_tickets)[[:space:]]/d' "$HP"
+fi
+ 
 # --------------------------------------------- 3. http-level + snippets ------
 step 3/9 "Writing conf.d/00-security.conf and snippets"
 install -d /etc/nginx/conf.d /etc/nginx/snippets /etc/nginx/sites-available /etc/nginx/sites-enabled
-
+ 
 # WARN-2 (server_tokens), WARN-3 (ssl_session_cache), WARN-11 (limit_req_zone)
 cat > /etc/nginx/conf.d/00-security.conf <<'EOF'
 # Managed by nginx-harden.sh (http-level settings)
-
+ 
 # Hide nginx version                                         [WARN-2]
 server_tokens off;
-
+ 
 # TLS: modern protocols/ciphers, session cache               [WARN-3]
 ssl_protocols TLSv1.2 TLSv1.3;
 ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305;
@@ -126,18 +134,18 @@ ssl_prefer_server_ciphers off;
 ssl_session_cache shared:SSL:10m;
 ssl_session_timeout 1d;
 ssl_session_tickets off;
-
+ 
 # Request rate limiting zone (applied in snippets/security-server.conf)  [WARN-11]
 limit_req_zone $binary_remote_addr zone=req_limit:10m rate=10r/s;
 limit_req_status 429;
-
+ 
 # Slow-client / oversized request protection
 client_body_timeout   10s;
 client_header_timeout 10s;
 send_timeout          10s;
 client_max_body_size  10m;
 EOF
-
+ 
 # WARN-4..9: security headers (shared snippet).
 # NOTE: add_header inside a location{} block REPLACES inherited headers - re-include
 # this snippet in any location that sets its own add_header.
@@ -153,12 +161,12 @@ add_header Permissions-Policy "geolocation=(), microphone=(), camera=(), payment
 EOF
 _h=$(< /etc/nginx/snippets/security-headers.conf)
 printf '%s\n' "${_h//@@CSP@@/$CSP}" > /etc/nginx/snippets/security-headers.conf
-
+ 
 # WARN-12 (limit_req applied) + WARN-13 (block dotfiles)
 cat > /etc/nginx/snippets/security-server.conf <<'EOF'
 # Managed by nginx-harden.sh
 limit_req zone=req_limit burst=20 nodelay;
-
+ 
 # Block hidden files (.git, .env, .htpasswd ...) but allow /.well-known/
 location ~ /\.(?!well-known).* {
     deny all;
@@ -166,26 +174,26 @@ location ~ /\.(?!well-known).* {
     log_not_found off;
 }
 EOF
-
+ 
 # ------------------------------------------------- 4. sites and certificates
 step 4/9 "Writing hardened default site (WARN-1, WARN-10)"
-
+ 
 NGX_VER=$(nginx -v 2>&1 | sed -E 's|.*/([0-9.]+).*|\1|')
 if [[ $(printf '%s\n' 1.25.1 "$NGX_VER" | sort -V | head -n1) == 1.25.1 ]]; then
   H2L=""; H2D="    http2 on;"
 else
   H2L=" http2"; H2D=""
 fi
-
+ 
 IFS= read -r -d '' LOC_STATIC <<'EOF'
     root @@WEBROOT@@;
     index index.html index.htm index.nginx-debian.html;
-
+ 
     location / {
         try_files $uri $uri/ =404;
     }
 EOF
-
+ 
 IFS= read -r -d '' LOC_PROXY <<'EOF'
     location / {
         proxy_pass @@PROXY@@;
@@ -197,11 +205,11 @@ IFS= read -r -d '' LOC_PROXY <<'EOF'
         proxy_hide_header X-Powered-By;
     }
 EOF
-
+ 
 if [[ -n $PROXY ]]; then LOCATION_BLOCK=$LOC_PROXY; else LOCATION_BLOCK=$LOC_STATIC; fi
 if [[ -n $PRIMARY ]]; then DEFAULT_BODY="    return 444;   # unknown Host/SNI: drop connection"
 else DEFAULT_BODY=$LOC_STATIC; fi
-
+ 
 render() {
   local t; t=$(cat)
   t=${t//@@LOCATION@@/$LOCATION_BLOCK}
@@ -214,7 +222,7 @@ render() {
   t=${t//@@H2D@@/$H2D}
   printf '%s\n' "$t"
 }
-
+ 
 # Self-signed cert so the catch-all HTTPS server has ssl_certificate  [WARN-1]
 CERT_DIR=/etc/ssl/nginx-default
 if [[ ! -s $CERT_DIR/default.crt ]]; then
@@ -224,38 +232,38 @@ if [[ ! -s $CERT_DIR/default.crt ]]; then
     || die "failed to generate self-signed certificate"
   chmod 600 "$CERT_DIR/default.key"
 fi
-
+ 
 render > /etc/nginx/sites-available/default <<'EOF'
 # Managed by nginx-harden.sh - catch-all server (direct IP / unknown hostnames)
-
+ 
 server {
     listen 80 default_server;
     listen [::]:80 default_server;
     server_name _;
-
+ 
     include snippets/security-headers.conf;
     include snippets/security-server.conf;
-
+ 
     return 301 https://$host$request_uri;          # [WARN-10]
 }
-
+ 
 server {
     listen 443 ssl@@H2L@@ default_server;
     listen [::]:443 ssl@@H2L@@ default_server;
 @@H2D@@
     server_name _;
-
+ 
     ssl_certificate     /etc/ssl/nginx-default/default.crt;
     ssl_certificate_key /etc/ssl/nginx-default/default.key;
-
+ 
     include snippets/security-headers.conf;
     include snippets/security-server.conf;
-
+ 
 @@DEFAULT_BODY@@
 }
 EOF
 ln -sfn /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
-
+ 
 write_domain_http() {   # port 80 only: ACME challenge + redirect
   render > "/etc/nginx/sites-available/$PRIMARY.conf" <<'EOF'
 # Managed by nginx-harden.sh
@@ -263,15 +271,15 @@ server {
     listen 80;
     listen [::]:80;
     server_name @@SERVER_NAMES@@;
-
+ 
     include snippets/security-headers.conf;
     include snippets/security-server.conf;
-
+ 
     location ^~ /.well-known/acme-challenge/ {
         root /var/www/certbot;
         default_type "text/plain";
     }
-
+ 
     location / {
         return 301 https://$host$request_uri;
     }
@@ -279,7 +287,7 @@ server {
 EOF
   ln -sfn "/etc/nginx/sites-available/$PRIMARY.conf" "/etc/nginx/sites-enabled/$PRIMARY.conf"
 }
-
+ 
 write_domain_full() {   # port 80 + 443 with the real cert
   { cat <<'EOF'
 # Managed by nginx-harden.sh
@@ -287,46 +295,46 @@ server {
     listen 80;
     listen [::]:80;
     server_name @@SERVER_NAMES@@;
-
+ 
     include snippets/security-headers.conf;
     include snippets/security-server.conf;
-
+ 
     location ^~ /.well-known/acme-challenge/ {
         root /var/www/certbot;
         default_type "text/plain";
     }
-
+ 
     location / {
         return 301 https://$host$request_uri;
     }
 }
-
+ 
 server {
     listen 443 ssl@@H2L@@;
     listen [::]:443 ssl@@H2L@@;
 @@H2D@@
     server_name @@SERVER_NAMES@@;
-
+ 
     ssl_certificate     /etc/letsencrypt/live/@@PRIMARY@@/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/@@PRIMARY@@/privkey.pem;
-
+ 
     access_log /var/log/nginx/@@PRIMARY@@.access.log;
-
+ 
     include snippets/security-headers.conf;
     include snippets/security-server.conf;
-
+ 
 @@LOCATION@@
 }
 EOF
   } | render > "/etc/nginx/sites-available/$PRIMARY.conf"
   ln -sfn "/etc/nginx/sites-available/$PRIMARY.conf" "/etc/nginx/sites-enabled/$PRIMARY.conf"
 }
-
+ 
 [[ -n $PRIMARY ]] && write_domain_http
-
+ 
 step 5/9 "Testing and applying configuration"
 apply
-
+ 
 # --------------------------------------------------- 6. Let's Encrypt cert --
 step 6/9 "Let's Encrypt certificate"
 if [[ -z $PRIMARY ]]; then
@@ -343,7 +351,7 @@ else
     for d in "${DOMAINS[@]}"; do CB+=(-d "$d"); done
     if "${CB[@]}"; then CERT_OK=1; else CERT_OK=0; fi
   fi
-
+ 
   if (( CERT_OK )); then
     write_domain_full
     if nginx -t; then
@@ -363,7 +371,7 @@ else
     echo "         re-run this script after fixing DNS."
   fi
 fi
-
+ 
 # -------------------------------------------------------------- 7. fail2ban --
 step 7/9 "fail2ban (WARN-14)"
 if (( SKIP_F2B )); then
@@ -371,12 +379,12 @@ if (( SKIP_F2B )); then
 else
   DEBIAN_FRONTEND=noninteractive apt-get install -y fail2ban || echo "WARNING: fail2ban install failed"
   mkdir -p /var/log/nginx; touch /var/log/nginx/error.log
-
+ 
   MY_IP=""
   if [[ -n ${SSH_CLIENT:-} ]]; then MY_IP=${SSH_CLIENT%% *}
   else MY_IP=$(who -m 2>/dev/null | awk '{print $NF}' | tr -d '()'); fi
   [[ $MY_IP =~ ^[0-9a-fA-F:.]+$ ]] || MY_IP=""
-
+ 
   JL=/etc/fail2ban/jail.local
   if [[ ! -f $JL ]]; then
     cat > "$JL" <<EOF
@@ -389,22 +397,22 @@ maxretry = 5
 bantime.increment = true
 bantime.factor    = 2
 bantime.maxtime   = 1w
-
+ 
 [sshd]
 enabled = true
 port    = ssh
-
+ 
 [nginx-http-auth]
 enabled = true
 port    = http,https
 logpath = /var/log/nginx/error.log
-
+ 
 [nginx-botsearch]
 enabled  = true
 port     = http,https
 logpath  = /var/log/nginx/error.log
 maxretry = 2
-
+ 
 [nginx-limit-req]
 enabled = true
 port    = http,https
@@ -412,14 +420,14 @@ logpath = /var/log/nginx/error.log
 EOF
   elif ! grep -q '^\[nginx-limit-req\]' "$JL"; then
     cat >> "$JL" <<'EOF'
-
+ 
 [nginx-limit-req]
 enabled = true
 port    = http,https
 logpath = /var/log/nginx/error.log
 EOF
   fi
-
+ 
   if fail2ban-client -t >/dev/null 2>&1; then
     systemctl enable fail2ban >/dev/null 2>&1
     systemctl restart fail2ban
@@ -428,7 +436,7 @@ EOF
     echo "WARNING: fail2ban config test failed; check $JL"
   fi
 fi
-
+ 
 # ---------------------------------------------- 8. updates and reboot -------
 step 8/9 "System updates (WARN-15)"
 if (( DO_UPGRADE )); then
@@ -437,13 +445,13 @@ if (( DO_UPGRADE )); then
 else
   echo "Skipped (use --upgrade to apply pending updates)"
 fi
-
+ 
 REBOOT_PENDING=0
 if [[ -f /var/run/reboot-required ]]; then
   REBOOT_PENDING=1
   echo "A reboot is required to finish applying kernel/security updates."
 fi
-
+ 
 # ------------------------------------------------------------- 9. verify ----
 step 9/9 "Verification"
 nginx -t
@@ -456,12 +464,12 @@ echo "Response headers:"
     curl -skI --max-time 10 https://127.0.0.1/
   fi
 } | grep -iE '^(HTTP|server|strict-transport|x-frame|x-content-type|content-security|referrer-policy|permissions-policy)' || true
-
+ 
 echo
 echo "Done. Backup: $BACKUP"
 echo "Restore with: sudo rm -rf /etc/nginx && sudo tar -xzf $BACKUP -C /"
 echo "Re-run your audit tool to confirm the warnings are cleared."
-
+ 
 if (( REBOOT_PENDING )); then
   if (( DO_REBOOT )); then
     echo "Rebooting in 1 minute (cancel with: sudo shutdown -c)"
@@ -470,3 +478,4 @@ if (( REBOOT_PENDING )); then
     echo "Reboot when convenient:  sudo reboot   (or re-run with --reboot)"
   fi
 fi
+ 
