@@ -2,9 +2,9 @@
 
 | Property | Value |
 | :--- | :--- |
-| **Overall Health** | **NEEDS ATTENTION (15 WARN)** |
-| **Checks Summary** | **OK:** `16` &nbsp; **WARN:** `15` &nbsp; **FAIL:** `0` |
-| **Generated At** | `2026-11-15 12:47:37 IST` |
+| **Overall Health** | **CRITICAL (2 FAIL, 1 WARN)** |
+| **Checks Summary** | **OK:** `38` &nbsp; **WARN:** `1` &nbsp; **FAIL:** `2` |
+| **Generated At** | `2026-11-15 13:16:12 IST` |
 | **Host / OS** | `ravinath.prod` (Ubuntu 22.04.4 LTS) |
 | **Nginx Version** | `nginx/1.18.0 (Ubuntu)` — Binary: [nginx](file:///usr/sbin/nginx) (`/usr/sbin/nginx`) |
 | **Main Config** | [nginx.conf](file:///etc/nginx/nginx.conf) (`/etc/nginx/nginx.conf`) |
@@ -35,25 +35,18 @@
 
 ## What Is Wrong & How to Fix It (Failures & Warnings)
 
+### Critical Failures (`[FAIL]` — Fix Immediately)
+
+| ID | Section | What Is Wrong | Where (File / Line Link) | Docs | How to Fix |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **FAIL-1** | [13. ACCESS LOG & TRAFFIC ANALYSIS (assumes combined format)](#13-access-log-traffic-analysis-assumes-combined-format) | High HTTP 5xx error rate >= 5% (24 of 24 requests) in /var/log/nginx/github.jaganathan.co.uk.access.log | [github.jaganathan.co.uk.access.log](file:///var/log/nginx/github.jaganathan.co.uk.access.log) (`/var/log/nginx/github.jaganathan.co.uk.access.log`) | [Docs](https://docs.nginx.com/nginx/admin-guide/monitoring/logging/) | Inspect top 5xx URLs in /var/log/nginx/github.jaganathan.co.uk.access.log and correlate with /var/log/nginx/error.log |
+| **FAIL-2** | [16. BACKENDS & RELATED SERVICES](#16-backends-related-services) | Upstream backend 127.0.0.1:3000 is NOT reachable (configured at github.jaganathan.co.uk.conf) | [github.jaganathan.co.uk.conf:58](file:///etc/nginx/conf.d/github.jaganathan.co.uk.conf#L58) (`/etc/nginx/conf.d/github.jaganathan.co.uk.conf:58`) | [Docs](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_pass) | Verify the backend application listening on 127.0.0.1:3000 is running and check its logs |
+
 ### Warnings (`[WARN]` — Recommended Hardening & Fixes)
 
 | ID | Section | Warning Details | Where (File / Line Link) | Docs | How to Fix |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **WARN-1** | [7. SSL / TLS CERTIFICATES](#7-ssl-tls-certificates) | No ssl_certificate directives found - HTTPS is not configured | [default:21](file:///etc/nginx/sites-enabled/default#L21) (`/etc/nginx/sites-enabled/default:21`) | [Docs](https://nginx.org/en/docs/http/configuring_https_servers.html) | Configure TLS certificates (e.g. via Certbot: sudo certbot --nginx) and listen on 443 ssl |
-| **WARN-2** | [8. SECURITY AUDIT (config-based)](#8-security-audit-config-based) | server_tokens is not set to 'off' - Nginx version is exposed in HTTP headers and error pages | [nginx.conf:20](file:///etc/nginx/nginx.conf#L20) (`/etc/nginx/nginx.conf:20`) | [Docs](https://nginx.org/en/docs/http/ngx_http_core_module.html#server_tokens) | Uncomment or add 'server_tokens off;' inside the http {} block in /etc/nginx/nginx.conf |
-| **WARN-3** | [8. SECURITY AUDIT (config-based)](#8-security-audit-config-based) | ssl_session_cache is not configured (impacts TLS handshake performance) | [nginx.conf:11](file:///etc/nginx/nginx.conf#L11) (`/etc/nginx/nginx.conf:11`) | [Docs](https://nginx.org/en/docs/http/ngx_http_ssl_module.html#ssl_session_cache) | Add 'ssl_session_cache shared:SSL:10m; ssl_session_timeout 1d;' in http {} block of /etc/nginx/nginx.conf |
-| **WARN-4** | [8. SECURITY AUDIT (config-based)](#8-security-audit-config-based) | HTTP security header 'Strict-Transport-Security' is missing from configuration | [default:21](file:///etc/nginx/sites-enabled/default#L21) (`/etc/nginx/sites-enabled/default:21`) | [Docs](https://owasp.org/www-project-secure-headers/) | Add 'add_header Strict-Transport-Security "..." always;' to your server {} block or shared security snippet |
-| **WARN-5** | [8. SECURITY AUDIT (config-based)](#8-security-audit-config-based) | HTTP security header 'X-Frame-Options' is missing from configuration | [default:21](file:///etc/nginx/sites-enabled/default#L21) (`/etc/nginx/sites-enabled/default:21`) | [Docs](https://owasp.org/www-project-secure-headers/) | Add 'add_header X-Frame-Options "..." always;' to your server {} block or shared security snippet |
-| **WARN-6** | [8. SECURITY AUDIT (config-based)](#8-security-audit-config-based) | HTTP security header 'X-Content-Type-Options' is missing from configuration | [default:21](file:///etc/nginx/sites-enabled/default#L21) (`/etc/nginx/sites-enabled/default:21`) | [Docs](https://owasp.org/www-project-secure-headers/) | Add 'add_header X-Content-Type-Options "..." always;' to your server {} block or shared security snippet |
-| **WARN-7** | [8. SECURITY AUDIT (config-based)](#8-security-audit-config-based) | HTTP security header 'Content-Security-Policy' is missing from configuration | [default:21](file:///etc/nginx/sites-enabled/default#L21) (`/etc/nginx/sites-enabled/default:21`) | [Docs](https://owasp.org/www-project-secure-headers/) | Add 'add_header Content-Security-Policy "..." always;' to your server {} block or shared security snippet |
-| **WARN-8** | [8. SECURITY AUDIT (config-based)](#8-security-audit-config-based) | HTTP security header 'Referrer-Policy' is missing from configuration | [default:21](file:///etc/nginx/sites-enabled/default#L21) (`/etc/nginx/sites-enabled/default:21`) | [Docs](https://owasp.org/www-project-secure-headers/) | Add 'add_header Referrer-Policy "..." always;' to your server {} block or shared security snippet |
-| **WARN-9** | [8. SECURITY AUDIT (config-based)](#8-security-audit-config-based) | HTTP security header 'Permissions-Policy' is missing from configuration | [default:21](file:///etc/nginx/sites-enabled/default#L21) (`/etc/nginx/sites-enabled/default:21`) | [Docs](https://owasp.org/www-project-secure-headers/) | Add 'add_header Permissions-Policy "..." always;' to your server {} block or shared security snippet |
-| **WARN-10** | [8. SECURITY AUDIT (config-based)](#8-security-audit-config-based) | Port 80 is served without an automatic HTTP -> HTTPS redirect | [default:22](file:///etc/nginx/sites-enabled/default#L22) (`/etc/nginx/sites-enabled/default:22`) | [Docs](https://nginx.org/en/docs/http/ngx_http_rewrite_module.html#return) | Add 'return 301 https://$host$request_uri;' in the port 80 server {} block |
-| **WARN-11** | [8. SECURITY AUDIT (config-based)](#8-security-audit-config-based) | No limit_req_zone defined (no request rate limiting against brute-force/DDoS) | [nginx.conf:11](file:///etc/nginx/nginx.conf#L11) (`/etc/nginx/nginx.conf:11`) | [Docs](https://nginx.org/en/docs/http/ngx_http_limit_req_module.html#limit_req_zone) | Add 'limit_req_zone $binary_remote_addr zone=req_limit:10m rate=10r/s;' in http {} block of /etc/nginx/nginx.conf |
-| **WARN-12** | [8. SECURITY AUDIT (config-based)](#8-security-audit-config-based) | limit_req is not applied to any server or location context | [default:21](file:///etc/nginx/sites-enabled/default#L21) (`/etc/nginx/sites-enabled/default:21`) | [Docs](https://nginx.org/en/docs/http/ngx_http_limit_req_module.html#limit_req) | Apply 'limit_req zone=req_limit burst=20 nodelay;' inside sensitive server/location blocks |
-| **WARN-13** | [8. SECURITY AUDIT (config-based)](#8-security-audit-config-based) | No location rule blocking hidden dotfiles (/.git, /.env, /.htpasswd) | [default:21](file:///etc/nginx/sites-enabled/default#L21) (`/etc/nginx/sites-enabled/default:21`) | [Docs](https://nginx.org/en/docs/http/ngx_http_core_module.html#location) | Add 'location ~ /\.(?!well-known).* { deny all; }' to server {} blocks |
-| **WARN-14** | [10. SYSTEM-LEVEL HARDENING](#10-system-level-hardening) | fail2ban is not installed (recommended for nginx-http-auth and bot/scanner rate-banning) | [etc](file:///etc) (`/etc`) | [Docs](https://www.fail2ban.org/wiki/index.php/Main_Page) | Install fail2ban: sudo apt-get install -y fail2ban |
-| **WARN-15** | [10. SYSTEM-LEVEL HARDENING](#10-system-level-hardening) | System reboot required to apply kernel/security updates | [reboot-required](file:///var/run/reboot-required) (`/var/run/reboot-required`) | [Docs](https://wiki.debian.org/UnattendedUpgrades) | Schedule a maintenance window and reboot the host: sudo reboot |
+| **WARN-1** | [12. ERROR LOG ANALYSIS](#12-error-log-analysis) | Upstream/backend connection errors found in /var/log/nginx/github.jaganathan.co.uk.error.log | [github.jaganathan.co.uk.error.log](file:///var/log/nginx/github.jaganathan.co.uk.error.log) (`/var/log/nginx/github.jaganathan.co.uk.error.log`) | [Docs](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_read_timeout) | Check backend service health and inspect recent lines in /var/log/nginx/github.jaganathan.co.uk.error.log |
 
 ---
 
@@ -63,16 +56,16 @@
 ## 1. SYSTEM OVERVIEW
 
 - OS        : Ubuntu 22.04.4 LTS
-- Kernel    : 5.15.0-198-generic  (x86_64)
-- Uptime    : up 4 weeks, 3 days, 4 hours, 43 minutes
-- Load avg  : 0.03 0.18 0.13   CPUs: 8
+- Kernel    : 5.15.0-203-generic  (x86_64)
+- Uptime    : up 14 minutes
+- Load avg  : 0.10 0.13 0.07   CPUs: 8
 
 ### Memory
 
 
 ```text
                total        used        free      shared  buff/cache   available
-Mem:            17Gi       1.5Gi       7.7Gi       1.0Mi       8.3Gi        15Gi
+Mem:            17Gi       661Mi        15Gi       1.0Mi       1.2Gi        16Gi
 Swap:             0B          0B          0B
 ```
 
@@ -92,7 +85,7 @@ Filesystem                        Type  Size  Used Avail Use% Mounted on
 
 ```text
 Filesystem                          Inodes  IUsed    IFree IUse% Mounted on
-/dev/mapper/ubuntu--vg-ubuntu--lv 15613952 243922 15370030    2% /
+/dev/mapper/ubuntu--vg-ubuntu--lv 15613952 244520 15369432    2% /
 /dev/vda2                           114688    320   114368    1% /boot
 ```
 
@@ -216,19 +209,19 @@ nginx-core 1.18.0-6ubuntu14.22
 ```text
 * nginx.service - A high performance web server and a reverse proxy server
      Loaded: loaded (/lib/systemd/system/nginx.service; enabled; vendor preset: enabled)
-     Active: active (running) since Sun 2026-11-15 12:43:19 IST; 4min 19s ago
+     Active: active (running) since Sun 2026-11-15 13:02:04 IST; 14min ago
        Docs: man:nginx(8)
-    Process: 1529774 ExecReload=/usr/sbin/nginx -g daemon on; master_process on; -s reload (code=exited, status=0/SUCCESS)
-   Main PID: 1527287 (nginx)
+    Process: 5616 ExecReload=/usr/sbin/nginx -g daemon on; master_process on; -s reload (code=exited, status=0/SUCCESS)
+   Main PID: 860 (nginx)
       Tasks: 9 (limit: 21436)
-     Memory: 7.8M
-        CPU: 165ms
+     Memory: 19.3M
+        CPU: 580ms
      CGroup: /system.slice/nginx.service
-             |-1527287 "nginx: master process /usr/sbin/nginx -g daemon on; master_process on;"
-             |-1529775 "nginx: worker process" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" ""
-             |-1529776 "nginx: worker process" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" ""
-             |-1529777 "nginx: worker process" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" ""
-             |-1529778 "nginx: worker process" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" ""
+             |- 860 "nginx: master process /usr/sbin/nginx -g daemon on; master_process on;"
+             |-5625 "nginx: worker process" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" ""
+             |-5626 "nginx: worker process" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" ""
+             |-5627 "nginx: worker process" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" ""
+             |-5629 "nginx: worker process" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" ""
 ```
 
 
@@ -236,11 +229,17 @@ nginx-core 1.18.0-6ubuntu14.22
 
 
 ```text
-Nov 15 12:34:25 ravinath.prod systemd[1]: nginx.service: Unit cannot be reloaded because it is inactive.
-Nov 15 12:43:19 ravinath.prod systemd[1]: Starting A high performance web server and a reverse proxy server...
-Nov 15 12:43:19 ravinath.prod systemd[1]: Started A high performance web server and a reverse proxy server.
-Nov 15 12:47:11 ravinath.prod systemd[1]: Reloading A high performance web server and a reverse proxy server...
-Nov 15 12:47:11 ravinath.prod systemd[1]: Reloaded A high performance web server and a reverse proxy server.
+Nov 15 13:01:14 ravinath.prod systemd[1]: Reloaded A high performance web server and a reverse proxy server.
+Nov 15 13:01:29 ravinath.prod systemd[1]: Stopping A high performance web server and a reverse proxy server...
+Nov 15 13:01:29 ravinath.prod systemd[1]: nginx.service: Deactivated successfully.
+Nov 15 13:01:29 ravinath.prod systemd[1]: Stopped A high performance web server and a reverse proxy server.
+-- Boot caa9102e01de4d859337acecfc5b0412 --
+Nov 15 13:02:04 ravinath.prod systemd[1]: Starting A high performance web server and a reverse proxy server...
+Nov 15 13:02:04 ravinath.prod systemd[1]: Started A high performance web server and a reverse proxy server.
+Nov 15 13:12:43 ravinath.prod systemd[1]: Reloading A high performance web server and a reverse proxy server...
+Nov 15 13:12:43 ravinath.prod systemd[1]: Reloaded A high performance web server and a reverse proxy server.
+Nov 15 13:14:51 ravinath.prod systemd[1]: Reloading A high performance web server and a reverse proxy server...
+Nov 15 13:14:51 ravinath.prod systemd[1]: Reloaded A high performance web server and a reverse proxy server.
 ```
 
 
@@ -253,15 +252,15 @@ Nov 15 12:47:11 ravinath.prod systemd[1]: Reloaded A high performance web server
 
 ```text
     PID    PPID USER     %CPU %MEM   RSS     ELAPSED CMD
-1527287       1 root      0.0  0.0 12264       04:20 nginx: master process /usr/sbin/nginx -g daemon on; master_process on;
-1529775 1527287 www-data  0.0  0.0  5684       00:28 nginx: worker process
-1529776 1527287 www-data  0.0  0.0  5684       00:28 nginx: worker process
-1529777 1527287 www-data  0.0  0.0  5684       00:28 nginx: worker process
-1529778 1527287 www-data  0.0  0.0  5684       00:28 nginx: worker process
-1529779 1527287 www-data  0.0  0.0  5684       00:28 nginx: worker process
-1529780 1527287 www-data  0.0  0.0  5684       00:28 nginx: worker process
-1529781 1527287 www-data  0.0  0.0  5684       00:28 nginx: worker process
-1529782 1527287 www-data  0.0  0.0  5684       00:28 nginx: worker process
+    860       1 root      0.0  0.0 10428       14:10 nginx: master process /usr/sbin/nginx -g daemon on; master_process on;
+   5625     860 www-data  0.0  0.0  6432       01:24 nginx: worker process
+   5626     860 www-data  0.0  0.0  6432       01:24 nginx: worker process
+   5627     860 www-data  0.0  0.0 10480       01:24 nginx: worker process
+   5629     860 www-data  0.0  0.0  6432       01:24 nginx: worker process
+   5630     860 www-data  0.0  0.0  6432       01:24 nginx: worker process
+   5631     860 www-data  0.0  0.0  6432       01:24 nginx: worker process
+   5632     860 www-data  0.0  0.0  6432       01:24 nginx: worker process
+   5633     860 www-data  0.0  0.0  6432       01:24 nginx: worker process
 ```
 
 - **[ OK ]** Master runs as root (normal, needed for ports <1024)
@@ -276,7 +275,7 @@ Nov 15 12:47:11 ravinath.prod systemd[1]: Reloaded A high performance web server
 Max open files            1024                 524288               files     
 ```
 
-- Open FDs (master): 23
+- Open FDs (master): 27
 
 <a id="4-listening-ports-connections"></a>
 
@@ -287,8 +286,10 @@ Max open files            1024                 524288               files
 
 
 ```text
-tcp   LISTEN 0      511          0.0.0.0:80         0.0.0.0:*    users:(("nginx",pid=1529782,fd=6),("nginx",pid=1529781,fd=6),("nginx",pid=1529780,fd=6),("nginx",pid=1529779,fd=6),("nginx",pid=1529778,fd=6),("nginx",pid=1529777,fd=6),("nginx",pid=1529776,fd=6),("nginx",pid=1529775,fd=6),("nginx",pid=1527287,fd=6))
-tcp   LISTEN 0      511             [::]:80            [::]:*    users:(("nginx",pid=1529782,fd=7),("nginx",pid=1529781,fd=7),("nginx",pid=1529780,fd=7),("nginx",pid=1529779,fd=7),("nginx",pid=1529778,fd=7),("nginx",pid=1529777,fd=7),("nginx",pid=1529776,fd=7),("nginx",pid=1529775,fd=7),("nginx",pid=1527287,fd=7))
+tcp   LISTEN 0      511          0.0.0.0:443        0.0.0.0:*    users:(("nginx",pid=5633,fd=8),("nginx",pid=5632,fd=8),("nginx",pid=5631,fd=8),("nginx",pid=5630,fd=8),("nginx",pid=5629,fd=8),("nginx",pid=5627,fd=8),("nginx",pid=5626,fd=8),("nginx",pid=5625,fd=8),("nginx",pid=860,fd=8))
+tcp   LISTEN 0      511          0.0.0.0:80         0.0.0.0:*    users:(("nginx",pid=5633,fd=6),("nginx",pid=5632,fd=6),("nginx",pid=5631,fd=6),("nginx",pid=5630,fd=6),("nginx",pid=5629,fd=6),("nginx",pid=5627,fd=6),("nginx",pid=5626,fd=6),("nginx",pid=5625,fd=6),("nginx",pid=860,fd=6))
+tcp   LISTEN 0      511             [::]:443           [::]:*    users:(("nginx",pid=5633,fd=9),("nginx",pid=5632,fd=9),("nginx",pid=5631,fd=9),("nginx",pid=5630,fd=9),("nginx",pid=5629,fd=9),("nginx",pid=5627,fd=9),("nginx",pid=5626,fd=9),("nginx",pid=5625,fd=9),("nginx",pid=860,fd=9))
+tcp   LISTEN 0      511             [::]:80            [::]:*    users:(("nginx",pid=5633,fd=7),("nginx",pid=5632,fd=7),("nginx",pid=5631,fd=7),("nginx",pid=5630,fd=7),("nginx",pid=5629,fd=7),("nginx",pid=5627,fd=7),("nginx",pid=5626,fd=7),("nginx",pid=5625,fd=7),("nginx",pid=860,fd=7))
 ```
 
 
@@ -297,7 +298,13 @@ tcp   LISTEN 0      511             [::]:80            [::]:*    users:(("nginx"
 
 ```text
       1 [::]:80 default_server
+      1 [::]:80
+      1 [::]:443 ssl http2 default_server
+      1 [::]:443 ssl http2
       1 80 default_server
+      1 80
+      1 443 ssl http2 default_server
+      1 443 ssl http2
 ```
 
 
@@ -305,7 +312,8 @@ tcp   LISTEN 0      511             [::]:80            [::]:*    users:(("nginx"
 
 
 ```text
-LISTEN         2
+LISTEN         4
+TIME-WAIT      3
 ```
 
 
@@ -321,11 +329,12 @@ LISTEN         2
 
 
 ```text
-0.0.0.0:80
+0.0.0.0:443
 0.0.0.0:22
-[::]:80
+0.0.0.0:80
+[::]:443
 [::]:22
-*:8080
+[::]:80
 ```
 
 
@@ -337,6 +346,9 @@ LISTEN         2
 
 ### Files loaded
 
+- Loaded: [00-production-hardening.conf](file:///etc/nginx/conf.d/00-production-hardening.conf) (`/etc/nginx/conf.d/00-production-hardening.conf`)
+- Loaded: [00-security.conf](file:///etc/nginx/conf.d/00-security.conf) (`/etc/nginx/conf.d/00-security.conf`)
+- Loaded: [github.jaganathan.co.uk.conf](file:///etc/nginx/conf.d/github.jaganathan.co.uk.conf) (`/etc/nginx/conf.d/github.jaganathan.co.uk.conf`)
 - Loaded: [mime.types](file:///etc/nginx/mime.types) (`/etc/nginx/mime.types`)
 - Loaded: [50-mod-http-geoip2.conf](file:///etc/nginx/modules-enabled/50-mod-http-geoip2.conf) (`/etc/nginx/modules-enabled/50-mod-http-geoip2.conf`)
 - Loaded: [50-mod-http-image-filter.conf](file:///etc/nginx/modules-enabled/50-mod-http-image-filter.conf) (`/etc/nginx/modules-enabled/50-mod-http-image-filter.conf`)
@@ -346,19 +358,25 @@ LISTEN         2
 - Loaded: [70-mod-stream-geoip2.conf](file:///etc/nginx/modules-enabled/70-mod-stream-geoip2.conf) (`/etc/nginx/modules-enabled/70-mod-stream-geoip2.conf`)
 - Loaded: [nginx.conf](file:///etc/nginx/nginx.conf) (`/etc/nginx/nginx.conf`)
 - Loaded: [default](file:///etc/nginx/sites-enabled/default) (`/etc/nginx/sites-enabled/default`)
+- Loaded: [security-headers.conf](file:///etc/nginx/snippets/security-headers.conf) (`/etc/nginx/snippets/security-headers.conf`)
+- Loaded: [security-server.conf](file:///etc/nginx/snippets/security-server.conf) (`/etc/nginx/snippets/security-server.conf`)
 
 ### Directory tree
 
 
 ```text
 /etc/nginx/sites-available:
-  -rw-r--r-- 1 root root 2412 May 30  2023 default
+  -rw-r--r-- 1 root root  805 Nov 15 13:12 default
 /etc/nginx/sites-enabled:
-  lrwxrwxrwx 1 root root   34 Nov 15 12:43 default -> /etc/nginx/sites-available/default
+  lrwxrwxrwx 1 root root   34 Nov 15 13:12 default -> /etc/nginx/sites-available/default
 /etc/nginx/conf.d:
-
+  -rw-r--r-- 1 root root  316 Nov 15 13:14 00-production-hardening.conf
+  -rw-r--r-- 1 root root  874 Nov 15 13:12 00-security.conf
+  -rw-r--r-- 1 root root 3389 Nov 15 13:14 github.jaganathan.co.uk.conf
 /etc/nginx/snippets:
   -rw-r--r-- 1 root root  423 May 30  2023 fastcgi-php.conf
+  -rw-r--r-- 1 root root  582 Nov 15 13:12 security-headers.conf
+  -rw-r--r-- 1 root root  239 Nov 15 13:12 security-server.conf
   -rw-r--r-- 1 root root  217 May 30  2023 snakeoil.conf
 /etc/nginx/modules-enabled:
   lrwxrwxrwx 1 root root   55 Nov 15 12:43 50-mod-http-geoip2.conf -> /usr/share/nginx/modules-available/mod-http-geoip2.conf
@@ -387,9 +405,20 @@ worker_connections 768;
 sendfile on;
 tcp_nopush on;
 types_hash_max_size 2048;
+client_max_body_size  10m;
+client_max_body_size 25m;
+client_body_timeout   10s;
+client_body_timeout 30s;
+client_header_timeout 10s;
+client_header_timeout 30s;
+send_timeout          10s;
+send_timeout 30s;
 gzip on;
 error_log /var/log/nginx/error.log;
+error_log /var/log/nginx/github.jaganathan.co.uk.error.log warn;
 access_log /var/log/nginx/access.log;
+access_log /var/log/nginx/github.jaganathan.co.uk.access.log;
+access_log off;
 ```
 
 - **[ OK ]** worker_processes auto
@@ -400,13 +429,37 @@ access_log /var/log/nginx/access.log;
 
 
 ```text
-[1] _
-    file       : /etc/nginx/sites-enabled/default:21
+[1] github.jaganathan.co.uk
+    file       : /etc/nginx/conf.d/github.jaganathan.co.uk.conf:7
+    listen     : 80 | [::]:80
+    return     : 301 https://$host$request_uri
+    locations  : 0     
+
+[2] github.jaganathan.co.uk
+    file       : /etc/nginx/conf.d/github.jaganathan.co.uk.conf:16
+    listen     : 443 ssl http2 | [::]:443 ssl http2
+    proxy_pass : http://127.0.0.1:3000
+    return     : 200 "OK\n"
+    ssl cert   : /etc/letsencrypt/live/github.jaganathan.co.uk/fullchain.pem
+    ssl key    : /etc/letsencrypt/live/github.jaganathan.co.uk/privkey.pem
+    access_log : off
+    locations  : 4    [ip-acl] 
+
+[3] _
+    file       : /etc/nginx/sites-enabled/default:3
     listen     : 80 default_server | [::]:80 default_server
+    return     : 301 https://$host$request_uri
+    locations  : 0     
+
+[4] _
+    file       : /etc/nginx/sites-enabled/default:14
+    listen     : 443 ssl http2 default_server | [::]:443 ssl http2 default_server
     root       : /var/www/html
+    ssl cert   : /etc/ssl/nginx-default/default.crt
+    ssl key    : /etc/ssl/nginx-default/default.key
     locations  : 1     
 
-Total server blocks: 1
+Total server blocks: 4
 ```
 
 
@@ -415,6 +468,7 @@ Total server blocks: 1
 
 ```text
 _
+github.jaganathan.co.uk
 ```
 
 
@@ -423,8 +477,10 @@ _
 - **[ OK ]** Explicit default_server configured
 
 ```text
-	listen 80 default_server;
-	listen [::]:80 default_server;
+    listen 80 default_server;
+    listen [::]:80 default_server;
+    listen 443 ssl http2 default_server;
+    listen [::]:443 ssl http2 default_server;
 ```
 
 
@@ -440,7 +496,10 @@ _
 
 
 ```text
-      1 location / {
+      2 location ~ /\.(?!well-known).* {
+      2 location / {
+      1 location ~* \.(?:bak|sql|old|swp|orig|save|env)$ {
+      1 location = /healthz {
 ```
 
 
@@ -452,10 +511,25 @@ _
 
 ## 7. SSL / TLS CERTIFICATES
 
-- **[WARN] (`WARN-1`)** No ssl_certificate directives found - HTTPS is not configured
-  - **Where**: [default:21](file:///etc/nginx/sites-enabled/default#L21) (`/etc/nginx/sites-enabled/default:21`)
-  - **Reference**: <https://nginx.org/en/docs/http/configuring_https_servers.html>
-  - **How to Fix**: Configure TLS certificates (e.g. via Certbot: sudo certbot --nginx) and listen on 443 ssl
+- Certificate : [fullchain.pem](file:///etc/letsencrypt/live/github.jaganathan.co.uk/fullchain.pem) (`/etc/letsencrypt/live/github.jaganathan.co.uk/fullchain.pem`) (configured at [github.jaganathan.co.uk.conf:23](file:///etc/nginx/conf.d/github.jaganathan.co.uk.conf#L23) (`/etc/nginx/conf.d/github.jaganathan.co.uk.conf:23`))
+-   Subject   : CN = github.jaganathan.co.uk
+-   Issuer    : C = US, O = Let's Encrypt, CN = YR1
+-   SANs      : DNS:github.jaganathan.co.uk
+-   Expires   : Feb 13 06:46:17 2027 GMT (89 days remaining)
+-   Key / Sig : 2048 bit / sha256WithRSAEncryption
+- **[ OK ]** Certificate /etc/letsencrypt/live/github.jaganathan.co.uk/fullchain.pem validity OK (89 days remaining)
+- Certificate : [default.crt](file:///etc/ssl/nginx-default/default.crt) (`/etc/ssl/nginx-default/default.crt`) (configured at [default:20](file:///etc/nginx/sites-enabled/default#L20) (`/etc/nginx/sites-enabled/default:20`))
+-   Subject   : CN = localhost
+-   Issuer    : CN = localhost
+-   SANs      : n/a
+-   Expires   : Nov 12 07:31:12 2036 GMT (3649 days remaining)
+-   Key / Sig : 256 bit / ecdsa-with-SHA256
+- **[ OK ]** Certificate /etc/ssl/nginx-default/default.crt validity OK (3649 days remaining)
+
+### Private key permissions
+
+- **[ OK ]** Private key /etc/letsencrypt/live/github.jaganathan.co.uk/privkey.pem permissions OK (600 root:root)
+- **[ OK ]** Private key /etc/ssl/nginx-default/default.key permissions OK (600 root:root)
 
 ### Certbot certificates
 
@@ -463,11 +537,18 @@ _
 ```text
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-No certificates found.
+Found the following certs:
+  Certificate Name: github.jaganathan.co.uk
+    Serial Number: 60d995c183d6688a6b698ed7fa1ce8216a1
+    Key Type: RSA
+    Domains: github.jaganathan.co.uk
+    Expiry Date: 2027-02-13 06:46:17+00:00 (VALID: 89 days)
+    Certificate Path: /etc/letsencrypt/live/github.jaganathan.co.uk/fullchain.pem
+    Private Key Path: /etc/letsencrypt/live/github.jaganathan.co.uk/privkey.pem
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ```
 
-- Let's Encrypt live dir: README 
+- Let's Encrypt live dir: README github.jaganathan.co.uk 
 - certbot cron present: [certbot](file:///etc/cron.d/certbot) (`/etc/cron.d/certbot`)
 
 <a id="8-security-audit-config-based"></a>
@@ -477,76 +558,40 @@ No certificates found.
 
 ### Information disclosure
 
-- **[WARN] (`WARN-2`)** server_tokens is not set to 'off' - Nginx version is exposed in HTTP headers and error pages
-  - **Where**: [nginx.conf:20](file:///etc/nginx/nginx.conf#L20) (`/etc/nginx/nginx.conf:20`)
-  - **Reference**: <https://nginx.org/en/docs/http/ngx_http_core_module.html#server_tokens>
-  - **How to Fix**: Uncomment or add 'server_tokens off;' inside the http {} block in /etc/nginx/nginx.conf
-- Consider adding: proxy_hide_header X-Powered-By;
+- **[ OK ]** server_tokens off (Nginx version hidden)
+- **[ OK ]** X-Powered-By hidden from upstreams
 
 ### TLS protocol & cipher policy
 
-- ssl_protocols configured: TLSv1.2 TLSv1.3  
+- ssl_protocols configured: TLSv1.2 TLSv1.3 
 - **[ OK ]** No legacy SSL/TLSv1.0/TLSv1.1 protocols enabled
 - **[ OK ]** TLSv1.3 enabled
-- ssl_ciphers not explicitly set (OpenSSL defaults used)
-- **[WARN] (`WARN-3`)** ssl_session_cache is not configured (impacts TLS handshake performance)
-  - **Where**: [nginx.conf:11](file:///etc/nginx/nginx.conf#L11) (`/etc/nginx/nginx.conf:11`)
-  - **Reference**: <https://nginx.org/en/docs/http/ngx_http_ssl_module.html#ssl_session_cache>
-  - **How to Fix**: Add 'ssl_session_cache shared:SSL:10m; ssl_session_timeout 1d;' in http {} block of /etc/nginx/nginx.conf
+- ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305;
+- **[ OK ]** ssl_session_cache configured
 
 ### Security headers (add_header)
 
-- **[WARN] (`WARN-4`)** HTTP security header 'Strict-Transport-Security' is missing from configuration
-  - **Where**: [default:21](file:///etc/nginx/sites-enabled/default#L21) (`/etc/nginx/sites-enabled/default:21`)
-  - **Reference**: <https://owasp.org/www-project-secure-headers/>
-  - **How to Fix**: Add 'add_header Strict-Transport-Security "..." always;' to your server {} block or shared security snippet
-- **[WARN] (`WARN-5`)** HTTP security header 'X-Frame-Options' is missing from configuration
-  - **Where**: [default:21](file:///etc/nginx/sites-enabled/default#L21) (`/etc/nginx/sites-enabled/default:21`)
-  - **Reference**: <https://owasp.org/www-project-secure-headers/>
-  - **How to Fix**: Add 'add_header X-Frame-Options "..." always;' to your server {} block or shared security snippet
-- **[WARN] (`WARN-6`)** HTTP security header 'X-Content-Type-Options' is missing from configuration
-  - **Where**: [default:21](file:///etc/nginx/sites-enabled/default#L21) (`/etc/nginx/sites-enabled/default:21`)
-  - **Reference**: <https://owasp.org/www-project-secure-headers/>
-  - **How to Fix**: Add 'add_header X-Content-Type-Options "..." always;' to your server {} block or shared security snippet
-- **[WARN] (`WARN-7`)** HTTP security header 'Content-Security-Policy' is missing from configuration
-  - **Where**: [default:21](file:///etc/nginx/sites-enabled/default#L21) (`/etc/nginx/sites-enabled/default:21`)
-  - **Reference**: <https://owasp.org/www-project-secure-headers/>
-  - **How to Fix**: Add 'add_header Content-Security-Policy "..." always;' to your server {} block or shared security snippet
-- **[WARN] (`WARN-8`)** HTTP security header 'Referrer-Policy' is missing from configuration
-  - **Where**: [default:21](file:///etc/nginx/sites-enabled/default#L21) (`/etc/nginx/sites-enabled/default:21`)
-  - **Reference**: <https://owasp.org/www-project-secure-headers/>
-  - **How to Fix**: Add 'add_header Referrer-Policy "..." always;' to your server {} block or shared security snippet
-- **[WARN] (`WARN-9`)** HTTP security header 'Permissions-Policy' is missing from configuration
-  - **Where**: [default:21](file:///etc/nginx/sites-enabled/default#L21) (`/etc/nginx/sites-enabled/default:21`)
-  - **Reference**: <https://owasp.org/www-project-secure-headers/>
-  - **How to Fix**: Add 'add_header Permissions-Policy "..." always;' to your server {} block or shared security snippet
+- **[ OK ]** Security header Strict-Transport-Security configured
+- **[ OK ]** Security header X-Frame-Options configured
+- **[ OK ]** Security header X-Content-Type-Options configured
+- **[ OK ]** Security header Content-Security-Policy configured
+- **[ OK ]** Security header Referrer-Policy configured
+- **[ OK ]** Security header Permissions-Policy configured
 
 ### HTTP -> HTTPS redirection
 
-- **[WARN] (`WARN-10`)** Port 80 is served without an automatic HTTP -> HTTPS redirect
-  - **Where**: [default:22](file:///etc/nginx/sites-enabled/default#L22) (`/etc/nginx/sites-enabled/default:22`)
-  - **Reference**: <https://nginx.org/en/docs/http/ngx_http_rewrite_module.html#return>
-  - **How to Fix**: Add 'return 301 https://$host$request_uri;' in the port 80 server {} block
-- HTTP/2 not enabled (consider adding 'http2' to listen 443)
+- **[ OK ]** HTTP -> HTTPS redirect present
+- **[ OK ]** HTTP/2 enabled
 
 ### Rate limiting / DoS protection
 
-- **[WARN] (`WARN-11`)** No limit_req_zone defined (no request rate limiting against brute-force/DDoS)
-  - **Where**: [nginx.conf:11](file:///etc/nginx/nginx.conf#L11) (`/etc/nginx/nginx.conf:11`)
-  - **Reference**: <https://nginx.org/en/docs/http/ngx_http_limit_req_module.html#limit_req_zone>
-  - **How to Fix**: Add 'limit_req_zone $binary_remote_addr zone=req_limit:10m rate=10r/s;' in http {} block of /etc/nginx/nginx.conf
-- **[WARN] (`WARN-12`)** limit_req is not applied to any server or location context
-  - **Where**: [default:21](file:///etc/nginx/sites-enabled/default#L21) (`/etc/nginx/sites-enabled/default:21`)
-  - **Reference**: <https://nginx.org/en/docs/http/ngx_http_limit_req_module.html#limit_req>
-  - **How to Fix**: Apply 'limit_req zone=req_limit burst=20 nodelay;' inside sensitive server/location blocks
-- client_max_body_size default (1m)
+- **[ OK ]** limit_req_zone defined
+- **[ OK ]** limit_req applied
+- client_max_body_size: 10m 25m 
 
 ### Dangerous / risky patterns
 
-- **[WARN] (`WARN-13`)** No location rule blocking hidden dotfiles (/.git, /.env, /.htpasswd)
-  - **Where**: [default:21](file:///etc/nginx/sites-enabled/default#L21) (`/etc/nginx/sites-enabled/default:21`)
-  - **Reference**: <https://nginx.org/en/docs/http/ngx_http_core_module.html#location>
-  - **How to Fix**: Add 'location ~ /\.(?!well-known).* { deny all; }' to server {} blocks
+- **[ OK ]** Dotfile (/.git, /.env) blocking location rule present
 
 ### Access control
 
@@ -572,7 +617,7 @@ No certificates found.
 
 
 ```text
-drwxr-xr-x 2 root adm 4096 Nov 15 12:43 /var/log/nginx
+drwxr-xr-x 2 root adm 4096 Nov 15 13:14 /var/log/nginx
 ```
 
 
@@ -591,16 +636,13 @@ Status: inactive
 
 ### Fail2ban
 
-- **[WARN] (`WARN-14`)** fail2ban is not installed (recommended for nginx-http-auth and bot/scanner rate-banning)
-  - **Where**: [etc](file:///etc) (`/etc`)
-  - **Reference**: <https://www.fail2ban.org/wiki/index.php/Main_Page>
-  - **How to Fix**: Install fail2ban: sudo apt-get install -y fail2ban
+- **[ OK ]** fail2ban service is active
 
 ### SELinux / AppArmor
 
 
 ```text
-31 profiles are loaded.
+30 profiles are loaded.
 ```
 
 
@@ -628,10 +670,6 @@ APT::Periodic::Unattended-Upgrade "1";
 
 ### Pending security updates
 
-- **[WARN] (`WARN-15`)** System reboot required to apply kernel/security updates
-  - **Where**: [reboot-required](file:///var/run/reboot-required) (`/var/run/reboot-required`)
-  - **Reference**: <https://wiki.debian.org/UnattendedUpgrades>
-  - **How to Fix**: Schedule a maintenance window and reboot the host: sudo reboot
 
 <a id="11-logs-locations-size-rotation"></a>
 
@@ -640,9 +678,11 @@ APT::Periodic::Unattended-Upgrade "1";
 
 ### Log files
 
-- Log file [access.log](file:///var/log/nginx/access.log) (`/var/log/nginx/access.log`) — size=4.0K mtime=2026-11-15 12:44:25
-- Log file [error.log](file:///var/log/nginx/error.log) (`/var/log/nginx/error.log`) — size=4.0K mtime=2026-11-15 12:47:11
-- Total /var/log/nginx size: 12K
+- Log file [access.log](file:///var/log/nginx/access.log) (`/var/log/nginx/access.log`) — size=40K mtime=2026-11-15 13:15:56
+- Log file [github.jaganathan.co.uk.access.log](file:///var/log/nginx/github.jaganathan.co.uk.access.log) (`/var/log/nginx/github.jaganathan.co.uk.access.log`) — size=4.0K mtime=2026-11-15 13:16:05
+- Log file [error.log](file:///var/log/nginx/error.log) (`/var/log/nginx/error.log`) — size=4.0K mtime=2026-11-15 13:14:51
+- Log file [github.jaganathan.co.uk.error.log](file:///var/log/nginx/github.jaganathan.co.uk.error.log) (`/var/log/nginx/github.jaganathan.co.uk.error.log`) — size=12K mtime=2026-11-15 13:16:05
+- Total /var/log/nginx size: 64K
 
 ### logrotate
 
@@ -680,7 +720,8 @@ APT::Periodic::Unattended-Upgrade "1";
 
 
 ```text
-      2 [notice]
+      8 [notice]
+      1 [emerg]
 ```
 
 
@@ -688,26 +729,85 @@ APT::Periodic::Unattended-Upgrade "1";
 
 
 ```text
+      1 [notice] 5616#5616: signal process started
+      1 [notice] 5458#5458: signal process started
+      1 [notice] 5443#5443: signal process started
+      1 [notice] 3991#3991: signal process started
+      1 [notice] 1536322#1536322: signal process started
+      1 [notice] 1530870#1530870: signal process started
       1 [notice] 1529774#1529774: signal process started
       1 [notice] 1527287#1527287: using inherited sockets from "6;7;"
+      1 [emerg] 2840#2840: "server_tokens" directive is duplicate in /etc/nginx/conf.d/00-security.conf:4
 ```
 
 
 ### Last 15 error/crit entries
 
 
+```text
+2026/11/15 13:05:56 [emerg] 2840#2840: "server_tokens" directive is duplicate in /etc/nginx/conf.d/00-security.conf:4
+```
+
+- Analysing error log: [github.jaganathan.co.uk.error.log](file:///var/log/nginx/github.jaganathan.co.uk.error.log) (`/var/log/nginx/github.jaganathan.co.uk.error.log`)
+
+### Entries by severity (last 50000 lines)
+
+
+```text
+     38 [error]
+```
+
+
+### Top 10 error messages
+
+
+```text
+     24 connect() failed (111: Unknown error) while connecting to upstream, client: X, server: github.jaganathan.co.uk, request:
+     14 access forbidden by rule, client: X, server: github.jaganathan.co.uk, request: "..."
+```
+
+
+### Last 15 error/crit entries
+
+
+```text
+2026/11/15 13:15:27 [error] 5627#5627: *39 connect() failed (111: Unknown error) while connecting to upstream, client: 91.148.244.131, server: github.jaganathan.co.uk, request: "GET /_vti_pvt/service.pwd HTTP/2.0", upstr
+2026/11/15 13:15:27 [error] 5627#5627: *39 connect() failed (111: Unknown error) while connecting to upstream, client: 91.148.244.131, server: github.jaganathan.co.uk, request: "GET /wp-admin/setup-config.php HTTP/2.0", 
+2026/11/15 13:15:27 [error] 5627#5627: *39 access forbidden by rule, client: 91.148.244.131, server: github.jaganathan.co.uk, request: "GET /.git/HEAD HTTP/2.0", host: "github.jaganathan.co.uk"
+2026/11/15 13:15:27 [error] 5627#5627: *39 access forbidden by rule, client: 91.148.244.131, server: github.jaganathan.co.uk, request: "GET /.env.production HTTP/2.0", host: "github.jaganathan.co.uk"
+2026/11/15 13:15:27 [error] 5627#5627: *39 access forbidden by rule, client: 91.148.244.131, server: github.jaganathan.co.uk, request: "GET /.npmrc HTTP/2.0", host: "github.jaganathan.co.uk"
+2026/11/15 13:15:27 [error] 5627#5627: *39 access forbidden by rule, client: 91.148.244.131, server: github.jaganathan.co.uk, request: "GET /database.sql HTTP/2.0", host: "github.jaganathan.co.uk"
+2026/11/15 13:15:27 [error] 5627#5627: *39 access forbidden by rule, client: 91.148.244.131, server: github.jaganathan.co.uk, request: "GET /.bash_history HTTP/2.0", host: "github.jaganathan.co.uk"
+2026/11/15 13:15:27 [error] 5627#5627: *39 connect() failed (111: Unknown error) while connecting to upstream, client: 91.148.244.131, server: github.jaganathan.co.uk, request: "GET /docker-compose.yml HTTP/2.0", upstrea
+2026/11/15 13:15:27 [error] 5627#5627: *39 access forbidden by rule, client: 91.148.244.131, server: github.jaganathan.co.uk, request: "GET /.vscode/sftp.json HTTP/2.0", host: "github.jaganathan.co.uk"
+2026/11/15 13:15:27 [error] 5627#5627: *39 connect() failed (111: Unknown error) while connecting to upstream, client: 91.148.244.131, server: github.jaganathan.co.uk, request: "GET /user_secrets.yml HTTP/2.0", upstream:
+2026/11/15 13:15:27 [error] 5627#5627: *39 connect() failed (111: Unknown error) while connecting to upstream, client: 91.148.244.131, server: github.jaganathan.co.uk, request: "GET /secrets.json HTTP/2.0", upstream: "ht
+2026/11/15 13:15:27 [error] 5627#5627: *39 connect() failed (111: Unknown error) while connecting to upstream, client: 91.148.244.131, server: github.jaganathan.co.uk, request: "GET /server.key HTTP/2.0", upstream: "http
+2026/11/15 13:15:37 [error] 5627#5627: *58 connect() failed (111: Unknown error) while connecting to upstream, client: 162.252.199.71, server: github.jaganathan.co.uk, request: "GET / HTTP/1.1", upstream: "http://127.0.0
+2026/11/15 13:15:56 [error] 5627#5627: *61 connect() failed (111: Unknown error) while connecting to upstream, client: 185.242.177.69, server: github.jaganathan.co.uk, request: "GET / HTTP/1.1", upstream: "http://127.0.0
+2026/11/15 13:16:05 [error] 5627#5627: *64 connect() failed (111: Unknown error) while connecting to upstream, client: 127.0.0.1, server: github.jaganathan.co.uk, request: "GET / HTTP/2.0", upstream: "http://127.0.0.1:30
+```
+
+- **[WARN] (`WARN-1`)** Upstream/backend connection errors found in /var/log/nginx/github.jaganathan.co.uk.error.log
+  - **Where**: [github.jaganathan.co.uk.error.log](file:///var/log/nginx/github.jaganathan.co.uk.error.log) (`/var/log/nginx/github.jaganathan.co.uk.error.log`)
+  - **Reference**: <https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_read_timeout>
+  - **How to Fix**: Check backend service health and inspect recent lines in /var/log/nginx/github.jaganathan.co.uk.error.log
+
 <a id="13-access-log-traffic-analysis-assumes-combined-format"></a>
 
 ## 13. ACCESS LOG & TRAFFIC ANALYSIS (assumes combined format)
 
-- Analysing access log: [access.log](file:///var/log/nginx/access.log) (`/var/log/nginx/access.log`) (last 50000 of 1 lines)
-- Time range: [15/Nov/2026:12:44:25 +0530]  ->  [15/Nov/2026:12:44:25 +0530]
+- Analysing access log: [access.log](file:///var/log/nginx/access.log) (`/var/log/nginx/access.log`) (last 50000 of 203 lines)
+- Time range: [15/Nov/2026:12:44:25 +0530]  ->  [15/Nov/2026:13:15:56 +0530]
 
 ### HTTP status code distribution
 
 
 ```text
-      1 200
+    165 404
+     16 200
+     13 301
+      1 405
 ```
 
 
@@ -715,7 +815,9 @@ APT::Periodic::Unattended-Upgrade "1";
 
 
 ```text
-2xx       1  (100.0%)
+2xx      16  (8.2%)
+3xx      13  (6.7%)
+4xx     166  (85.1%)
 ```
 
 
@@ -723,6 +825,100 @@ APT::Periodic::Unattended-Upgrade "1";
 
 
 ```text
+     94 104.22.20.124
+     73 104.22.20.54
+     16 127.0.0.1
+      3 162.158.179.51
+      2 172.70.142.167
+      1 56.124.83.188
+      1 35.240.6.16
+      1 23.178.112.212
+      1 185.242.177.69
+      1 18.220.206.63
+      1 172.71.81.229
+      1 162.158.88.161
+      1 162.158.193.102
+      1 162.158.114.209
+      1 16.192.127.209
+```
+
+
+### Top 15 requested URLs
+
+
+```text
+     23 /
+      8 400
+      7 /.well-known/acme-challenge/gVs8SrpXKBnS1AU8q66DTDnIn1RUJcL_RnvdzY0XSrk
+      1 /www/.env
+      1 /wp/.env
+      1 /wordpress/.env
+      1 /webroot/index.php/_environment
+      1 /webmail/phpinfo.php
+      1 /web/.env
+      1 /vendor/.env
+      1 /v3/.env
+      1 /v2/.env
+      1 /v1/.env
+      1 /uploads/.env
+      1 /transactional/.env
+```
+
+
+### Top 10 URLs returning 404
+
+
+```text
+      1 /www/.env
+      1 /wp/.env
+      1 /wordpress/.env
+      1 /webroot/index.php/_environment
+      1 /webmail/phpinfo.php
+      1 /web/.env
+      1 /vendor/.env
+      1 /v3/.env
+      1 /v2/.env
+      1 /v1/.env
+```
+
+
+### Top 10 URLs returning 5xx
+
+- Analysing access log: [github.jaganathan.co.uk.access.log](file:///var/log/nginx/github.jaganathan.co.uk.access.log) (`/var/log/nginx/github.jaganathan.co.uk.access.log`) (last 50000 of 24 lines)
+- Time range: [15/Nov/2026:13:14:52 +0530]  ->  [15/Nov/2026:13:16:05 +0530]
+
+### HTTP status code distribution
+
+
+```text
+     24 502
+```
+
+
+### Status classes
+
+
+```text
+5xx      24  (100.0%)
+```
+
+- **[FAIL] (`FAIL-1`)** High HTTP 5xx error rate >= 5% (24 of 24 requests) in /var/log/nginx/github.jaganathan.co.uk.access.log
+  - **Where**: [github.jaganathan.co.uk.access.log](file:///var/log/nginx/github.jaganathan.co.uk.access.log) (`/var/log/nginx/github.jaganathan.co.uk.access.log`)
+  - **Reference**: <https://docs.nginx.com/nginx/admin-guide/monitoring/logging/>
+  - **How to Fix**: Inspect top 5xx URLs in /var/log/nginx/github.jaganathan.co.uk.access.log and correlate with /var/log/nginx/error.log
+/var/log/nginx/github.jaganathan.co.uk.error.log
+
+### Top 15 client IPs
+
+
+```text
+     17 91.148.244.131
+      1 74.208.226.173
+      1 5.78.201.227
+      1 5.78.158.121
+      1 185.242.177.69
+      1 162.252.199.71
+      1 133.32.165.184
       1 127.0.0.1
 ```
 
@@ -731,7 +927,21 @@ APT::Periodic::Unattended-Upgrade "1";
 
 
 ```text
-      1 /
+     10 /
+      1 /wp-config.php
+      1 /wp-admin/setup-config.php
+      1 /user_secrets.yml
+      1 /storage/logs/laravel.log
+      1 /server.key
+      1 /secrets.json
+      1 /phpinfo.php
+      1 /docker-compose.yml
+      1 /config.xml
+      1 /config.php
+      1 /backup.zip
+      1 /backup.tar.gz
+      1 /actuator/heapdump
+      1 /_vti_pvt/service.pwd
 ```
 
 
@@ -741,6 +951,20 @@ APT::Periodic::Unattended-Upgrade "1";
 ### Top 10 URLs returning 5xx
 
 
+```text
+     10 502 /
+      1 502 /wp-config.php
+      1 502 /wp-admin/setup-config.php
+      1 502 /user_secrets.yml
+      1 502 /storage/logs/laravel.log
+      1 502 /server.key
+      1 502 /secrets.json
+      1 502 /phpinfo.php
+      1 502 /docker-compose.yml
+      1 502 /config.xml
+```
+
+
 <a id="14-live-endpoint-checks-localhost"></a>
 
 ## 14. LIVE ENDPOINT CHECKS (localhost)
@@ -748,34 +972,70 @@ APT::Periodic::Unattended-Upgrade "1";
 - Probing http://127.0.0.1 (Host: localhost, -k)
 
 ```text
-HTTP/1.1 200 OK
-Server: nginx/1.18.0 (Ubuntu)
-Date: Sun, 15 Nov 2026 07:17:41 GMT
+HTTP/1.1 301 Moved Permanently
+Server: nginx
+Date: Sun, 15 Nov 2026 07:46:17 GMT
 Content-Type: text/html
-Content-Length: 612
-Last-Modified: Sun, 15 Nov 2026 07:13:18 GMT
+Content-Length: 162
 Connection: keep-alive
-ETag: "6af95b8e-264"
-Accept-Ranges: bytes
+Location: https://127.0.0.1/
+Strict-Transport-Security: max-age=31536000
+X-Frame-Options: SAMEORIGIN
+X-Content-Type-Options: nosniff
+Content-Security-Policy: default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'
+Referrer-Policy: strict-origin-when-cross-origin
+Permissions-Policy: geolocation=(), microphone=(), camera=(), payment=(), usb=()
 
 ```
 
 - Probing https://127.0.0.1 (Host: localhost, -k)
 
 ```text
-(no response from https://127.0.0.1)
+HTTP/2 200 
+server: nginx
+date: Sun, 15 Nov 2026 07:46:17 GMT
+content-type: text/html
+content-length: 612
+last-modified: Sun, 15 Nov 2026 07:13:18 GMT
+etag: "6af95b8e-264"
+strict-transport-security: max-age=31536000
+x-frame-options: SAMEORIGIN
+x-content-type-options: nosniff
+content-security-policy: default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'
+referrer-policy: strict-origin-when-cross-origin
+permissions-policy: geolocation=(), microphone=(), camera=(), payment=(), usb=()
+accept-ranges: bytes
+
 ```
 
 
 ### Security headers on first named server over HTTPS
 
+- Testing github.jaganathan.co.uk via --resolve github.jaganathan.co.uk:443:127.0.0.1
+
+```text
+HTTP/2 502 
+server: nginx
+date: Sun, 15 Nov 2026 07:46:17 GMT
+content-type: text/html
+content-length: 150
+strict-transport-security: max-age=63072000; includeSubDomains
+x-frame-options: SAMEORIGIN
+x-content-type-options: nosniff
+referrer-policy: strict-origin-when-cross-origin
+permissions-policy: geolocation=(), microphone=(), camera=()
+content-security-policy: default-src 'self' 'unsafe-inline' data: https:;
+
+```
+
+- **[ OK ]** Live HTTPS response includes HSTS header
 
 ### TLS handshake test on 127.0.0.1:443
 
 - tls1 rejected or 127.0.0.1:443 not listening
 - tls1_1 rejected or 127.0.0.1:443 not listening
-- tls1_2 rejected or 127.0.0.1:443 not listening
-- tls1_3 rejected or 127.0.0.1:443 not listening
+- **[ OK ]** Live endpoint accepted tls1_2
+- **[ OK ]** Live endpoint accepted tls1_3
 
 <a id="15-performance-capacity-hints"></a>
 
@@ -793,7 +1053,7 @@ Accept-Ranges: bytes
 
 
 ```text
-total RSS: 56.4 MB across 9 processes
+total RSS: 64.4 MB across 9 processes
 ```
 
 
@@ -802,17 +1062,17 @@ total RSS: 56.4 MB across 9 processes
 
 ```text
 USER         PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
-artravi   940108  0.5  4.5 10153452 839400 ?     Sl   Oct23 172:48 java -jar smartapi-0.0.4-SNAPSHOT.jar
-mysql    1038809  0.8  2.1 2375100 396180 ?      Ssl  Nov13  28:43 /usr/sbin/mysqld
-root      106042  0.0  0.8 269112 165444 ?       S<s  Oct16  33:31 /lib/systemd/systemd-journald
-root         995  0.0  0.4 2431508 86312 ?       Ssl  Oct15  15:25 /usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock
-root         817  0.0  0.2 2089132 46988 ?       Ssl  Oct15  44:36 /usr/bin/containerd
+mysql        935  1.0  2.1 2374068 395360 ?      Ssl  13:02   0:09 /usr/sbin/mysqld
+root         465  0.1  0.4 191816 89504 ?        S<s  13:01   0:01 /lib/systemd/systemd-journald
+root         967  0.0  0.4 2210312 81236 ?       Ssl  13:02   0:00 /usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock
+root         787  0.1  0.2 2089132 43864 ?       Ssl  13:02   0:00 /usr/bin/containerd
+root         779  0.1  0.2 2223764 40768 ?       Ssl  13:02   0:01 /snap/snapd/current/usr/lib/snapd/snapd
 ```
 
 
 ### Files/sockets open by nginx
 
-- 618 open descriptors (lsof)
+- 681 open descriptors (lsof)
 
 <a id="16-backends-related-services"></a>
 
@@ -821,6 +1081,10 @@ root         817  0.0  0.2 2089132 46988 ?       Ssl  Oct15  44:36 /usr/bin/cont
 
 ### Upstream/proxy targets reachability
 
+- **[FAIL] (`FAIL-2`)** Upstream backend 127.0.0.1:3000 is NOT reachable (configured at github.jaganathan.co.uk.conf)
+  - **Where**: [github.jaganathan.co.uk.conf:58](file:///etc/nginx/conf.d/github.jaganathan.co.uk.conf#L58) (`/etc/nginx/conf.d/github.jaganathan.co.uk.conf:58`)
+  - **Reference**: <https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_pass>
+  - **How to Fix**: Verify the backend application listening on 127.0.0.1:3000 is running and check its logs
 
 ### Common companion services
 
@@ -828,6 +1092,7 @@ root         817  0.0  0.2 2089132 46988 ?       Ssl  Oct15  44:36 /usr/bin/cont
 ```text
 mysql              active
 docker             active
+fail2ban           active
 certbot.timer      active
 ```
 
@@ -841,14 +1106,14 @@ certbot.timer      active
 ## 17. CONFIG BACKUP & CHANGE TRACKING
 
 - 10 most recently modified files in /etc/nginx:
-- 2026-11-15 12:46 — [nginx.conf](file:///etc/nginx/nginx.conf) (`/etc/nginx/nginx.conf`)
+- 2026-11-15 13:14 — [github.jaganathan.co.uk.conf](file:///etc/nginx/conf.d/github.jaganathan.co.uk.conf) (`/etc/nginx/conf.d/github.jaganathan.co.uk.conf`)
+- 2026-11-15 13:14 — [00-production-hardening.conf](file:///etc/nginx/conf.d/00-production-hardening.conf) (`/etc/nginx/conf.d/00-production-hardening.conf`)
+- 2026-11-15 13:12 — [security-server.conf](file:///etc/nginx/snippets/security-server.conf) (`/etc/nginx/snippets/security-server.conf`)
+- 2026-11-15 13:12 — [security-headers.conf](file:///etc/nginx/snippets/security-headers.conf) (`/etc/nginx/snippets/security-headers.conf`)
+- 2026-11-15 13:12 — [default](file:///etc/nginx/sites-available/default) (`/etc/nginx/sites-available/default`)
+- 2026-11-15 13:12 — [nginx.conf](file:///etc/nginx/nginx.conf) (`/etc/nginx/nginx.conf`)
+- 2026-11-15 13:12 — [00-security.conf](file:///etc/nginx/conf.d/00-security.conf) (`/etc/nginx/conf.d/00-security.conf`)
 - 2023-05-30 23:01 — [win-utf](file:///etc/nginx/win-utf) (`/etc/nginx/win-utf`)
 - 2023-05-30 23:01 — [uwsgi_params](file:///etc/nginx/uwsgi_params) (`/etc/nginx/uwsgi_params`)
 - 2023-05-30 23:01 — [snakeoil.conf](file:///etc/nginx/snippets/snakeoil.conf) (`/etc/nginx/snippets/snakeoil.conf`)
-- 2023-05-30 23:01 — [fastcgi-php.conf](file:///etc/nginx/snippets/fastcgi-php.conf) (`/etc/nginx/snippets/fastcgi-php.conf`)
-- 2023-05-30 23:01 — [default](file:///etc/nginx/sites-available/default) (`/etc/nginx/sites-available/default`)
-- 2023-05-30 23:01 — [scgi_params](file:///etc/nginx/scgi_params) (`/etc/nginx/scgi_params`)
-- 2023-05-30 23:01 — [proxy_params](file:///etc/nginx/proxy_params) (`/etc/nginx/proxy_params`)
-- 2023-05-30 23:01 — [mime.types](file:///etc/nginx/mime.types) (`/etc/nginx/mime.types`)
-- 2023-05-30 23:01 — [koi-win](file:///etc/nginx/koi-win) (`/etc/nginx/koi-win`)
 - Config not under version control (consider git or etckeeper in /etc/nginx)
