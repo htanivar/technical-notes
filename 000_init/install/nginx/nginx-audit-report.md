@@ -2,10 +2,10 @@
 
 | Property | Value |
 | :--- | :--- |
-| **Overall Health** | **CRITICAL (3 FAIL, 15 WARN)** |
-| **Checks Summary** | **OK:** `15` &nbsp; **WARN:** `15` &nbsp; **FAIL:** `3` |
-| **Generated At** | `2026-11-14 19:02:06 IST` |
-| **Host / OS** | `sandbox` (Debian GNU/Linux 12 (bookworm)) |
+| **Overall Health** | **CRITICAL (2 FAIL, 5 WARN)** |
+| **Checks Summary** | **OK:** `37` &nbsp; **WARN:** `5` &nbsp; **FAIL:** `2` |
+| **Generated At** | `2026-11-14 20:46:55 IST` |
+| **Host / OS** | `antigravity` (Debian GNU/Linux 12 (bookworm)) |
 | **Nginx Version** | `nginx/1.22.1` — Binary: [nginx](file:///usr/sbin/nginx) (`/usr/sbin/nginx`) |
 | **Main Config** | [nginx.conf](file:///etc/nginx/nginx.conf) (`/etc/nginx/nginx.conf`) |
 | **Audit Script** | [status_nginx.sh](file:///home/ubuntu/code/github/raviautopilot/technical-notes/000_init/install/nginx/status_nginx.sh) (`/home/ubuntu/code/github/raviautopilot/technical-notes/000_init/install/nginx/status_nginx.sh`) |
@@ -39,29 +39,18 @@
 
 | ID | Section | What Is Wrong | Where (File / Line Link) | Docs | How to Fix |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **FAIL-1** | [3. SERVICE STATUS & PROCESSES](#3-service-status-processes) | nginx daemon is NOT running (0 active nginx processes) | [nginx](file:///etc/init.d/nginx) (`/etc/init.d/nginx`) | [Docs](https://nginx.org/en/docs/control.html) | Verify config and start service: sudo nginx -t && sudo service nginx start (or sudo nginx) |
-| **FAIL-2** | [8. SECURITY AUDIT (config-based)](#8-security-audit-config-based) | Deprecated/insecure TLS protocols enabled (SSLv3/TLSv1/TLSv1.1) | [nginx.conf:33](file:///etc/nginx/nginx.conf#L33) (`/etc/nginx/nginx.conf:33`) | [Docs](https://ssl-config.mozilla.org/#server=nginx) | Set 'ssl_protocols TLSv1.2 TLSv1.3;' in /etc/nginx/nginx.conf and remove TLSv1 / TLSv1.1 |
-| **FAIL-3** | [8. SECURITY AUDIT (config-based)](#8-security-audit-config-based) | Weak TLS cipher suites allowed in ssl_ciphers | [nginx.localhost.com.conf:18](file:///etc/nginx/conf.d/nginx.localhost.com.conf#L18) (`/etc/nginx/conf.d/nginx.localhost.com.conf:18`) | [Docs](https://ssl-config.mozilla.org/#server=nginx) | Update ssl_ciphers using Mozilla Intermediate TLS configuration |
+| **FAIL-1** | [13. ACCESS LOG & TRAFFIC ANALYSIS (assumes combined format)](#13-access-log-traffic-analysis-assumes-combined-format) | High HTTP 5xx error rate >= 5% (1 of 1 requests) in /var/log/nginx/github.jaganathan.co.uk.access.log | [github.jaganathan.co.uk.access.log](file:///var/log/nginx/github.jaganathan.co.uk.access.log) (`/var/log/nginx/github.jaganathan.co.uk.access.log`) | [Docs](https://docs.nginx.com/nginx/admin-guide/monitoring/logging/) | Inspect top 5xx URLs in /var/log/nginx/github.jaganathan.co.uk.access.log and correlate with /var/log/nginx/error.log |
+| **FAIL-2** | [16. BACKENDS & RELATED SERVICES](#16-backends-related-services) | Upstream backend 127.0.0.1:3000 is NOT reachable (configured at github.jaganathan.co.uk.conf) | [github.jaganathan.co.uk.conf:57](file:///etc/nginx/conf.d/github.jaganathan.co.uk.conf#L57) (`/etc/nginx/conf.d/github.jaganathan.co.uk.conf:57`) | [Docs](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_pass) | Verify the backend application listening on 127.0.0.1:3000 is running and check its logs |
 
 ### Warnings (`[WARN]` — Recommended Hardening & Fixes)
 
 | ID | Section | Warning Details | Where (File / Line Link) | Docs | How to Fix |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **WARN-1** | [3. SERVICE STATUS & PROCESSES](#3-service-status-processes) | Nginx init script not enabled in default runlevels | [nginx](file:///etc/init.d/nginx) (`/etc/init.d/nginx`) | [Docs](https://manpages.debian.org/bookworm/init-system-helpers/update-rc.d.8.en.html) | Enable at boot: sudo update-rc.d nginx defaults |
-| **WARN-2** | [3. SERVICE STATUS & PROCESSES](#3-service-status-processes) | nginx -t could not read restricted file '/etc/ssl/certs/nginx/nginx.key' as non-root user | [nginx.localhost.com.conf:14](file:///etc/nginx/conf.d/nginx.localhost.com.conf#L14) (`/etc/nginx/conf.d/nginx.localhost.com.conf:14`) | [Docs](https://nginx.org/en/docs/switches.html) | Run audit or syntax test with root privileges: sudo /home/ubuntu/code/github/raviautopilot/technical-notes/000_init/install/nginx/status_nginx.sh (or sudo nginx -t) |
-| **WARN-3** | [8. SECURITY AUDIT (config-based)](#8-security-audit-config-based) | server_tokens is not set to 'off' - Nginx version is exposed in HTTP headers and error pages | [nginx.conf:21](file:///etc/nginx/nginx.conf#L21) (`/etc/nginx/nginx.conf:21`) | [Docs](https://nginx.org/en/docs/http/ngx_http_core_module.html#server_tokens) | Uncomment or add 'server_tokens off;' inside the http {} block in /etc/nginx/nginx.conf |
-| **WARN-4** | [8. SECURITY AUDIT (config-based)](#8-security-audit-config-based) | ssl_session_cache is not configured (impacts TLS handshake performance) | [nginx.conf:12](file:///etc/nginx/nginx.conf#L12) (`/etc/nginx/nginx.conf:12`) | [Docs](https://nginx.org/en/docs/http/ngx_http_ssl_module.html#ssl_session_cache) | Add 'ssl_session_cache shared:SSL:10m; ssl_session_timeout 1d;' in http {} block of /etc/nginx/nginx.conf |
-| **WARN-5** | [8. SECURITY AUDIT (config-based)](#8-security-audit-config-based) | HTTP security header 'Strict-Transport-Security' is missing from configuration | [nginx.localhost.com.conf:1](file:///etc/nginx/conf.d/nginx.localhost.com.conf#L1) (`/etc/nginx/conf.d/nginx.localhost.com.conf:1`) | [Docs](https://owasp.org/www-project-secure-headers/) | Add 'add_header Strict-Transport-Security "..." always;' to your server {} block or shared security snippet |
-| **WARN-6** | [8. SECURITY AUDIT (config-based)](#8-security-audit-config-based) | HTTP security header 'X-Frame-Options' is missing from configuration | [nginx.localhost.com.conf:1](file:///etc/nginx/conf.d/nginx.localhost.com.conf#L1) (`/etc/nginx/conf.d/nginx.localhost.com.conf:1`) | [Docs](https://owasp.org/www-project-secure-headers/) | Add 'add_header X-Frame-Options "..." always;' to your server {} block or shared security snippet |
-| **WARN-7** | [8. SECURITY AUDIT (config-based)](#8-security-audit-config-based) | HTTP security header 'X-Content-Type-Options' is missing from configuration | [nginx.localhost.com.conf:1](file:///etc/nginx/conf.d/nginx.localhost.com.conf#L1) (`/etc/nginx/conf.d/nginx.localhost.com.conf:1`) | [Docs](https://owasp.org/www-project-secure-headers/) | Add 'add_header X-Content-Type-Options "..." always;' to your server {} block or shared security snippet |
-| **WARN-8** | [8. SECURITY AUDIT (config-based)](#8-security-audit-config-based) | HTTP security header 'Content-Security-Policy' is missing from configuration | [nginx.localhost.com.conf:1](file:///etc/nginx/conf.d/nginx.localhost.com.conf#L1) (`/etc/nginx/conf.d/nginx.localhost.com.conf:1`) | [Docs](https://owasp.org/www-project-secure-headers/) | Add 'add_header Content-Security-Policy "..." always;' to your server {} block or shared security snippet |
-| **WARN-9** | [8. SECURITY AUDIT (config-based)](#8-security-audit-config-based) | HTTP security header 'Referrer-Policy' is missing from configuration | [nginx.localhost.com.conf:1](file:///etc/nginx/conf.d/nginx.localhost.com.conf#L1) (`/etc/nginx/conf.d/nginx.localhost.com.conf:1`) | [Docs](https://owasp.org/www-project-secure-headers/) | Add 'add_header Referrer-Policy "..." always;' to your server {} block or shared security snippet |
-| **WARN-10** | [8. SECURITY AUDIT (config-based)](#8-security-audit-config-based) | HTTP security header 'Permissions-Policy' is missing from configuration | [nginx.localhost.com.conf:1](file:///etc/nginx/conf.d/nginx.localhost.com.conf#L1) (`/etc/nginx/conf.d/nginx.localhost.com.conf:1`) | [Docs](https://owasp.org/www-project-secure-headers/) | Add 'add_header Permissions-Policy "..." always;' to your server {} block or shared security snippet |
-| **WARN-11** | [8. SECURITY AUDIT (config-based)](#8-security-audit-config-based) | No limit_req_zone defined (no request rate limiting against brute-force/DDoS) | [nginx.conf:12](file:///etc/nginx/nginx.conf#L12) (`/etc/nginx/nginx.conf:12`) | [Docs](https://nginx.org/en/docs/http/ngx_http_limit_req_module.html#limit_req_zone) | Add 'limit_req_zone $binary_remote_addr zone=req_limit:10m rate=10r/s;' in http {} block of /etc/nginx/nginx.conf |
-| **WARN-12** | [8. SECURITY AUDIT (config-based)](#8-security-audit-config-based) | limit_req is not applied to any server or location context | [nginx.localhost.com.conf:1](file:///etc/nginx/conf.d/nginx.localhost.com.conf#L1) (`/etc/nginx/conf.d/nginx.localhost.com.conf:1`) | [Docs](https://nginx.org/en/docs/http/ngx_http_limit_req_module.html#limit_req) | Apply 'limit_req zone=req_limit burst=20 nodelay;' inside sensitive server/location blocks |
-| **WARN-13** | [8. SECURITY AUDIT (config-based)](#8-security-audit-config-based) | No location rule blocking hidden dotfiles (/.git, /.env, /.htpasswd) | [nginx.localhost.com.conf:1](file:///etc/nginx/conf.d/nginx.localhost.com.conf#L1) (`/etc/nginx/conf.d/nginx.localhost.com.conf:1`) | [Docs](https://nginx.org/en/docs/http/ngx_http_core_module.html#location) | Add 'location ~ /\.(?!well-known).* { deny all; }' to server {} blocks |
-| **WARN-14** | [10. SYSTEM-LEVEL HARDENING](#10-system-level-hardening) | No active host firewall rules detected ( or requires root to inspect iptables/nftables ) | [etc](file:///etc) (`/etc`) | [Docs](https://wiki.debian.org/Uncomplicated%20Firewall%20%28ufw%29) | Enable host firewall (e.g. sudo ufw allow 'Nginx Full' && sudo ufw enable) or run audit with sudo |
-| **WARN-15** | [10. SYSTEM-LEVEL HARDENING](#10-system-level-hardening) | fail2ban is not installed (recommended for nginx-http-auth and bot/scanner rate-banning) | [etc](file:///etc) (`/etc`) | [Docs](https://www.fail2ban.org/wiki/index.php/Main_Page) | Install fail2ban: sudo apt-get install -y fail2ban |
+| **WARN-2** | [3. SERVICE STATUS & PROCESSES](#3-service-status-processes) | nginx -t could not read restricted file '/etc/ssl/certs/nginx/github.jaganathan.co.uk.key' as non-root user | [github.jaganathan.co.uk.conf:23](file:///etc/nginx/conf.d/github.jaganathan.co.uk.conf#L23) (`/etc/nginx/conf.d/github.jaganathan.co.uk.conf:23`) | [Docs](https://nginx.org/en/docs/switches.html) | Run audit or syntax test with root privileges: sudo ./status_nginx.sh (or sudo nginx -t) |
+| **WARN-3** | [10. SYSTEM-LEVEL HARDENING](#10-system-level-hardening) | No active host firewall rules detected ( or requires root to inspect iptables/nftables ) | [etc](file:///etc) (`/etc`) | [Docs](https://wiki.debian.org/Uncomplicated%20Firewall%20%28ufw%29) | Enable host firewall (e.g. sudo ufw allow 'Nginx Full' && sudo ufw enable) or run audit with sudo |
+| **WARN-4** | [10. SYSTEM-LEVEL HARDENING](#10-system-level-hardening) | fail2ban is not installed (recommended for nginx-http-auth and bot/scanner rate-banning) | [etc](file:///etc) (`/etc`) | [Docs](https://www.fail2ban.org/wiki/index.php/Main_Page) | Install fail2ban: sudo apt-get install -y fail2ban |
+| **WARN-5** | [12. ERROR LOG ANALYSIS](#12-error-log-analysis) | Upstream/backend connection errors found in /var/log/nginx/github.jaganathan.co.uk.error.log | [github.jaganathan.co.uk.error.log](file:///var/log/nginx/github.jaganathan.co.uk.error.log) (`/var/log/nginx/github.jaganathan.co.uk.error.log`) | [Docs](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_read_timeout) | Check backend service health and inspect recent lines in /var/log/nginx/github.jaganathan.co.uk.error.log |
 
 ---
 
@@ -72,16 +61,16 @@
 
 - OS        : Debian GNU/Linux 12 (bookworm)
 - Kernel    : 6.14.2-1-liquorix-amd64  (x86_64)
-- Uptime    : up 3 hours, 34 minutes
-- Load avg  : 0.67 0.60 0.74   CPUs: 2
+- Uptime    : up 5 hours, 18 minutes
+- Load avg  : 2.18 1.10 0.68   CPUs: 2
 
 ### Memory
 
 
 ```text
                total        used        free      shared  buff/cache   available
-Mem:           3.8Gi       2.1Gi       825Mi        95Mi       1.3Gi       1.8Gi
-Swap:          7.0Gi       443Mi       6.6Gi
+Mem:           3.8Gi       2.2Gi       803Mi        80Mi       1.2Gi       1.7Gi
+Swap:          7.0Gi       488Mi       6.5Gi
 ```
 
 
@@ -90,8 +79,9 @@ Swap:          7.0Gi       443Mi       6.6Gi
 
 ```text
 Filesystem     Type    Size  Used Avail Use% Mounted on
-apps           vboxsf  196G   91G  105G  47% /apps/go/go1.26.1
-/dev/sda1      ext4     98G   25G   69G  27% /etc
+/dev/sda1      ext4     98G   25G   69G  27% /
+apps           vboxsf  196G   94G  103G  48% /apps
+code           vboxsf  196G   94G  103G  48% /code
 ```
 
 
@@ -100,12 +90,19 @@ apps           vboxsf  196G   91G  105G  47% /apps/go/go1.26.1
 
 ```text
 Filesystem      Inodes   IUsed   IFree IUse% Mounted on
-apps              1000 -999000 1000000     - /apps/go/go1.26.1
-/dev/sda1      6553600  460303 6093297    8% /etc
+/dev/sda1      6553600  460589 6093011    8% /
+apps              1000 -999000 1000000     - /apps
+code              1000 -999000 1000000     - /code
 ```
 
 
 ### Public / local IPs
+
+
+```text
+eth0             UP             192.168.1.2/24 2401:4900:8826:ed64:8616:74bc:c27b:c34d/64 fe80::6823:ef1d:db2c:2b06/64 
+docker0          DOWN           172.17.0.1/16 
+```
 
 
 <a id="2-nginx-binary-build"></a>
@@ -218,10 +215,7 @@ nginx-common 1.22.1-9+deb12u10
 
 ## 3. SERVICE STATUS & PROCESSES
 
-- **[FAIL] (`FAIL-1`)** nginx daemon is NOT running (0 active nginx processes)
-  - **Where**: [nginx](file:///etc/init.d/nginx) (`/etc/init.d/nginx`)
-  - **Reference**: <https://nginx.org/en/docs/control.html>
-  - **How to Fix**: Verify config and start service: sudo nginx -t && sudo service nginx start (or sudo nginx)
+- **[ OK ]** nginx process is running (non-systemd init)
 - **[WARN] (`WARN-1`)** Nginx init script not enabled in default runlevels
   - **Where**: [nginx](file:///etc/init.d/nginx) (`/etc/init.d/nginx`)
   - **Reference**: <https://manpages.debian.org/bookworm/init-system-helpers/update-rc.d.8.en.html>
@@ -229,14 +223,14 @@ nginx-common 1.22.1-9+deb12u10
 
 ### Config syntax test (nginx -t)
 
-- **[WARN] (`WARN-2`)** nginx -t could not read restricted file '/etc/ssl/certs/nginx/nginx.key' as non-root user
-  - **Where**: [nginx.localhost.com.conf:14](file:///etc/nginx/conf.d/nginx.localhost.com.conf#L14) (`/etc/nginx/conf.d/nginx.localhost.com.conf:14`)
+- **[WARN] (`WARN-2`)** nginx -t could not read restricted file '/etc/ssl/certs/nginx/github.jaganathan.co.uk.key' as non-root user
+  - **Where**: [github.jaganathan.co.uk.conf:23](file:///etc/nginx/conf.d/github.jaganathan.co.uk.conf#L23) (`/etc/nginx/conf.d/github.jaganathan.co.uk.conf:23`)
   - **Reference**: <https://nginx.org/en/docs/switches.html>
-  - **How to Fix**: Run audit or syntax test with root privileges: sudo /home/ubuntu/code/github/raviautopilot/technical-notes/000_init/install/nginx/status_nginx.sh (or sudo nginx -t)
+  - **How to Fix**: Run audit or syntax test with root privileges: sudo ./status_nginx.sh (or sudo nginx -t)
 
 ```text
-2026/11/14 19:02:06 [warn] 27#27: the "user" directive makes sense only if the master process runs with super-user privileges, ignored in /etc/nginx/nginx.conf:1
-2026/11/14 19:02:06 [emerg] 27#27: cannot load certificate key "/etc/ssl/certs/nginx/nginx.key": BIO_new_file() failed (SSL: error:8000000D:system library::Permission denied:calling fopen(/etc/ssl/certs/nginx/nginx.key, r) error:10080002:BIO routines::system lib)
+2026/11/14 20:46:55 [warn] 81364#81364: the "user" directive makes sense only if the master process runs with super-user privileges, ignored in /etc/nginx/nginx.conf:1
+2026/11/14 20:46:55 [emerg] 81364#81364: cannot load certificate key "/etc/ssl/certs/nginx/github.jaganathan.co.uk.key": BIO_new_file() failed (SSL: error:8000000D:system library::Permission denied:calling fopen(/etc/ssl/certs/nginx/github.jaganathan.co.uk.key, r) error:10080002:BIO routines::system lib)
 nginx: configuration file /etc/nginx/nginx.conf test failed
 ```
 
@@ -247,11 +241,24 @@ nginx: configuration file /etc/nginx/nginx.conf test failed
 
 ```text
     PID    PPID USER     %CPU %MEM   RSS     ELAPSED CMD
+  33805       1 root      0.0  0.1  6448    02:49:26 nginx: master process /usr/sbin/nginx
+  76483   33805 www-data  0.0  0.1  6248       12:52 nginx: worker process
+  76484   33805 www-data  0.0  0.0  1864       12:52 nginx: worker process
 ```
 
-- No running nginx master/worker processes to inspect.
-- Active worker processes: 0   (CPU cores: 2)
+- **[ OK ]** Master runs as root (normal, needed for ports <1024)
+- **[ OK ]** Workers run as non-root user: www-data
+- Active worker processes: 2   (CPU cores: 2)
 - PID file configured: /run/nginx.pid
+
+### Open-file limit of master
+
+
+```text
+Max open files            1024                 4096                 files     
+```
+
+- Open FDs (master): 0
 
 <a id="4-listening-ports-connections"></a>
 
@@ -270,9 +277,12 @@ nginx: configuration file /etc/nginx/nginx.conf test failed
 
 
 ```text
+      2 80
       1 [::]:80 default_server
+      1 [::]:80
+      1 [::]:443 ssl http2
       1 80 default_server
-      1 80
+      1 443 ssl http2
       1 443 ssl
 ```
 
@@ -281,7 +291,7 @@ nginx: configuration file /etc/nginx/nginx.conf test failed
 
 
 ```text
-(no active :80/:443 connections)
+LISTEN         4
 ```
 
 
@@ -297,7 +307,21 @@ nginx: configuration file /etc/nginx/nginx.conf test failed
 
 
 ```text
-(none detected)
+0.0.0.0:445
+0.0.0.0:443
+0.0.0.0:111
+0.0.0.0:80
+0.0.0.0:22
+0.0.0.0:139
+0.0.0.0:42607
+[::]:445
+[::]:443
+*:6566
+[::]:41345
+[::]:111
+[::]:80
+[::]:22
+[::]:139
 ```
 
 
@@ -309,6 +333,8 @@ nginx: configuration file /etc/nginx/nginx.conf test failed
 
 ### Files loaded
 
+- Loaded: [00-production-hardening.conf](file:///etc/nginx/conf.d/00-production-hardening.conf) (`/etc/nginx/conf.d/00-production-hardening.conf`)
+- Loaded: [github.jaganathan.co.uk.conf](file:///etc/nginx/conf.d/github.jaganathan.co.uk.conf) (`/etc/nginx/conf.d/github.jaganathan.co.uk.conf`)
 - Loaded: [nginx.localhost.com.conf](file:///etc/nginx/conf.d/nginx.localhost.com.conf) (`/etc/nginx/conf.d/nginx.localhost.com.conf`)
 - Loaded: [nginx.conf](file:///etc/nginx/nginx.conf) (`/etc/nginx/nginx.conf`)
 - Loaded: [default](file:///etc/nginx/sites-enabled/default) (`/etc/nginx/sites-enabled/default`)
@@ -318,14 +344,16 @@ nginx: configuration file /etc/nginx/nginx.conf test failed
 
 ```text
 /etc/nginx/sites-available:
-  -rw-r--r-- 1 nobody nogroup 2412 Jul 18 21:48 default
+  -rw-r--r-- 1 root root 2412 Jul 18 21:48 default
 /etc/nginx/sites-enabled:
-  lrwxrwxrwx 1 nobody nogroup   34 Nov 14 17:33 default -> /etc/nginx/sites-available/default
+  lrwxrwxrwx 1 root root   34 Nov 14 17:33 default -> /etc/nginx/sites-available/default
 /etc/nginx/conf.d:
-  -rw-r--r-- 1 nobody nogroup  748 Nov 14 17:57 nginx.localhost.com.conf
+  -rw-r--r-- 1 root root  399 Nov 14 20:34 00-production-hardening.conf
+  -rw-r--r-- 1 root root 3364 Nov 14 20:34 github.jaganathan.co.uk.conf
+  -rw-r--r-- 1 root root  748 Nov 14 17:57 nginx.localhost.com.conf
 /etc/nginx/snippets:
-  -rw-r--r-- 1 nobody nogroup  423 Jul 18 21:48 fastcgi-php.conf
-  -rw-r--r-- 1 nobody nogroup  217 Jul 18 21:48 snakeoil.conf
+  -rw-r--r-- 1 root root  423 Jul 18 21:48 fastcgi-php.conf
+  -rw-r--r-- 1 root root  217 Jul 18 21:48 snakeoil.conf
 /etc/nginx/modules-enabled:
 ```
 
@@ -347,11 +375,18 @@ worker_connections 768;
 sendfile on;
 tcp_nopush on;
 types_hash_max_size 2048;
+client_max_body_size 25m;
+client_body_timeout 30s;
+client_header_timeout 30s;
+send_timeout 30s;
 gzip on;
 error_log /var/log/nginx/error.log;
+error_log /var/log/nginx/github.jaganathan.co.uk.error.log warn;
 error_log /var/log/nginx/nginx.localhost.com.error.log;
 access_log /var/log/nginx/access.log;
+access_log /var/log/nginx/github.jaganathan.co.uk.access.log;
 access_log /var/log/nginx/nginx.localhost.com.access.log;
+access_log off;
 ```
 
 - **[ OK ]** worker_processes auto
@@ -362,13 +397,29 @@ access_log /var/log/nginx/nginx.localhost.com.access.log;
 
 
 ```text
-[1] nginx.localhost.com
+[1] github.jaganathan.co.uk
+    file       : /etc/nginx/conf.d/github.jaganathan.co.uk.conf:7
+    listen     : 80 | [::]:80
+    return     : 301 https://$host$request_uri
+    locations  : 0     
+
+[2] github.jaganathan.co.uk
+    file       : /etc/nginx/conf.d/github.jaganathan.co.uk.conf:16
+    listen     : 443 ssl http2 | [::]:443 ssl http2
+    proxy_pass : http://127.0.0.1:3000
+    return     : 200 "OK\n"
+    ssl cert   : /etc/ssl/certs/nginx/github.jaganathan.co.uk.crt
+    ssl key    : /etc/ssl/certs/nginx/github.jaganathan.co.uk.key
+    access_log : off
+    locations  : 4    [ip-acl] 
+
+[3] nginx.localhost.com
     file       : /etc/nginx/conf.d/nginx.localhost.com.conf:1
     listen     : 80
     return     : 301 https://$host$request_uri
     locations  : 0     
 
-[2] nginx.localhost.com
+[4] nginx.localhost.com
     file       : /etc/nginx/conf.d/nginx.localhost.com.conf:8
     listen     : 443 ssl
     root       : /var/www/html/nginx.localhost.com
@@ -377,13 +428,13 @@ access_log /var/log/nginx/nginx.localhost.com.access.log;
     access_log : /var/log/nginx/nginx.localhost.com.access.log
     locations  : 1     
 
-[3] _
+[5] _
     file       : /etc/nginx/sites-enabled/default:21
     listen     : 80 default_server | [::]:80 default_server
     root       : /var/www/html
     locations  : 1     
 
-Total server blocks: 3
+Total server blocks: 5
 ```
 
 
@@ -392,6 +443,7 @@ Total server blocks: 3
 
 ```text
 _
+github.jaganathan.co.uk
 nginx.localhost.com
 ```
 
@@ -418,19 +470,29 @@ nginx.localhost.com
 
 
 ```text
-      2 location / {
+      3 location / {
+      1 location ~* \.(?:bak|sql|old|swp|orig|save|env)$ {
+      1 location ~ /\.(?!well-known).* {
+      1 location = /healthz {
 ```
 
 
 ### Web root(s): size & owner
 
-- Web root [html](file:///var/www/html) (`/var/www/html`) — size=16K owner=nobody:nogroup perms=755
-- Web root [nginx.localhost.com](file:///var/www/html/nginx.localhost.com) (`/var/www/html/nginx.localhost.com`) — size=8.0K owner=nobody:nogroup perms=755
+- Web root [html](file:///var/www/html) (`/var/www/html`) — size=16K owner=root:root perms=755
+- Web root [nginx.localhost.com](file:///var/www/html/nginx.localhost.com) (`/var/www/html/nginx.localhost.com`) — size=8.0K owner=root:root perms=755
 
 <a id="7-ssl-tls-certificates"></a>
 
 ## 7. SSL / TLS CERTIFICATES
 
+- Certificate : [github.jaganathan.co.uk.crt](file:///etc/ssl/certs/nginx/github.jaganathan.co.uk.crt) (`/etc/ssl/certs/nginx/github.jaganathan.co.uk.crt`) (configured at [github.jaganathan.co.uk.conf:22](file:///etc/nginx/conf.d/github.jaganathan.co.uk.conf#L22) (`/etc/nginx/conf.d/github.jaganathan.co.uk.conf:22`))
+-   Subject   : C = US, ST = State, L = City, O = ProductionNginx, CN = github.jaganathan.co.uk
+-   Issuer    : C = US, ST = State, L = City, O = ProductionNginx, CN = github.jaganathan.co.uk
+-   SANs      : DNS:github.jaganathan.co.uk,DNS:localhost,IPAddress:127.0.0.1
+-   Expires   : Nov 14 15:04:03 2027 GMT (364 days remaining)
+-   Key / Sig : 2048 bit / sha256WithRSAEncryption
+- **[ OK ]** Certificate /etc/ssl/certs/nginx/github.jaganathan.co.uk.crt validity OK (364 days remaining)
 - Certificate : [nginx.crt](file:///etc/ssl/certs/nginx/nginx.crt) (`/etc/ssl/certs/nginx/nginx.crt`) (configured at [nginx.localhost.com.conf:13](file:///etc/nginx/conf.d/nginx.localhost.com.conf#L13) (`/etc/nginx/conf.d/nginx.localhost.com.conf:13`))
 -   Subject   : C = US, ST = State, L = City, O = LocalHost, CN = nginx.localhost.com
 -   Issuer    : C = US, ST = State, L = City, O = LocalHost, CN = nginx.localhost.com
@@ -441,7 +503,8 @@ nginx.localhost.com
 
 ### Private key permissions
 
-- **[ OK ]** Private key /etc/ssl/certs/nginx/nginx.key permissions OK (600 nobody:nogroup)
+- **[ OK ]** Private key /etc/ssl/certs/nginx/github.jaganathan.co.uk.key permissions OK (600 root:root)
+- **[ OK ]** Private key /etc/ssl/certs/nginx/nginx.key permissions OK (600 root:root)
 
 <a id="8-security-audit-config-based"></a>
 
@@ -450,80 +513,40 @@ nginx.localhost.com
 
 ### Information disclosure
 
-- **[WARN] (`WARN-3`)** server_tokens is not set to 'off' - Nginx version is exposed in HTTP headers and error pages
-  - **Where**: [nginx.conf:21](file:///etc/nginx/nginx.conf#L21) (`/etc/nginx/nginx.conf:21`)
-  - **Reference**: <https://nginx.org/en/docs/http/ngx_http_core_module.html#server_tokens>
-  - **How to Fix**: Uncomment or add 'server_tokens off;' inside the http {} block in /etc/nginx/nginx.conf
-- Consider adding: proxy_hide_header X-Powered-By;
+- **[ OK ]** server_tokens off (Nginx version hidden)
+- **[ OK ]** X-Powered-By hidden from upstreams
 
 ### TLS protocol & cipher policy
 
-- ssl_protocols configured: TLSv1 TLSv1.1 TLSv1.2 TLSv1.3  TLSv1.2 TLSv1.3 
-- **[FAIL] (`FAIL-2`)** Deprecated/insecure TLS protocols enabled (SSLv3/TLSv1/TLSv1.1)
-  - **Where**: [nginx.conf:33](file:///etc/nginx/nginx.conf#L33) (`/etc/nginx/nginx.conf:33`)
-  - **Reference**: <https://ssl-config.mozilla.org/#server=nginx>
-  - **How to Fix**: Set 'ssl_protocols TLSv1.2 TLSv1.3;' in /etc/nginx/nginx.conf and remove TLSv1 / TLSv1.1
+- ssl_protocols configured: TLSv1.2 TLSv1.3 TLSv1.2 TLSv1.3  
+- **[ OK ]** No legacy SSL/TLSv1.0/TLSv1.1 protocols enabled
 - **[ OK ]** TLSv1.3 enabled
-- ssl_ciphers HIGH:!aNULL:!MD5;
-- **[FAIL] (`FAIL-3`)** Weak TLS cipher suites allowed in ssl_ciphers
-  - **Where**: [nginx.localhost.com.conf:18](file:///etc/nginx/conf.d/nginx.localhost.com.conf#L18) (`/etc/nginx/conf.d/nginx.localhost.com.conf:18`)
-  - **Reference**: <https://ssl-config.mozilla.org/#server=nginx>
-  - **How to Fix**: Update ssl_ciphers using Mozilla Intermediate TLS configuration
-- **[WARN] (`WARN-4`)** ssl_session_cache is not configured (impacts TLS handshake performance)
-  - **Where**: [nginx.conf:12](file:///etc/nginx/nginx.conf#L12) (`/etc/nginx/nginx.conf:12`)
-  - **Reference**: <https://nginx.org/en/docs/http/ngx_http_ssl_module.html#ssl_session_cache>
-  - **How to Fix**: Add 'ssl_session_cache shared:SSL:10m; ssl_session_timeout 1d;' in http {} block of /etc/nginx/nginx.conf
+- ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384;
+- **[ OK ]** ssl_session_cache configured
 
 ### Security headers (add_header)
 
-- **[WARN] (`WARN-5`)** HTTP security header 'Strict-Transport-Security' is missing from configuration
-  - **Where**: [nginx.localhost.com.conf:1](file:///etc/nginx/conf.d/nginx.localhost.com.conf#L1) (`/etc/nginx/conf.d/nginx.localhost.com.conf:1`)
-  - **Reference**: <https://owasp.org/www-project-secure-headers/>
-  - **How to Fix**: Add 'add_header Strict-Transport-Security "..." always;' to your server {} block or shared security snippet
-- **[WARN] (`WARN-6`)** HTTP security header 'X-Frame-Options' is missing from configuration
-  - **Where**: [nginx.localhost.com.conf:1](file:///etc/nginx/conf.d/nginx.localhost.com.conf#L1) (`/etc/nginx/conf.d/nginx.localhost.com.conf:1`)
-  - **Reference**: <https://owasp.org/www-project-secure-headers/>
-  - **How to Fix**: Add 'add_header X-Frame-Options "..." always;' to your server {} block or shared security snippet
-- **[WARN] (`WARN-7`)** HTTP security header 'X-Content-Type-Options' is missing from configuration
-  - **Where**: [nginx.localhost.com.conf:1](file:///etc/nginx/conf.d/nginx.localhost.com.conf#L1) (`/etc/nginx/conf.d/nginx.localhost.com.conf:1`)
-  - **Reference**: <https://owasp.org/www-project-secure-headers/>
-  - **How to Fix**: Add 'add_header X-Content-Type-Options "..." always;' to your server {} block or shared security snippet
-- **[WARN] (`WARN-8`)** HTTP security header 'Content-Security-Policy' is missing from configuration
-  - **Where**: [nginx.localhost.com.conf:1](file:///etc/nginx/conf.d/nginx.localhost.com.conf#L1) (`/etc/nginx/conf.d/nginx.localhost.com.conf:1`)
-  - **Reference**: <https://owasp.org/www-project-secure-headers/>
-  - **How to Fix**: Add 'add_header Content-Security-Policy "..." always;' to your server {} block or shared security snippet
-- **[WARN] (`WARN-9`)** HTTP security header 'Referrer-Policy' is missing from configuration
-  - **Where**: [nginx.localhost.com.conf:1](file:///etc/nginx/conf.d/nginx.localhost.com.conf#L1) (`/etc/nginx/conf.d/nginx.localhost.com.conf:1`)
-  - **Reference**: <https://owasp.org/www-project-secure-headers/>
-  - **How to Fix**: Add 'add_header Referrer-Policy "..." always;' to your server {} block or shared security snippet
-- **[WARN] (`WARN-10`)** HTTP security header 'Permissions-Policy' is missing from configuration
-  - **Where**: [nginx.localhost.com.conf:1](file:///etc/nginx/conf.d/nginx.localhost.com.conf#L1) (`/etc/nginx/conf.d/nginx.localhost.com.conf:1`)
-  - **Reference**: <https://owasp.org/www-project-secure-headers/>
-  - **How to Fix**: Add 'add_header Permissions-Policy "..." always;' to your server {} block or shared security snippet
+- **[ OK ]** Security header Strict-Transport-Security configured
+- **[ OK ]** Security header X-Frame-Options configured
+- **[ OK ]** Security header X-Content-Type-Options configured
+- **[ OK ]** Security header Content-Security-Policy configured
+- **[ OK ]** Security header Referrer-Policy configured
+- **[ OK ]** Security header Permissions-Policy configured
 
 ### HTTP -> HTTPS redirection
 
 - **[ OK ]** HTTP -> HTTPS redirect present
-- HTTP/2 not enabled (consider adding 'http2' to listen 443)
+- **[ OK ]** HTTP/2 enabled
 
 ### Rate limiting / DoS protection
 
-- **[WARN] (`WARN-11`)** No limit_req_zone defined (no request rate limiting against brute-force/DDoS)
-  - **Where**: [nginx.conf:12](file:///etc/nginx/nginx.conf#L12) (`/etc/nginx/nginx.conf:12`)
-  - **Reference**: <https://nginx.org/en/docs/http/ngx_http_limit_req_module.html#limit_req_zone>
-  - **How to Fix**: Add 'limit_req_zone $binary_remote_addr zone=req_limit:10m rate=10r/s;' in http {} block of /etc/nginx/nginx.conf
-- **[WARN] (`WARN-12`)** limit_req is not applied to any server or location context
-  - **Where**: [nginx.localhost.com.conf:1](file:///etc/nginx/conf.d/nginx.localhost.com.conf#L1) (`/etc/nginx/conf.d/nginx.localhost.com.conf:1`)
-  - **Reference**: <https://nginx.org/en/docs/http/ngx_http_limit_req_module.html#limit_req>
-  - **How to Fix**: Apply 'limit_req zone=req_limit burst=20 nodelay;' inside sensitive server/location blocks
-- client_max_body_size default (1m)
+- **[ OK ]** limit_req_zone defined
+- **[ OK ]** limit_req applied
+- client_max_body_size: 25m 
 
 ### Dangerous / risky patterns
 
-- **[WARN] (`WARN-13`)** No location rule blocking hidden dotfiles (/.git, /.env, /.htpasswd)
-  - **Where**: [nginx.localhost.com.conf:1](file:///etc/nginx/conf.d/nginx.localhost.com.conf#L1) (`/etc/nginx/conf.d/nginx.localhost.com.conf:1`)
-  - **Reference**: <https://nginx.org/en/docs/http/ngx_http_core_module.html#location>
-  - **How to Fix**: Add 'location ~ /\.(?!well-known).* { deny all; }' to server {} blocks
+- **[ OK ]** Dotfile (/.git, /.env) blocking location rule present
 
 ### Access control
 
@@ -538,7 +561,7 @@ nginx.localhost.com
 
 ## 9. FILE & DIRECTORY PERMISSIONS
 
-- [nginx.conf](file:///etc/nginx/nginx.conf) (`/etc/nginx/nginx.conf`)  perms=644 owner=nobody:nogroup
+- [nginx.conf](file:///etc/nginx/nginx.conf) (`/etc/nginx/nginx.conf`)  perms=644 owner=root:root
 - **[ OK ]** No world-writable config files in /etc/nginx
 
 ### Web roots - world-writable & sensitive files
@@ -550,7 +573,7 @@ nginx.localhost.com
 
 
 ```text
-drwxr-xr-x 2 nobody nogroup 4096 Nov 14 17:33 /var/log/nginx
+drwxr-xr-x 2 root adm 4096 Nov 14 20:34 /var/log/nginx
 ```
 
 
@@ -561,14 +584,14 @@ drwxr-xr-x 2 nobody nogroup 4096 Nov 14 17:33 /var/log/nginx
 
 ### Firewall
 
-- **[WARN] (`WARN-14`)** No active host firewall rules detected ( or requires root to inspect iptables/nftables )
+- **[WARN] (`WARN-3`)** No active host firewall rules detected ( or requires root to inspect iptables/nftables )
   - **Where**: [etc](file:///etc) (`/etc`)
   - **Reference**: <https://wiki.debian.org/Uncomplicated%20Firewall%20%28ufw%29>
   - **How to Fix**: Enable host firewall (e.g. sudo ufw allow 'Nginx Full' && sudo ufw enable) or run audit with sudo
 
 ### Fail2ban
 
-- **[WARN] (`WARN-15`)** fail2ban is not installed (recommended for nginx-http-auth and bot/scanner rate-banning)
+- **[WARN] (`WARN-4`)** fail2ban is not installed (recommended for nginx-http-auth and bot/scanner rate-banning)
   - **Where**: [etc](file:///etc) (`/etc`)
   - **Reference**: <https://www.fail2ban.org/wiki/index.php/Main_Page>
   - **How to Fix**: Install fail2ban: sudo apt-get install -y fail2ban
@@ -623,10 +646,12 @@ cups-core-drivers/oldstable,oldstable-security 2.4.2-3+deb12u9 amd64 [upgradable
 ### Log files
 
 - Log file [access.log](file:///var/log/nginx/access.log) (`/var/log/nginx/access.log`) — size=4.0K mtime=2026-11-14 18:43:01
+- Log file [github.jaganathan.co.uk.access.log](file:///var/log/nginx/github.jaganathan.co.uk.access.log) (`/var/log/nginx/github.jaganathan.co.uk.access.log`) — size=4.0K mtime=2026-11-14 20:34:29
 - Log file [nginx.localhost.com.access.log](file:///var/log/nginx/nginx.localhost.com.access.log) (`/var/log/nginx/nginx.localhost.com.access.log`) — size=4.0K mtime=2026-11-14 18:43:01
 - Log file [error.log](file:///var/log/nginx/error.log) (`/var/log/nginx/error.log`) — size=0 mtime=2026-11-14 17:33:44
+- Log file [github.jaganathan.co.uk.error.log](file:///var/log/nginx/github.jaganathan.co.uk.error.log) (`/var/log/nginx/github.jaganathan.co.uk.error.log`) — size=4.0K mtime=2026-11-14 20:34:29
 - Log file [nginx.localhost.com.error.log](file:///var/log/nginx/nginx.localhost.com.error.log) (`/var/log/nginx/nginx.localhost.com.error.log`) — size=0 mtime=2026-11-14 17:33:46
-- Total /var/log/nginx size: 12K
+- Total /var/log/nginx size: 20K
 
 ### logrotate
 
@@ -659,6 +684,35 @@ cups-core-drivers/oldstable,oldstable-security 2.4.2-3+deb12u9 amd64 [upgradable
 ## 12. ERROR LOG ANALYSIS
 
 - Cannot read error log [error.log](file:///var/log/nginx/error.log) (`/var/log/nginx/error.log`) (run with sudo to analyse error log contents)
+- Analysing error log: [github.jaganathan.co.uk.error.log](file:///var/log/nginx/github.jaganathan.co.uk.error.log) (`/var/log/nginx/github.jaganathan.co.uk.error.log`)
+
+### Entries by severity (last 50000 lines)
+
+
+```text
+      1 [error]
+```
+
+
+### Top 10 error messages
+
+
+```text
+      1 connect() failed (111: Connection refused) while connecting to upstream, client: X, server: github.jaganathan.co.uk, req
+```
+
+
+### Last 15 error/crit entries
+
+
+```text
+2026/11/14 20:34:29 [error] 76483#76483: *14 connect() failed (111: Connection refused) while connecting to upstream, client: 127.0.0.1, server: github.jaganathan.co.uk, request: "GET / HTTP/2.0", upstream: "http://127.0
+```
+
+- **[WARN] (`WARN-5`)** Upstream/backend connection errors found in /var/log/nginx/github.jaganathan.co.uk.error.log
+  - **Where**: [github.jaganathan.co.uk.error.log](file:///var/log/nginx/github.jaganathan.co.uk.error.log) (`/var/log/nginx/github.jaganathan.co.uk.error.log`)
+  - **Reference**: <https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_read_timeout>
+  - **How to Fix**: Check backend service health and inspect recent lines in /var/log/nginx/github.jaganathan.co.uk.error.log
 - Analysing error log: [nginx.localhost.com.error.log](file:///var/log/nginx/nginx.localhost.com.error.log) (`/var/log/nginx/nginx.localhost.com.error.log`)
 - **[ OK ]** Error log /var/log/nginx/nginx.localhost.com.error.log is empty (0 errors recorded)
 
@@ -667,6 +721,57 @@ cups-core-drivers/oldstable,oldstable-security 2.4.2-3+deb12u9 amd64 [upgradable
 ## 13. ACCESS LOG & TRAFFIC ANALYSIS (assumes combined format)
 
 - Cannot read access log [access.log](file:///var/log/nginx/access.log) (`/var/log/nginx/access.log`) (run with sudo to analyse traffic)
+- Analysing access log: [github.jaganathan.co.uk.access.log](file:///var/log/nginx/github.jaganathan.co.uk.access.log) (`/var/log/nginx/github.jaganathan.co.uk.access.log`) (last 50000 of 1 lines)
+- Time range: [14/Nov/2026:20:34:29 +0530]  ->  [14/Nov/2026:20:34:29 +0530]
+
+### HTTP status code distribution
+
+
+```text
+      1 502
+```
+
+
+### Status classes
+
+
+```text
+5xx       1  (100.0%)
+```
+
+- **[FAIL] (`FAIL-1`)** High HTTP 5xx error rate >= 5% (1 of 1 requests) in /var/log/nginx/github.jaganathan.co.uk.access.log
+  - **Where**: [github.jaganathan.co.uk.access.log](file:///var/log/nginx/github.jaganathan.co.uk.access.log) (`/var/log/nginx/github.jaganathan.co.uk.access.log`)
+  - **Reference**: <https://docs.nginx.com/nginx/admin-guide/monitoring/logging/>
+  - **How to Fix**: Inspect top 5xx URLs in /var/log/nginx/github.jaganathan.co.uk.access.log and correlate with /var/log/nginx/error.log
+/var/log/nginx/github.jaganathan.co.uk.error.log
+/var/log/nginx/nginx.localhost.com.error.log
+
+### Top 15 client IPs
+
+
+```text
+      1 127.0.0.1
+```
+
+
+### Top 15 requested URLs
+
+
+```text
+      1 /
+```
+
+
+### Top 10 URLs returning 404
+
+
+### Top 10 URLs returning 5xx
+
+
+```text
+      1 502 /
+```
+
 - Analysing access log: [nginx.localhost.com.access.log](file:///var/log/nginx/nginx.localhost.com.access.log) (`/var/log/nginx/nginx.localhost.com.access.log`) (last 50000 of 7 lines)
 - Time range: [14/Nov/2026:17:57:30 +0530]  ->  [14/Nov/2026:18:43:01 +0530]
 
@@ -716,27 +821,63 @@ cups-core-drivers/oldstable,oldstable-security 2.4.2-3+deb12u9 amd64 [upgradable
 - Probing http://127.0.0.1 (Host: localhost, -k)
 
 ```text
-(no response from http://127.0.0.1)
+HTTP/1.1 200 OK
+Server: nginx
+Date: Sat, 14 Nov 2026 15:16:58 GMT
+Content-Type: text/html
+Content-Length: 615
+Last-Modified: Sat, 14 Nov 2026 12:03:44 GMT
+Connection: keep-alive
+ETag: "6af84e20-267"
+Accept-Ranges: bytes
+
 ```
 
 - Probing https://127.0.0.1 (Host: localhost, -k)
 
 ```text
-(no response from https://127.0.0.1)
+HTTP/2 502 
+server: nginx
+date: Sat, 14 Nov 2026 15:16:58 GMT
+content-type: text/html
+content-length: 150
+strict-transport-security: max-age=63072000; includeSubDomains
+x-frame-options: SAMEORIGIN
+x-content-type-options: nosniff
+referrer-policy: strict-origin-when-cross-origin
+permissions-policy: geolocation=(), microphone=(), camera=()
+content-security-policy: default-src 'self' 'unsafe-inline' data: https:;
+
 ```
 
 
 ### Security headers on first named server over HTTPS
 
-- Testing nginx.localhost.com via --resolve nginx.localhost.com:443:127.0.0.1
-- No live HTTPS response on 127.0.0.1:443 for nginx.localhost.com (daemon stopped or port not listening)
+- Testing github.jaganathan.co.uk via --resolve github.jaganathan.co.uk:443:127.0.0.1
+
+```text
+HTTP/2 502 
+server: nginx
+date: Sat, 14 Nov 2026 15:16:58 GMT
+content-type: text/html
+content-length: 150
+strict-transport-security: max-age=63072000; includeSubDomains
+x-frame-options: SAMEORIGIN
+x-content-type-options: nosniff
+referrer-policy: strict-origin-when-cross-origin
+permissions-policy: geolocation=(), microphone=(), camera=()
+content-security-policy: default-src 'self' 'unsafe-inline' data: https:;
+
+```
+
+- **[ OK ]** Live HTTPS response includes HSTS header
 
 ### TLS handshake test on 127.0.0.1:443
 
 - tls1 rejected or 127.0.0.1:443 not listening
 - tls1_1 rejected or 127.0.0.1:443 not listening
-- tls1_2 rejected or 127.0.0.1:443 not listening
-- tls1_3 rejected or 127.0.0.1:443 not listening
+- **[ OK ]** Live endpoint accepted tls1_2
+- **[ OK ]** Live endpoint accepted tls1_3
 
 <a id="15-performance-capacity-hints"></a>
 
@@ -754,7 +895,7 @@ cups-core-drivers/oldstable,oldstable-security 2.4.2-3+deb12u9 amd64 [upgradable
 
 
 ```text
-total RSS: 0.0 MB across 0 processes
+total RSS: 19.3 MB across 3 processes
 ```
 
 
@@ -763,17 +904,17 @@ total RSS: 0.0 MB across 0 processes
 
 ```text
 USER         PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
-ubuntu         1 19.7  3.5 2042168 142220 ?      Sl   19:02   0:00 /home/ubuntu/.gemini/bin/agy
-ubuntu       830  0.0  0.1   8104  4272 pts/3    R+   19:02   0:00 ps aux --sort=-%mem
-ubuntu        15  4.3  0.0  76892  3852 pts/3    S+   19:02   0:00 bash /home/ubuntu/code/github/raviautopilot/technical-notes/000_init/inst
-ubuntu        13  0.0  0.0  76268  3324 pts/3    Ss+  19:02   0:00 bash -c /home/ubuntu/code/github/raviautopilot/technical-notes/000_init/i
-ubuntu       829  0.0  0.0  76892  2056 pts/3    S+   19:02   0:00 bash /home/ubuntu/code/github/raviautopilot/technical-notes/000_init/inst
+ubuntu     80322 36.4  9.5 1463382388 383384 ?   S<l  20:46   0:11 /apps/antigravity/antigravityIde/antigravity-ide --type=zygote
+ubuntu     80494 13.6  7.9 1461621164 317556 ?   Sl   20:46   0:04 /proc/self/exe --type=utility --utility-sub-type=node.mojom.NodeService -
+ubuntu     81130 26.5  7.2 1459871592 292272 ?   Sl   20:46   0:04 /apps/antigravity/antigravityIde/antigravity-ide --type=zygote
+ubuntu     81099  5.6  7.1 2252024 285156 ?      Sl   20:46   0:01 /home/ubuntu/.gemini/bin/agy --hub --hub-port=42805 --app_data_dir=antigr
+ubuntu     80245 16.0  6.7 1461795436 272312 ?   S<Lsl 20:46   0:05 /apps/antigravity/antigravityIde/antigravity-ide
 ```
 
 
 ### Files/sockets open by nginx
 
-- 0 open descriptors (lsof)
+- 13 open descriptors (lsof)
 
 <a id="16-backends-related-services"></a>
 
@@ -782,12 +923,16 @@ ubuntu       829  0.0  0.0  76892  2056 pts/3    S+   19:02   0:00 bash /home/ub
 
 ### Upstream/proxy targets reachability
 
+- **[FAIL] (`FAIL-2`)** Upstream backend 127.0.0.1:3000 is NOT reachable (configured at github.jaganathan.co.uk.conf)
+  - **Where**: [github.jaganathan.co.uk.conf:57](file:///etc/nginx/conf.d/github.jaganathan.co.uk.conf#L57) (`/etc/nginx/conf.d/github.jaganathan.co.uk.conf:57`)
+  - **Reference**: <https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_pass>
+  - **How to Fix**: Verify the backend application listening on 127.0.0.1:3000 is running and check its logs
 
 ### Common companion services
 
 
 ```text
-docker             inactive (sysvinit)
+docker             active (sysvinit)
 ```
 
 
@@ -800,6 +945,9 @@ docker             inactive (sysvinit)
 ## 17. CONFIG BACKUP & CHANGE TRACKING
 
 - 10 most recently modified files in /etc/nginx:
+- 2026-11-14 20:34 — [nginx.conf](file:///etc/nginx/nginx.conf) (`/etc/nginx/nginx.conf`)
+- 2026-11-14 20:34 — [github.jaganathan.co.uk.conf](file:///etc/nginx/conf.d/github.jaganathan.co.uk.conf) (`/etc/nginx/conf.d/github.jaganathan.co.uk.conf`)
+- 2026-11-14 20:34 — [00-production-hardening.conf](file:///etc/nginx/conf.d/00-production-hardening.conf) (`/etc/nginx/conf.d/00-production-hardening.conf`)
 - 2026-11-14 17:57 — [nginx.localhost.com.conf](file:///etc/nginx/conf.d/nginx.localhost.com.conf) (`/etc/nginx/conf.d/nginx.localhost.com.conf`)
 - 2026-07-18 21:48 — [win-utf](file:///etc/nginx/win-utf) (`/etc/nginx/win-utf`)
 - 2026-07-18 21:48 — [uwsgi_params](file:///etc/nginx/uwsgi_params) (`/etc/nginx/uwsgi_params`)
@@ -807,7 +955,4 @@ docker             inactive (sysvinit)
 - 2026-07-18 21:48 — [fastcgi-php.conf](file:///etc/nginx/snippets/fastcgi-php.conf) (`/etc/nginx/snippets/fastcgi-php.conf`)
 - 2026-07-18 21:48 — [default](file:///etc/nginx/sites-available/default) (`/etc/nginx/sites-available/default`)
 - 2026-07-18 21:48 — [scgi_params](file:///etc/nginx/scgi_params) (`/etc/nginx/scgi_params`)
-- 2026-07-18 21:48 — [proxy_params](file:///etc/nginx/proxy_params) (`/etc/nginx/proxy_params`)
-- 2026-07-18 21:48 — [nginx.conf](file:///etc/nginx/nginx.conf) (`/etc/nginx/nginx.conf`)
-- 2026-07-18 21:48 — [mime.types](file:///etc/nginx/mime.types) (`/etc/nginx/mime.types`)
 - Config not under version control (consider git or etckeeper in /etc/nginx)
