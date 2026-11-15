@@ -43,7 +43,7 @@ if command -v apt &>/dev/null; then
     DISTRO="DEBIAN"
     INSTALL_CMD_UPDATE="apt update -y"
     INSTALL_CMD_INSTALL="apt install -y"
-    REMOVE_CMD="apt purge nginx -y"
+    REMOVE_CMD="apt purge -y 'nginx*' && apt autoremove -y"
 elif command -v dnf &>/dev/null; then
     DISTRO="RHEL"
     INSTALL_CMD_UPDATE=""
@@ -82,9 +82,6 @@ if command -v nginx &>/dev/null; then
 fi
 
 # --- Init system handling (systemd vs SysVinit/OpenRC/containers/WSL) ---
-# configure_nginx.sh calls 'systemctl', which fails when systemd is not PID 1
-# (e.g. MX Linux with SysVinit, containers, WSL). In that case we put a small
-# 'systemctl' shim first in PATH that maps to 'service' / 'update-rc.d'.
 setup_init_compat() {
     if [ -d /run/systemd/system ]; then
         log "✅ systemd detected as init system."
@@ -160,7 +157,7 @@ rollback() {
     if [ "$ROLLBACK_NEEDED" -eq 1 ]; then
         log "!!! Performing rollback..."
 
-        if command -v nginx &>/dev/null; then
+        if command -v nginx &>/dev/null || dpkg -l 2>/dev/null | grep -q '^ii  nginx'; then
             if [ -d /run/systemd/system ]; then
                 systemctl stop nginx 2>/dev/null
                 systemctl disable nginx 2>/dev/null
@@ -169,7 +166,7 @@ rollback() {
             fi
 
             if [ "$NGINX_PREINSTALLED" -eq 0 ] && [ -n "$REMOVE_CMD" ]; then
-                $REMOVE_CMD
+                eval "$REMOVE_CMD"
                 log "   NGINX stopped and removed."
             else
                 log "   NGINX stopped (kept: it was installed before this run)."
@@ -243,20 +240,36 @@ run_configuration() {
 }
 
 test_installation() {
-    log "[STEP 4/4] Testing NGINX HTTPS setup..."
+    log "[STEP 4/4] Testing NGINX setup..."
 
-    # Use 127.0.0.1 with a Host header so no hostname resolution is required.
-    # Retry briefly: on non-systemd hosts nginx may take a moment to come up.
+    local site_conf
+    site_conf="$(ls -t /etc/nginx/conf.d/*.conf 2>/dev/null | grep -v '00-production-hardening.conf' | head -n 1)"
+
+    local test_domain="nginx.localhost.com"
+    local test_proto="https"
+    local test_port="443"
+
+    if [[ -n "$site_conf" && -f "$site_conf" ]]; then
+        test_domain="$(awk '/^[[:space:]]*server_name[[:space:]]+/{gsub(/;/,"",$2); print $2; exit}' "$site_conf")"
+        if grep -qE '^[[:space:]]*listen[[:space:]]+[0-9]+[[:space:]]+ssl' "$site_conf"; then
+            test_proto="https"
+            test_port="$(awk '/^[[:space:]]*listen[[:space:]]+[0-9]+[[:space:]]+ssl/{print $2; exit}' "$site_conf")"
+        else
+            test_proto="http"
+            test_port="$(awk '/^[[:space:]]*listen[[:space:]]+[0-9]+/{gsub(/;/,"",$2); print $2; exit}' "$site_conf")"
+        fi
+    fi
+
     local attempt
     for attempt in 1 2 3 4 5; do
-        if curl -s -k -H "Host: nginx.localhost.com" https://127.0.0.1/ | grep -q "Welcome to HTTPS NGINX Test Page"; then
-            log "✅ Installation Test SUCCESSFUL. HTTPS site is live."
+        if curl -s -k -o /dev/null -w '%{http_code}' -H "Host: ${test_domain}" "${test_proto}://127.0.0.1:${test_port}/healthz" | grep -q '^200$'; then
+            log "✅ Installation Test SUCCESSFUL. ${test_proto^^} site (${test_domain}) is live."
             return
         fi
-        log "   Attempt $attempt/5: site not ready yet, retrying..."
+        log "   Attempt $attempt/5: site (${test_domain} on ${test_proto}:${test_port}) not ready yet, retrying..."
         sleep 2
     done
-    fail_and_rollback "Installation Test FAILED. HTTPS site did not return expected content."
+    fail_and_rollback "Installation Test FAILED. ${test_proto^^} site (${test_domain}) did not return HTTP 200 on /healthz."
 }
 
 # --- Main Execution Flow ---
@@ -273,4 +286,3 @@ log "--- NGINX Installation & Configuration COMPLETED SUCCESSFULLY ---"
 # Success: no rollback; just clean up temp files (the EXIT trap removes the shim)
 ROLLBACK_NEEDED=0
 rm -f "$STATE_FILE" /tmp/installed_packages_before.list
-
