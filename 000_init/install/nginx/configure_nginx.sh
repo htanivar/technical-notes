@@ -244,9 +244,26 @@ mkdir -p "$BACKUP_DIR"
 cp -a "$NGINX_MAIN_CONF" "$BACKUP_DIR/nginx.conf.bak" 2>/dev/null || true
 [[ -f "$SITE_CONF_PATH" ]] && cp -a "$SITE_CONF_PATH" "$BACKUP_DIR/site.conf.bak" 2>/dev/null || true
 
+SNIPPET_CONF="${NGINX_CONF_DIR}/00-production-hardening.conf"
+[[ -f "$SNIPPET_CONF" ]] && cp -a "$SNIPPET_CONF" "$BACKUP_DIR/hardening.conf.bak" 2>/dev/null || true
+
+# Other global files (conf.d/00-*.conf, e.g. 00-security.conf from nginx-harden.sh) may already
+# define http-level directives. Defining them again makes nginx fail with
+# '"<directive>" directive is duplicate', so detect that and skip our copy.
+defined_in_other_globals() {
+  local d="$1" f
+  for f in "$NGINX_CONF_DIR"/00-*.conf; do
+    [[ -f "$f" && "$f" != "$SNIPPET_CONF" ]] || continue
+    grep -Eq "^[[:space:]]*${d}[[:space:]]" "$f" && return 0
+  done
+  return 1
+}
+
 if [[ -f "$NGINX_MAIN_CONF" ]]; then
   # 1a. Enable server_tokens off; safely without duplicates
-  if grep -qE '^\s*server_tokens\s+' "$NGINX_MAIN_CONF"; then
+  if defined_in_other_globals server_tokens; then
+    log "   ℹ️ server_tokens already set in a conf.d/00-*.conf file; leaving ${NGINX_MAIN_CONF} untouched."
+  elif grep -qE '^\s*server_tokens\s+' "$NGINX_MAIN_CONF"; then
     sed -i -E 's/^\s*server_tokens\s+.*;/\tserver_tokens off;/' "$NGINX_MAIN_CONF"
   elif grep -qE '^\s*#\s*server_tokens\s+' "$NGINX_MAIN_CONF"; then
     sed -i -E 's/^\s*#\s*server_tokens\s+.*;/\tserver_tokens off;/' "$NGINX_MAIN_CONF"
@@ -260,7 +277,6 @@ if [[ -f "$NGINX_MAIN_CONF" ]]; then
   fi
 
   # 1c. Add shared SSL session cache, tickets off, rate limit zone, and WebSocket upgrade map inside http {}
-  SNIPPET_CONF="${NGINX_CONF_DIR}/00-production-hardening.conf"
   cat > "$SNIPPET_CONF" <<EOF
 # Managed by configure_nginx.sh — Global Production Hardening & Shared Zones
 ssl_session_cache shared:SSL:10m;
@@ -279,10 +295,10 @@ EOF
   chmod 644 "$SNIPPET_CONF"
 
   # Remove any duplicate default ssl_session_cache / map if already in nginx.conf to prevent directive clashes
-  if grep -qE '^\s*ssl_session_cache\s+' "$NGINX_MAIN_CONF"; then
+  if grep -qE '^\s*ssl_session_cache\s+' "$NGINX_MAIN_CONF" || defined_in_other_globals ssl_session_cache; then
     sed -i -E '/^ssl_session_cache/d; /^ssl_session_timeout/d; /^ssl_session_tickets/d' "$SNIPPET_CONF"
   fi
-  if grep -q "connection_upgrade" "$NGINX_MAIN_CONF"; then
+  if grep -q "connection_upgrade" "$NGINX_MAIN_CONF" || defined_in_other_globals 'map[[:space:]]+\$http_upgrade'; then
     sed -i '/^map \$http_upgrade/,/^}/d' "$SNIPPET_CONF"
   fi
   if grep -q "prod_req_limit" "$NGINX_MAIN_CONF"; then
@@ -363,7 +379,24 @@ EOF
 elif [[ "$SSL_MODE" == "letsencrypt" ]]; then
   log "2. Setting up Let's Encrypt certificate for ${HOST_NAME}..."
   if command -v certbot >/dev/null 2>&1; then
-    if certbot certonly --nginx -d "$HOST_NAME" --non-interactive --agree-tos --email "$LE_EMAIL"; then
+    # 'certbot --nginx' needs the nginx plugin (separate package on Debian/Ubuntu)
+    _plugins="$(certbot plugins 2>/dev/null || true)"
+    if ! grep -qi nginx <<<"$_plugins"; then
+      log "   ℹ️ certbot nginx plugin missing; installing python3-certbot-nginx..."
+      DEBIAN_FRONTEND=noninteractive apt-get install -y python3-certbot-nginx >/dev/null 2>&1 \
+        || log "   ⚠️ Could not install python3-certbot-nginx."
+    fi
+
+    LE_ARGS=(--non-interactive --agree-tos)
+    if [[ -z "$LE_EMAIL" || "$LE_EMAIL" =~ @(localhost|local)$ ]]; then
+      LE_ARGS+=(--register-unsafely-without-email)   # Let's Encrypt rejects @localhost addresses
+    else
+      LE_ARGS+=(--email "$LE_EMAIL")
+    fi
+    LE_DOMAINS=(-d "$HOST_NAME")
+    for al in $SERVER_ALIASES; do LE_DOMAINS+=(-d "$al"); done
+
+    if certbot certonly --nginx "${LE_DOMAINS[@]}" "${LE_ARGS[@]}"; then
       SSL_CERT_FILE="/etc/letsencrypt/live/${HOST_NAME}/fullchain.pem"
       SSL_KEY_FILE="/etc/letsencrypt/live/${HOST_NAME}/privkey.pem"
       log "   ✅ Let's Encrypt certificate obtained: ${SSL_CERT_FILE}"
@@ -459,9 +492,15 @@ fi
 log "5. Writing production NGINX virtual host config to ${SITE_CONF_PATH}..."
 
 # Check if nginx supports 'http2 on;' directive (>= 1.25.1) vs 'listen 443 ssl http2;'
-HTTP2_LISTEN_OPT="http2"
-if [[ "$SSL_MODE" == "none" ]]; then
-  HTTP2_LISTEN_OPT=""
+HTTP2_LISTEN_OPT=""
+HTTP2_DIRECTIVE=""
+if [[ "$SSL_MODE" != "none" ]]; then
+  NGX_VER="$("$NGINX_BIN" -v 2>&1 | sed -E 's|.*/([0-9.]+).*|\1|')"
+  if [[ "$(printf '%s\n' 1.25.1 "$NGX_VER" | sort -V | head -n1)" == "1.25.1" ]]; then
+    HTTP2_DIRECTIVE="http2 on;"          # nginx >= 1.25.1
+  else
+    HTTP2_LISTEN_OPT="http2"             # older nginx
+  fi
 fi
 
 # Build location block based on static vs reverse-proxy mode
@@ -537,6 +576,7 @@ server {
 server {
     listen ${HTTPS_PORT} ssl ${HTTP2_LISTEN_OPT};
     listen [::]:${HTTPS_PORT} ssl ${HTTP2_LISTEN_OPT};
+    ${HTTP2_DIRECTIVE}
     server_name ${SERVER_NAME_DIRECTIVE};
 
     # --- SSL / TLS Certificates & Modern Cipher Suite ---
@@ -650,6 +690,11 @@ if ! "$NGINX_BIN" -t 2>&1 | tee -a "$LOG_FILE"; then
     cp -a "$BACKUP_DIR/site.conf.bak" "$SITE_CONF_PATH"
   else
     rm -f "$SITE_CONF_PATH"
+  fi
+  if [[ -f "$BACKUP_DIR/hardening.conf.bak" ]]; then
+    cp -a "$BACKUP_DIR/hardening.conf.bak" "$SNIPPET_CONF"
+  else
+    rm -f "$SNIPPET_CONF"
   fi
   rm -rf "$BACKUP_DIR"
   exit 1
