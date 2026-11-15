@@ -245,10 +245,12 @@ cp -a "$NGINX_MAIN_CONF" "$BACKUP_DIR/nginx.conf.bak" 2>/dev/null || true
 [[ -f "$SITE_CONF_PATH" ]] && cp -a "$SITE_CONF_PATH" "$BACKUP_DIR/site.conf.bak" 2>/dev/null || true
 
 if [[ -f "$NGINX_MAIN_CONF" ]]; then
-  # 1a. Enable server_tokens off;
-  if grep -qE '^\s*#\s*server_tokens\s+off;' "$NGINX_MAIN_CONF"; then
-    sed -i -E 's/^\s*#\s*server_tokens\s+off;/\tserver_tokens off;/' "$NGINX_MAIN_CONF"
-  elif ! grep -qE '^\s*server_tokens\s+off;' "$NGINX_MAIN_CONF"; then
+  # 1a. Enable server_tokens off; safely without duplicates
+  if grep -qE '^\s*server_tokens\s+' "$NGINX_MAIN_CONF"; then
+    sed -i -E 's/^\s*server_tokens\s+.*;/\tserver_tokens off;/' "$NGINX_MAIN_CONF"
+  elif grep -qE '^\s*#\s*server_tokens\s+' "$NGINX_MAIN_CONF"; then
+    sed -i -E 's/^\s*#\s*server_tokens\s+.*;/\tserver_tokens off;/' "$NGINX_MAIN_CONF"
+  else
     sed -i '/http\s*{/a \	server_tokens off;' "$NGINX_MAIN_CONF"
   fi
 
